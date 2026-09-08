@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="gridGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#06B6D4" stop-opacity="0.0" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bgGrad)" />
+  <!-- Futuristic 3D Grid Perspective -->
+  <g stroke="#334155" stroke-width="1" opacity="0.4">
+    <line x1="100" y1="600" x2="350" y2="250" />
+    <line x1="250" y1="600" x2="380" y2="250" />
+    <line x1="400" y1="600" x2="400" y2="250" />
+    <line x1="550" y1="600" x2="420" y2="250" />
+    <line x1="700" y1="600" x2="450" y2="250" />
+    <line x1="50" y1="550" x2="750" y2="550" />
+    <line x1="120" y1="480" x2="680" y2="480" />
+    <line x1="180" y1="420" x2="620" y2="420" />
+    <line x1="240" y1="360" x2="560" y2="360" />
+    <line x1="300" y1="300" x2="500" y2="300" />
+  </g>
+  <!-- City Skyline silhouettes -->
+  <path d="M50 380 L50 260 L90 260 L90 220 L130 220 L130 380" fill="#1E293B" opacity="0.6" />
+  <path d="M140 380 L140 180 L170 150 L200 180 L200 380" fill="#334155" opacity="0.7" />
+  <path d="M210 380 L210 240 L260 240 L260 380" fill="#1E293B" opacity="0.8" />
+  <path d="M270 380 L270 140 L330 140 L330 380" fill="#475569" opacity="0.8" />
+  <path d="M550 380 L550 160 L600 160 L600 380" fill="#334155" opacity="0.7" />
+  <path d="M610 380 L610 210 L670 210 L670 380" fill="#1E293B" opacity="0.8" />
+  <path d="M680 380 L680 250 L730 250 L730 380" fill="#334155" opacity="0.6" />
+  <!-- AI Scanning Cones and Target Reticles -->
+  <circle cx="300" cy="240" r="8" fill="#EF4444" />
+  <circle cx="300" cy="240" r="22" stroke="#EF4444" stroke-width="2" stroke-dasharray="4 4" opacity="0.8" />
+  <circle cx="580" cy="280" r="8" fill="#F59E0B" />
+  <circle cx="580" cy="280" r="24" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4 4" opacity="0.8" />
+  <circle cx="450" cy="460" r="10" fill="#06B6D4" />
+  <circle cx="450" cy="460" r="30" stroke="#06B6D4" stroke-width="2" opacity="0.7" />
+  <path d="M400 100 L450 460" stroke="#06B6D4" stroke-width="2" stroke-dasharray="6 6" opacity="0.6" />
+</svg>
