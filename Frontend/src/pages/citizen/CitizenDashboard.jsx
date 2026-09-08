@@ -8,34 +8,27 @@ import {
   PlusCircle,
   Navigation,
   Sparkles,
-  TrendingUp,
   ArrowRight
 } from 'lucide-react';
 import { IssueContext } from '../../context/IssueContext';
 import useAuth from '../../hooks/useAuth';
 import StatCard from '../../components/dashboard/StatCard';
 import IssueCard from '../../components/issue/IssueCard';
+import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
+import { getUserComplaints } from '../../utils/helpers';
 
 export const CitizenDashboard = () => {
   const { issues, upvoteIssue } = useContext(IssueContext);
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const currentCitizenEmail = user?.email || 'citizen@civicvision.ai';
+  // Strictly filter complaints belonging exclusively to the currently logged-in citizen by User ID
+  const myComplaints = getUserComplaints(issues, user);
 
-  // Filter citizen's own submitted issues (shown in My Submissions)
-  const myIssues = issues.filter(
-    (i) => i.reporter?.email === currentCitizenEmail || (user?.email && i.reporter?.email === user.email)
-  );
-
-  // Filter other community/neighborhood issues (shown in Citizen Hub)
-  const communityIssues = issues.filter(
-    (i) => i.reporter?.email !== currentCitizenEmail && (!user?.email || i.reporter?.email !== user.email)
-  );
-
-  const resolvedCount = issues.filter((i) => i.status === 'RESOLVED' || i.status === 'CLOSED').length;
-  const totalUpvotes = myIssues.reduce((acc, curr) => acc + (curr.upvotes || 0), 0);
+  const resolvedCount = myComplaints.filter((i) => i.status === 'RESOLVED' || i.status === 'CLOSED').length;
+  const inProgressCount = myComplaints.filter((i) => i.status === 'IN_PROGRESS' || i.status === 'ASSIGNED' || i.status === 'VERIFIED').length;
+  const totalUpvotes = myComplaints.reduce((acc, curr) => acc + (curr.upvotes || 0), 0);
 
   return (
     <div className="space-y-8">
@@ -44,15 +37,15 @@ export const CitizenDashboard = () => {
         <div className="space-y-2 max-w-xl">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-              Active Civic Guardian
+              Active Citizen Account
             </span>
-            <span className="text-xs font-mono text-slate-400">Zone: {user?.zone || 'North Zone'}</span>
+            <span className="text-xs font-mono text-slate-400">ID: {user?._id || user?.id || 'usr_citizen_001'}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-display">
             Welcome back, {user?.name || 'Citizen'}!
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            Your neighborhood AI radar is active. You have <strong className="text-indigo-300">{myIssues.length} report{myIssues.length === 1 ? '' : 's'}</strong> in My Submissions, dispatched to municipal workers and admins.
+            You have <strong className="text-indigo-300">{myComplaints.length} complaint{myComplaints.length === 1 ? '' : 's'}</strong> logged under your account. Track real-time repair progress, field technician assignments, and verification audits.
           </p>
         </div>
 
@@ -64,18 +57,18 @@ export const CitizenDashboard = () => {
           </Link>
           <Link to="/citizen/my-reports">
             <Button variant="secondary" size="md" leftIcon={FileText}>
-              My Submissions ({myIssues.length})
+              My Submissions ({myComplaints.length})
             </Button>
           </Link>
           <Link to="/citizen/explore">
             <Button variant="ghost" size="md" leftIcon={Navigation}>
-              Live GPS Radar
+              My GPS Radar
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Metrics Row */}
+      {/* Metrics Row (Strictly Scoped to Logged-in Citizen) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div
           onClick={() => navigate('/citizen/my-reports')}
@@ -83,26 +76,26 @@ export const CitizenDashboard = () => {
         >
           <StatCard
             title="My Submissions"
-            value={myIssues.length}
-            subtitle="View your reported complaints"
+            value={myComplaints.length}
+            subtitle="Uploaded by your account"
             icon={FileText}
-            trend="Exclusively in My Submissions"
+            trend="Exclusively your reports"
             trendPositive={true}
             colorScheme="indigo"
           />
         </div>
         <StatCard
-          title="Community Resolved"
+          title="My Resolved"
           value={resolvedCount}
-          subtitle="Fixed by city teams"
+          subtitle="Fixed by municipal teams"
           icon={CheckCircle2}
-          trend="94% resolution rate"
+          trend={myComplaints.length > 0 ? `${Math.round((resolvedCount / myComplaints.length) * 100)}% resolved` : '0 resolved'}
           trendPositive={true}
           colorScheme="emerald"
         />
         <StatCard
           title="Reputation Score"
-          value={`${user?.reputationScore || 340} pts`}
+          value={`${user?.reputationScore || 100} pts`}
           subtitle="Tier: Civic Guardian"
           icon={Award}
           trend="+45 pts"
@@ -110,11 +103,11 @@ export const CitizenDashboard = () => {
           colorScheme="amber"
         />
         <StatCard
-          title="Upvotes Received"
-          value={totalUpvotes || 47}
+          title="Upvotes on My Reports"
+          value={totalUpvotes}
           subtitle="Community endorsements"
           icon={ThumbsUp}
-          trend="+12 this week"
+          trend={totalUpvotes > 0 ? `+${totalUpvotes} endorsements` : '0 upvotes'}
           trendPositive={true}
           colorScheme="cyan"
         />
@@ -146,7 +139,7 @@ export const CitizenDashboard = () => {
           </div>
           <div>
             <h4 className="text-sm font-bold text-slate-100 group-hover:text-cyan-300 transition-colors">
-              My Submissions ({myIssues.length})
+              My Submissions ({myComplaints.length})
             </h4>
             <p className="text-xs text-slate-400">Track your uploaded complaints & live status</p>
           </div>
@@ -161,37 +154,40 @@ export const CitizenDashboard = () => {
           </div>
           <div>
             <h4 className="text-sm font-bold text-slate-100 group-hover:text-emerald-300 transition-colors">
-              Repair Work Audit
+              My Repair Audits
             </h4>
             <p className="text-xs text-slate-400">AI before-and-after photo verification</p>
           </div>
         </div>
       </div>
 
-      {/* Recent Community Issues (Excluding citizen's own submissions) */}
+      {/* Citizen's Own Submitted Complaints Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-slate-100 font-display">Active Neighborhood Incidents</h3>
-            <p className="text-xs text-slate-400">Community reports within 5km of your municipal sector (Your reports are in My Submissions)</p>
+            <h3 className="text-lg font-bold text-slate-100 font-display">My Uploaded Complaints</h3>
+            <p className="text-xs text-slate-400">Complaints filed by your account ({user?.email || 'Logged-in Citizen'})</p>
           </div>
           <Link
-            to="/citizen/explore"
+            to="/citizen/my-reports"
             className="text-xs font-semibold text-indigo-400 hover:text-cyan-300 flex items-center gap-1"
           >
-            <span>Explore All On GPS Radar</span>
+            <span>View All in My Submissions ({myComplaints.length})</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
-        {communityIssues.length === 0 ? (
-          <div className="p-8 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-2">
-            <p className="text-sm text-slate-300 font-medium">No other community incidents in this sector.</p>
-            <p className="text-xs text-slate-500">Your submitted complaints are tracked under <Link to="/citizen/my-reports" className="text-indigo-400 font-bold underline">My Submissions</Link>.</p>
-          </div>
+        {myComplaints.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="No complaints submitted yet"
+            description="You haven't reported any civic hazards yet. Submit a report with photo & GPS to track municipal response."
+            actionLabel="Submit First Hazard"
+            onAction={() => navigate('/citizen/report')}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {communityIssues.slice(0, 6).map((issue) => (
+            {myComplaints.slice(0, 6).map((issue) => (
               <IssueCard
                 key={issue.id}
                 issue={issue}

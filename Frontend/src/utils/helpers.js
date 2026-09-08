@@ -6,6 +6,45 @@ export function cn(...inputs) {
 }
 
 /**
+ * Checks if a complaint was submitted by the currently logged-in citizen.
+ * Strictly checks unique user ID (complaint.userId === user._id || complaint.userId === user.id)
+ * and reporter object identifiers.
+ */
+export function isUserComplaint(complaint, user) {
+  if (!complaint || !user) return false;
+
+  const currentUserId = String(user._id || user.id || '').trim();
+  const complaintUserId = String(
+    complaint.userId ||
+    complaint.reporter?.id ||
+    complaint.reporter?._id ||
+    ''
+  ).trim();
+
+  // Primary check: Match by unique User ID
+  if (currentUserId && complaintUserId && currentUserId === complaintUserId) {
+    return true;
+  }
+
+  // Fallback: Match by email if user ID is missing
+  const userEmail = String(user.email || '').trim().toLowerCase();
+  const complaintEmail = String(complaint.reporter?.email || '').trim().toLowerCase();
+  if (userEmail && complaintEmail && userEmail === complaintEmail) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Filters a list of complaints to ONLY those belonging to the currently logged-in user.
+ */
+export function getUserComplaints(complaints, user) {
+  if (!Array.isArray(complaints) || !user) return [];
+  return complaints.filter((c) => isUserComplaint(c, user));
+}
+
+/**
  * Calculates distance between two coordinates in kilometers using Haversine formula
  */
 export function calculateDistanceKm(lat1, lon1, lat2, lon2) {

@@ -24,9 +24,13 @@ export const ReportIssue = () => {
   const saveIssue = async (issueData) => {
     setSubmitting(true);
     try {
+      const currentUserId = user?._id || user?.id || 'usr_citizen_001';
       const payload = {
         ...issueData,
+        userId: currentUserId,
         reporter: {
+          id: currentUserId,
+          _id: currentUserId,
           name: user?.name || 'Citizen Reporter',
           email: user?.email || 'citizen@civicvision.ai',
           avatar: user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',

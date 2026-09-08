@@ -72,8 +72,17 @@ export const issueApi = {
           i.location?.address?.toLowerCase().includes(q)
         );
       }
+      if (filters.userId) {
+        const uid = String(filters.userId).trim();
+        issues = issues.filter(i => 
+          String(i.userId || '').trim() === uid || 
+          String(i.reporter?.id || '').trim() === uid ||
+          String(i.reporter?._id || '').trim() === uid
+        );
+      }
       if (filters.reporterEmail) {
-        issues = issues.filter(i => i.reporter?.email === filters.reporterEmail);
+        const targetEmail = filters.reporterEmail.trim().toLowerCase();
+        issues = issues.filter(i => (i.reporter?.email || '').trim().toLowerCase() === targetEmail);
       }
       
       return issues;
@@ -100,8 +109,10 @@ export const issueApi = {
       return response.data;
     } catch {
       const issues = getLocalIssues();
+      const currentUserId = issueData.userId || issueData.reporter?.id || issueData.reporter?._id || 'usr_citizen_001';
       const newIssue = {
         id: `CIV-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+        userId: currentUserId,
         upvotes: 1,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -109,7 +120,13 @@ export const issueApi = {
           { status: 'Reported', time: new Date().toISOString(), note: 'Submitted by citizen with AI scan data.' },
           { status: 'AI Verified', time: new Date().toISOString(), note: `AI categorized as ${issueData.category} with score ${issueData.priorityScore || 80}.` }
         ],
-        ...issueData
+        ...issueData,
+        userId: currentUserId,
+        reporter: {
+          ...issueData.reporter,
+          id: currentUserId,
+          _id: currentUserId,
+        }
       };
       
       const updatedList = [newIssue, ...issues];

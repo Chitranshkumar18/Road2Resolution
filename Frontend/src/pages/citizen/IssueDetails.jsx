@@ -24,12 +24,13 @@ import RepairVerification from '../../components/ai/RepairVerification';
 import LocationPicker from '../../components/map/LocationPicker';
 import Button from '../../components/common/Button';
 import { formatDate } from '../../utils/formatDate';
+import { isUserComplaint } from '../../utils/helpers';
 
 export const IssueDetails = () => {
   const { id } = useParams();
   const { issues, upvoteIssue, updateIssueStatus, submitRepairVerification } = useContext(IssueContext);
   const { addToast } = useContext(NotificationContext);
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, isWorker } = useAuth();
   const navigate = useNavigate();
 
   const [commentText, setCommentText] = useState('');
@@ -48,14 +49,36 @@ export const IssueDetails = () => {
     },
   ]);
 
-  const issue = issues.find((i) => i.id === id) || issues[0];
+  const issue = issues.find((i) => i.id === id);
 
   if (!issue) {
     return (
       <div className="text-center py-20">
-        <p className="text-slate-400">Issue not found.</p>
-        <Link to="/citizen/dashboard" className="text-indigo-400 font-bold mt-2 inline-block">
-          Return to Dashboard
+        <p className="text-slate-400">Complaint not found.</p>
+        <Link to="/citizen/my-reports" className="text-indigo-400 font-bold mt-2 inline-block">
+          Return to My Submissions
+        </Link>
+      </div>
+    );
+  }
+
+  // If user is a citizen (not admin / worker), verify that this complaint belongs to the logged-in citizen
+  const isAuthorized = isAdmin || isWorker || isUserComplaint(issue, user);
+
+  if (!isAuthorized) {
+    return (
+      <div className="text-center py-20 p-8 rounded-3xl bg-slate-900 border border-slate-800 max-w-lg mx-auto space-y-4">
+        <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mx-auto">
+          <ShieldCheck className="w-6 h-6" />
+        </div>
+        <h3 className="text-lg font-bold text-white">Complaint Privacy Restricted</h3>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          You can only view details and resolution tracking for complaints submitted by your own citizen account.
+        </p>
+        <Link to="/citizen/my-reports" className="inline-block">
+          <Button variant="primary" size="md">
+            Go to My Submissions
+          </Button>
         </Link>
       </div>
     );

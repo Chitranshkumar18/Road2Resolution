@@ -47,6 +47,7 @@ export const SEVERITY_LEVELS = {
 export const INITIAL_MOCK_ISSUES = [
   {
     id: 'CIV-2026-8941',
+    userId: 'usr_citizen_001',
     title: 'Severe Deep Crater Pothole on Ring Road Flyover',
     description: 'A 2-foot wide dangerous crater formed in the middle lane causing vehicles to brake abruptly. High accident risk during night hours.',
     category: 'pothole',
@@ -65,6 +66,8 @@ export const INITIAL_MOCK_ISSUES = [
     imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=800&auto=format&fit=crop&q=80',
     repairVerificationUrl: null,
     reporter: {
+      id: 'usr_citizen_001',
+      _id: 'usr_citizen_001',
       name: 'Aarav Mehta',
       email: 'citizen@civicvision.ai',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
@@ -88,6 +91,7 @@ export const INITIAL_MOCK_ISSUES = [
   },
   {
     id: 'CIV-2026-8942',
+    userId: 'usr_citizen_riya',
     title: 'Major 12-inch Water Main Leak Flooding Pedestrian Walkway',
     description: 'Pressurized clean water leaking continuously since morning, submersing the footpath and eroding the road foundation.',
     category: 'water_leak',
@@ -106,6 +110,8 @@ export const INITIAL_MOCK_ISSUES = [
     imageUrl: 'https://images.unsplash.com/photo-1584467735815-f778f274e296?w=800&auto=format&fit=crop&q=80',
     repairVerificationUrl: null,
     reporter: {
+      id: 'usr_citizen_riya',
+      _id: 'usr_citizen_riya',
       name: 'Riya Sen',
       email: 'riya.sen@example.com',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
@@ -128,6 +134,7 @@ export const INITIAL_MOCK_ISSUES = [
   },
   {
     id: 'CIV-2026-8943',
+    userId: 'usr_citizen_sunil',
     title: 'Cluster of 4 Streetlights Non-Operational on School Road',
     description: 'Complete blackout for a 200m stretch adjacent to Government Girls Senior Secondary School. Creates safety concerns after sunset.',
     category: 'streetlight',
@@ -146,6 +153,8 @@ export const INITIAL_MOCK_ISSUES = [
     imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800&auto=format&fit=crop&q=80',
     repairVerificationUrl: null,
     reporter: {
+      id: 'usr_citizen_sunil',
+      _id: 'usr_citizen_sunil',
       name: 'Sunil Kapoor',
       email: 'sunil.k@example.com',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
@@ -167,6 +176,7 @@ export const INITIAL_MOCK_ISSUES = [
   },
   {
     id: 'CIV-2026-8944',
+    userId: 'usr_citizen_pooja',
     title: 'Solid Waste Bin Overflow & Secondary Dump Spill',
     description: 'Community dumpster has not been cleared for 4 days. Waste spilling onto service lane attracting stray animals.',
     category: 'garbage',
@@ -224,8 +234,10 @@ export const INITIAL_MOCK_ISSUES = [
       }
     ],
     reporter: {
+      id: 'usr_citizen_pooja',
+      _id: 'usr_citizen_pooja',
       name: 'Pooja Verma',
-      email: 'citizen@civicvision.ai',
+      email: 'pooja.verma@example.com',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
       reputation: 220
     },
@@ -247,6 +259,7 @@ export const INITIAL_MOCK_ISSUES = [
   },
   {
     id: 'CIV-2026-8945',
+    userId: 'usr_citizen_mohit',
     title: 'Traffic Junction Signal Blinking Red on All Approaches',
     description: 'Signal controller malfunction at busy 4-way intersection causing gridlock and near-miss vehicle collisions.',
     category: 'traffic_signal',
@@ -265,6 +278,8 @@ export const INITIAL_MOCK_ISSUES = [
     imageUrl: 'https://images.unsplash.com/photo-1508873535684-277a3cbcc4e8?w=800&auto=format&fit=crop&q=80',
     repairVerificationUrl: null,
     reporter: {
+      id: 'usr_citizen_mohit',
+      _id: 'usr_citizen_mohit',
       name: 'Mohit Chawla',
       email: 'mohit.c@example.com',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',

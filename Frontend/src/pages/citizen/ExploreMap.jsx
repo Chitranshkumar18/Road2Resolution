@@ -1,13 +1,16 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Search, Filter, Layers, Navigation, Radio, LocateFixed, Sparkles, AlertCircle } from 'lucide-react';
 import { IssueContext } from '../../context/IssueContext';
+import useAuth from '../../hooks/useAuth';
 import IssueMap from '../../components/map/IssueMap';
 import Button from '../../components/common/Button';
 import useLocation from '../../hooks/useLocation';
 import { ISSUE_CATEGORIES, SEVERITY_LEVELS } from '../../utils/constants';
+import { getUserComplaints } from '../../utils/helpers';
 
 export const ExploreMap = () => {
   const { issues } = useContext(IssueContext);
+  const { user } = useAuth();
   const { coords, accuracy, loading: gpsLoading, getCurrentPosition } = useLocation();
 
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -15,15 +18,18 @@ export const ExploreMap = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [mapCenter, setMapCenter] = useState([28.6180, 77.2120]);
 
-  const filteredIssues = issues.filter((issue) => {
+  // Strictly filter complaints belonging exclusively to the currently logged-in citizen by User ID
+  const citizenIssues = getUserComplaints(issues, user);
+
+  const filteredIssues = citizenIssues.filter((issue) => {
     if (selectedCategory !== 'all' && issue.category !== selectedCategory) return false;
     if (selectedSeverity !== 'all' && issue.severity !== selectedSeverity) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
-        issue.title.toLowerCase().includes(q) ||
-        issue.description.toLowerCase().includes(q) ||
-        issue.location?.address.toLowerCase().includes(q)
+        issue.title?.toLowerCase().includes(q) ||
+        issue.description?.toLowerCase().includes(q) ||
+        issue.location?.address?.toLowerCase().includes(q)
       );
     }
     return true;
@@ -48,11 +54,11 @@ export const ExploreMap = () => {
             <div className="flex items-center gap-2">
               <Radio className="w-5 h-5 text-cyan-400 animate-pulse" />
               <h2 className="text-xl font-bold text-white font-display">
-                Metropolitan Live GPS Incident Radar
+                My Reported Hazards Live GPS Radar
               </h2>
             </div>
             <p className="text-xs text-slate-400">
-              Real-time satellite GPS tracking of active infrastructure reports across metropolitan sectors
+              Real-time satellite GPS tracking of complaints submitted by your account ({user?.email || 'Logged-in Citizen'})
             </p>
           </div>
 
@@ -67,7 +73,7 @@ export const ExploreMap = () => {
               Lock to My GPS
             </Button>
             <span className="px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-              {filteredIssues.length} GPS Incidents
+              {filteredIssues.length} My Pin{filteredIssues.length === 1 ? '' : 's'}
             </span>
           </div>
         </div>

@@ -3,6 +3,7 @@ import api from './axios';
 const DEMO_USERS = {
   citizen: {
     id: 'usr_citizen_001',
+    _id: 'usr_citizen_001',
     name: 'Aarav Mehta',
     email: 'citizen@civicvision.ai',
     role: 'citizen',
@@ -15,6 +16,7 @@ const DEMO_USERS = {
   },
   worker: {
     id: 'usr_worker_001',
+    _id: 'usr_worker_001',
     name: 'Ramesh Verma',
     email: 'worker@civicvision.ai',
     role: 'worker',
@@ -29,6 +31,7 @@ const DEMO_USERS = {
   },
   admin: {
     id: 'usr_admin_001',
+    _id: 'usr_admin_001',
     name: 'Director S. K. Malhotra',
     email: 'admin@civicvision.ai',
     role: 'admin',
@@ -91,8 +94,10 @@ export const authApi = {
         );
         
         if (role === 'admin') {
+          const uid = `usr_admin_${Date.now()}`;
           user = {
-            id: `usr_admin_${Date.now()}`,
+            id: uid,
+            _id: uid,
             name: email.split('@')[0].replace('.', ' ').toUpperCase(),
             email,
             role: 'admin',
@@ -101,8 +106,10 @@ export const authApi = {
             clearanceLevel: 'Authorized City Administrator'
           };
         } else if (role === 'worker') {
+          const uid = `usr_worker_${Date.now()}`;
           user = {
-            id: `usr_worker_${Date.now()}`,
+            id: uid,
+            _id: uid,
             name: email.split('@')[0].replace('.', ' ').toUpperCase(),
             email,
             role: 'worker',
@@ -115,8 +122,10 @@ export const authApi = {
             activeTasksCount: 1
           };
         } else {
+          const uid = `usr_citizen_${Date.now()}`;
           user = {
-            id: `usr_citizen_${Date.now()}`,
+            id: uid,
+            _id: uid,
             name: email.split('@')[0].replace('.', ' '),
             email,
             role: 'citizen',
@@ -147,8 +156,10 @@ export const authApi = {
       let newUser;
 
       if (role === 'admin') {
+        const uid = `usr_admin_${Date.now()}`;
         newUser = {
-          id: `usr_admin_${Date.now()}`,
+          id: uid,
+          _id: uid,
           name: userData.name || 'Municipal Officer',
           email: userData.email,
           role: 'admin',
@@ -159,8 +170,10 @@ export const authApi = {
           clearanceLevel: 'Municipal Operations Administrator'
         };
       } else if (role === 'worker') {
+        const uid = `usr_worker_${Date.now()}`;
         newUser = {
-          id: `usr_worker_${Date.now()}`,
+          id: uid,
+          _id: uid,
           name: userData.name || 'Field Engineer',
           email: userData.email,
           role: 'worker',
@@ -174,8 +187,10 @@ export const authApi = {
           activeTasksCount: 0
         };
       } else {
+        const uid = `usr_citizen_${Date.now()}`;
         newUser = {
-          id: `usr_citizen_${Date.now()}`,
+          id: uid,
+          _id: uid,
           name: userData.name || 'Citizen User',
           email: userData.email,
           role: 'citizen',

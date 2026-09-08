@@ -1,24 +1,25 @@
 import React, { useState, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PlusCircle, Search, Filter, FileText } from 'lucide-react';
 import { IssueContext } from '../../context/IssueContext';
 import useAuth from '../../hooks/useAuth';
 import IssueCard from '../../components/issue/IssueCard';
 import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
+import { getUserComplaints } from '../../utils/helpers';
 
 export const MyReports = () => {
   const { issues, upvoteIssue } = useContext(IssueContext);
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all'); // all, active, resolved
   const [searchQuery, setSearchQuery] = useState('');
 
-  const currentCitizenEmail = user?.email || 'citizen@civicvision.ai';
+  // Strictly filter complaints belonging exclusively to the currently logged-in citizen by User ID
+  const userIssues = getUserComplaints(issues, user);
 
-  // Filter issues for current citizen
-  const userIssues = issues.filter(
-    (i) => i.reporter?.email === currentCitizenEmail || (user?.email && i.reporter?.email === user.email)
-  );
+  const activeCount = userIssues.filter((i) => i.status !== 'RESOLVED' && i.status !== 'CLOSED').length;
+  const resolvedCount = userIssues.filter((i) => i.status === 'RESOLVED' || i.status === 'CLOSED').length;
 
   const filteredIssues = userIssues.filter((issue) => {
     if (activeTab === 'active' && (issue.status === 'RESOLVED' || issue.status === 'CLOSED')) return false;
@@ -27,9 +28,10 @@ export const MyReports = () => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
-        issue.title.toLowerCase().includes(q) ||
-        issue.description.toLowerCase().includes(q) ||
-        issue.id.toLowerCase().includes(q)
+        issue.title?.toLowerCase().includes(q) ||
+        issue.description?.toLowerCase().includes(q) ||
+        issue.id?.toLowerCase().includes(q) ||
+        issue.location?.address?.toLowerCase().includes(q)
       );
     }
     return true;
@@ -57,8 +59,8 @@ export const MyReports = () => {
         <div className="flex items-center gap-2 w-full md:w-auto">
           {[
             { id: 'all', label: `All Reports (${userIssues.length})` },
-            { id: 'active', label: 'Active Work' },
-            { id: 'resolved', label: 'Resolved & Audited' },
+            { id: 'active', label: `Active Work (${activeCount})` },
+            { id: 'resolved', label: `Resolved & Audited (${resolvedCount})` },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -91,10 +93,14 @@ export const MyReports = () => {
       {filteredIssues.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title="No reports match your filter"
-          description="Submit a report with an image to have our AI prioritize and route it to city engineers."
-          actionLabel="Submit First Hazard"
-          onAction={() => {}}
+          title="No reports match your account filter"
+          description={
+            userIssues.length === 0
+              ? "You have not submitted any complaints yet. Submit a report with photo & GPS to track municipal response."
+              : "No complaints matching this tab or search filter were found in your account."
+          }
+          actionLabel="Submit New Hazard"
+          onAction={() => navigate('/citizen/report')}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
