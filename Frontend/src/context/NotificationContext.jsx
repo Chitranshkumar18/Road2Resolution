@@ -6,30 +6,30 @@ export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([
     {
       id: 'notif-1',
-      title: '🚨 High Priority Alert',
-      message: 'Critical pothole detected on Outer Ring Road Flyover (Priority Score: 94).',
-      time: '10m ago',
+      title: '🚨 Live GPS Telemetry Active',
+      message: 'Municipal AI radar is scanning your sector for infrastructure updates.',
+      time: 'Just now',
       read: false,
-      type: 'critical',
-      link: '/citizen/issue/CIV-2026-8941'
+      type: 'info',
+      link: '/citizen/explore'
     },
     {
       id: 'notif-2',
-      title: '✅ Repair Completed & AI Verified',
-      message: 'Waste spillage at Mayur Vihar Pocket 3 has been cleared and audited.',
-      time: '2h ago',
+      title: '📋 Citizen Reports Queue',
+      message: 'Track the status and municipal resolution progress of your submitted complaints.',
+      time: '1h ago',
       read: false,
-      type: 'success',
-      link: '/citizen/issue/CIV-2026-8944'
+      type: 'info',
+      link: '/citizen/my-reports'
     },
     {
       id: 'notif-3',
-      title: '👷 Crew Dispatched',
-      message: 'PWD Road Maintenance Unit dispatched to Kalyan Marg junction.',
-      time: '4h ago',
+      title: '🔍 Repair Audit Portal',
+      message: 'Inspect AI differential before-and-after audits for completed hazard repairs.',
+      time: '3h ago',
       read: true,
-      type: 'info',
-      link: '/citizen/issue/CIV-2026-8945'
+      type: 'success',
+      link: '/citizen/repair-verification'
     }
   ]);
 
