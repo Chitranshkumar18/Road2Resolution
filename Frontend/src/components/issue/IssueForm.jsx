@@ -247,7 +247,7 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
       {/* Step 3: Live GPS Coordinates & Location Telemetry */}
       <div className="space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 flex, items-center gap-1.5">
             <Navigation className="w-3.5 h-3.5 text-cyan-400" />
             <span>Step 3: Live GPS Coordinates & Location Telemetry</span>
           </label>
