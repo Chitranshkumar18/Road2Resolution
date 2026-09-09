@@ -6,10 +6,10 @@ import Header from '../components/common/Header';
 
 export const CitizenLayout = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const location = useLocation();
+  const location = useLocation(); //--->>>Ye current URL/path ki information deta hai.
 
   const getPageMeta = () => {
-    const p = location.pathname;
+    const p = location.pathname; //--->>>Ye current URL/path ko store karta hai.(location)
     if (p.includes('/citizen/report')) return { title: 'Report Civic Hazard', subtitle: 'Submit photo with AI visual diagnosis & live GPS' };
     if (p.includes('/citizen/ai-analysis')) return { title: 'AI Neural Vision Scanner', subtitle: 'Automated defect classifier & severity predictor' };
     if (p.includes('/citizen/duplicate-check')) return { title: 'Duplicate Report Detector', subtitle: 'Prevent redundant submissions and merge upvotes' };
@@ -21,6 +21,7 @@ export const CitizenLayout = () => {
   };
 
   const meta = getPageMeta();
+  
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-slate-100 flex">
@@ -50,3 +51,21 @@ export const CitizenLayout = () => {
 };
 
 export default CitizenLayout;
+
+
+
+
+// ┌──────────────────────────────────────────────┐
+// │                                              │
+// │ Sidebar │         Main Content               │
+// │         │                                    │
+// │         │ Header                             │
+// │         │                                    │
+// │         │ Page Content                       │
+// │         │                                    │
+// └──────────────────────────────────────────────┘
+
+
+
+
+// The purpose of `CitizenLayout.jsx` is to provide a **common UI structure for all citizen pages** — including the **Sidebar, Header, and responsive main content area** — and to render the actual page for the current route using `<Outlet />`.

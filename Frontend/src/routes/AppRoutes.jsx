@@ -51,7 +51,7 @@ export const AppRoutes = () => {
   return (
     <Routes>
       {/* Public Pages */}
-      <Route element={<PublicLayout />}>
+      <Route element={<PublicLayout />}>         
         <Route path="/" element={<Home />} />
         <Route path="/reviews" element={<PublicReviews />} />
         <Route path="/login" element={<Login />} />

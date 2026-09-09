@@ -4,8 +4,8 @@ const DEMO_USERS = {
   citizen: {
     id: 'usr_citizen_001',
     _id: 'usr_citizen_001',
-    name: 'Aarav Mehta',
-    email: 'citizen@civicvision.ai',
+    name: 'chitransh kumar',
+    email: 'Road2solution@gmail.com',
     role: 'citizen',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
     phone: '+91 98765 43210',
@@ -17,8 +17,8 @@ const DEMO_USERS = {
   worker: {
     id: 'usr_worker_001',
     _id: 'usr_worker_001',
-    name: 'Ramesh Verma',
-    email: 'worker@civicvision.ai',
+    name: 'krishna rastogi',
+    email: 'worker@gmail.com',
     role: 'worker',
     contractorUnit: 'PWD Rapid Road Repair Unit #4',
     department: 'Public Works Department (PWD)',
@@ -32,8 +32,8 @@ const DEMO_USERS = {
   admin: {
     id: 'usr_admin_001',
     _id: 'usr_admin_001',
-    name: 'Director S. K. Malhotra',
-    email: 'admin@civicvision.ai',
+    name: 'government',
+    email: 'admin@gmail.com',
     role: 'admin',
     department: 'Smart City Urban Command Centre',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
@@ -49,12 +49,12 @@ function getRegisteredUsers() {
   const stored = localStorage.getItem(USERS_STORAGE_KEY);
   if (!stored) {
     const initial = [DEMO_USERS.citizen, DEMO_USERS.worker, DEMO_USERS.admin];
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(initial));
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(initial)); // local storage only store string
     return initial;
   }
   try {
-    const parsed = JSON.parse(stored);
-    if (!parsed.some(u => u.email === 'worker@civicvision.ai')) {
+    const parsed = JSON.parse(stored); // string to json
+    if (!parsed.some(u => u.email === 'worker@gmail.com')) {     // It checks whether a user with the given email address exists or not.
       parsed.push(DEMO_USERS.worker);
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(parsed));
     }

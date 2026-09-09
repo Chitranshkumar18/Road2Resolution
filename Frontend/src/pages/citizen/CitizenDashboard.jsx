@@ -7,7 +7,6 @@ import {
   ThumbsUp,
   PlusCircle,
   Navigation,
-  Sparkles,
   ArrowRight
 } from 'lucide-react';
 import { IssueContext } from '../../context/IssueContext';
@@ -80,7 +79,7 @@ export const CitizenDashboard = () => {
             subtitle="Uploaded by your account"
             icon={FileText}
             trend="Exclusively your reports"
-            trendPositive={true}
+            trendPositive={false}
             colorScheme="indigo"
           />
         </div>
