@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { CopyCheck, Search, MapPin, Sparkles } from 'lucide-react';
+import { CopyCheck, Search } from 'lucide-react';
 import Button from '../../components/common/Button';
 import DuplicateDetection from '../../components/ai/DuplicateDetection';
 import { ISSUE_CATEGORIES } from '../../utils/constants';

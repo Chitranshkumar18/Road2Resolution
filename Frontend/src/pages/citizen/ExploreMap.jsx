@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { Search, Filter, Layers, Navigation, Radio, LocateFixed, Sparkles, AlertCircle } from 'lucide-react';
+import { Search, Radio, LocateFixed } from 'lucide-react';
 import { IssueContext } from '../../context/IssueContext';
 import useAuth from '../../hooks/useAuth';
 import IssueMap from '../../components/map/IssueMap';

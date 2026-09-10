@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Award, Shield, CheckCircle2, ThumbsUp, Save, Phone, Mail, MapPin } from 'lucide-react';
+import { User, Award, CheckCircle2, Save, Phone, MapPin } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import Button from '../../components/common/Button';
 import { NotificationContext } from '../../context/NotificationContext';

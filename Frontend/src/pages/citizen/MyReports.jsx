@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PlusCircle, Search, Filter, FileText } from 'lucide-react';
+import { PlusCircle, Search, FileText } from 'lucide-react';
 import { IssueContext } from '../../context/IssueContext';
 import useAuth from '../../hooks/useAuth';
 import IssueCard from '../../components/issue/IssueCard';
