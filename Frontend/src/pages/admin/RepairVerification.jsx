@@ -20,7 +20,8 @@ import {
   Check,
   HardHat,
   Truck,
-  Clock
+  Clock,
+  HeartHandshake
 } from 'lucide-react';
 import { IssueContext } from '../../context/IssueContext';
 import { NotificationContext } from '../../context/NotificationContext';
@@ -30,6 +31,8 @@ import IssueStatus from '../../components/issue/IssueStatus';
 import Button from '../../components/common/Button';
 import { formatDate } from '../../utils/formatDate';
 import { PLACEHOLDER_IMAGES } from '../../utils/constants';
+import { formatResponsibleEntity } from '../../utils/helpers';
+import { formatDisplayAddress } from '../../utils/geocoding';
 
 export const AdminRepairVerification = () => {
   const { issues = [], submitRepairVerification } = useContext(IssueContext) || {};
@@ -56,7 +59,7 @@ export const AdminRepairVerification = () => {
         result
       );
       if (addToast) {
-        addToast(`🎉 Repair certified & published live to Citizen Portal for ${selectedIssue.id}!`, 'success');
+        addToast(`🎉 Repair certified & published live to Citizen & Public Portals for ${selectedIssue.id}!`, 'success');
       }
     }
   };
@@ -77,14 +80,14 @@ export const AdminRepairVerification = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl md:text-2xl font-black text-white font-display">
-                  Contractor Repair QA & Verification Console
+                  Contractor & Volunteer Repair QA Verification Console
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
                   ADMIN ONLY
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Municipal inspection workbench for reviewing worker-submitted resolution proofs, executing differential AI scans, and publishing verified resolutions live to the Citizen Portal.
+                Municipal inspection workbench for reviewing resolution proofs submitted by registered organizations or public volunteers, executing differential AI scans, and publishing verified resolutions live.
               </p>
             </div>
           </div>
@@ -105,7 +108,7 @@ export const AdminRepairVerification = () => {
             <div className="flex items-center gap-2.5">
               <HardHat className="w-5 h-5 text-amber-400" />
               <h3 className="text-sm md:text-base font-bold text-white font-display">
-                Worker Field Submissions Awaiting Admin Certification ({workerSubmissions.length})
+                Field Submissions Awaiting Admin Certification ({workerSubmissions.length})
               </h3>
             </div>
             <span className="text-xs font-mono text-amber-300 font-bold bg-amber-500/20 px-2.5 py-1 rounded-full border border-amber-500/30">
@@ -114,45 +117,52 @@ export const AdminRepairVerification = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {workerSubmissions.map((wIssue) => (
-              <div
-                key={wIssue.id}
-                onClick={() => setSelectedIssueId(wIssue.id)}
-                className={`p-3.5 rounded-2xl cursor-pointer border transition-all space-y-2.5 ${
-                  selectedIssueId === wIssue.id
-                    ? 'bg-amber-950/70 border-amber-500 ring-2 ring-amber-500/30'
-                    : 'bg-slate-950/80 border-slate-800 hover:border-amber-500/50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-amber-400">{wIssue.id}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {formatDate(wIssue.workerSubmission?.submittedAt || wIssue.updatedAt)}
-                  </span>
-                </div>
+            {workerSubmissions.map((wIssue) => {
+              const entity = formatResponsibleEntity(wIssue);
+              const isVol = wIssue.responsibleType === 'PUBLIC_INDIVIDUAL' || wIssue.workerSubmission?.submittedBy === 'PUBLIC_INDIVIDUAL' || wIssue.workerSubmission?.isVolunteer;
 
-                <div className="flex items-center gap-2">
-                  <img
-                    src={wIssue.workerSubmission?.afterImageUrl || wIssue.repairVerificationUrl || PLACEHOLDER_IMAGES.repairedRoad}
-                    alt="Worker Proof"
-                    className="w-12 h-12 rounded-lg object-cover border border-amber-500/30 flex-shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-100 truncate">{wIssue.title}</p>
-                    <p className="text-[10px] text-amber-300/90 truncate">
-                      By: {wIssue.workerSubmission?.workerName || 'Field Tech'}
-                    </p>
+              return (
+                <div
+                  key={wIssue.id}
+                  onClick={() => setSelectedIssueId(wIssue.id)}
+                  className={`p-3.5 rounded-2xl cursor-pointer border transition-all space-y-2.5 ${
+                    selectedIssueId === wIssue.id
+                      ? 'bg-amber-950/70 border-amber-500 ring-2 ring-amber-500/30'
+                      : 'bg-slate-950/80 border-slate-800 hover:border-amber-500/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold text-amber-400">{wIssue.id}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {formatDate(wIssue.workerSubmission?.submittedAt || wIssue.updatedAt)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={wIssue.workerSubmission?.afterImageUrl || wIssue.repairVerificationUrl || PLACEHOLDER_IMAGES.repairedRoad}
+                      alt="Worker Proof"
+                      className="w-12 h-12 rounded-lg object-cover border border-amber-500/30 flex-shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-100 truncate">{wIssue.title}</p>
+                      <p className={`text-[10px] truncate ${isVol ? 'text-emerald-300 font-bold' : 'text-amber-300/90'}`}>
+                        {isVol ? `🌟 Volunteer: ${wIssue.workerSubmission?.workerName || 'Public Citizen'}` : `🏢 Org: ${wIssue.workerSubmission?.organizationName || wIssue.assignedOrgName || 'Contractor'}`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/80">
+                    <span className="truncate text-slate-300 font-medium">
+                      {formatDisplayAddress(wIssue.location?.address, wIssue.location)}
+                    </span>
+                    <span className="text-amber-400 font-bold flex items-center gap-0.5">
+                      Audit <ArrowRight className="w-3 h-3" />
+                    </span>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/80">
-                  <span className="truncate">{wIssue.location?.address}</span>
-                  <span className="text-amber-400 font-bold flex items-center gap-0.5">
-                    Audit <ArrowRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -195,12 +205,25 @@ export const AdminRepairVerification = () => {
 
               <h4 className="text-sm font-bold text-slate-100">{selectedIssue.title}</h4>
 
+              {/* Responsible entity badge */}
+              {selectedIssue.assignedOrgName ? (
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs space-y-0.5">
+                  <span className="text-[10px] font-mono text-indigo-400 block uppercase">Responsible Organization:</span>
+                  <strong className="text-slate-200">{selectedIssue.assignedOrgName}</strong>
+                </div>
+              ) : selectedIssue.responsibleType === 'PUBLIC_INDIVIDUAL' ? (
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-0.5">
+                  <span className="text-[10px] font-mono text-emerald-400 block uppercase">Responsible Public Volunteer:</span>
+                  <strong className="text-emerald-300">🌟 {selectedIssue.responsibleName || 'Citizen Volunteer'}</strong>
+                </div>
+              ) : null}
+
               {/* Worker submission banner if available */}
               {selectedIssue.workerSubmission && (
                 <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-1 text-xs">
                   <div className="flex items-center justify-between text-amber-300 font-bold">
                     <span className="flex items-center gap-1">
-                      <HardHat className="w-3.5 h-3.5" /> Worker Proof Attached
+                      <HardHat className="w-3.5 h-3.5" /> Proof Attached
                     </span>
                     <span className="text-[10px] font-mono">{selectedIssue.workerSubmission.contractorUnit}</span>
                   </div>
@@ -221,8 +244,8 @@ export const AdminRepairVerification = () => {
                   <span className="text-slate-200 capitalize font-medium">{selectedIssue.category}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Department:</span>
-                  <span className="text-slate-200 font-medium">{selectedIssue.department || 'PWD Roads'}</span>
+                  <span>State & City:</span>
+                  <span className="text-slate-200 font-medium">{selectedIssue.location?.city || 'City'}, {selectedIssue.location?.state || 'Delhi'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Severity:</span>
@@ -234,7 +257,9 @@ export const AdminRepairVerification = () => {
                 </div>
                 <div className="flex items-center gap-1 text-[11px] text-slate-400 pt-1">
                   <MapPin className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                  <span className="truncate">{selectedIssue.location?.address}</span>
+                  <span className="truncate text-slate-200 font-medium">
+                    {formatDisplayAddress(selectedIssue.location?.address, selectedIssue.location)}
+                  </span>
                 </div>
               </div>
 
@@ -266,6 +291,9 @@ export const AdminRepairVerification = () => {
               beforeImageUrl={selectedIssue.imageUrl || PLACEHOLDER_IMAGES.pothole}
               afterImageUrl={selectedIssue.repairVerificationUrl || selectedIssue.workerSubmission?.afterImageUrl}
               workerSubmission={selectedIssue.workerSubmission}
+              assignedOrgName={selectedIssue.assignedOrgName}
+              responsibleType={selectedIssue.responsibleType}
+              responsibleName={selectedIssue.responsibleName}
               status={selectedIssue.status}
               isAdmin={true}
               readOnly={false}
@@ -287,7 +315,7 @@ export const AdminRepairVerification = () => {
           <div className="flex items-center gap-2.5">
             <CheckCircle className="w-5 h-5 text-emerald-400" />
             <h3 className="text-base font-bold text-white font-display">
-              Published Municipal Repair Records
+              Published Municipal & Volunteer Repair Records
             </h3>
           </div>
           <span className="text-xs text-slate-400">
@@ -297,53 +325,65 @@ export const AdminRepairVerification = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {resolvedIssues.length > 0 ? (
-            resolvedIssues.map((issue) => (
-              <div
-                key={issue.id}
-                className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/40 transition-all space-y-3 cursor-pointer group"
-                onClick={() => setSelectedIssueId(issue.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-emerald-400">{issue.id}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/20 flex items-center gap-1">
-                    <Check className="w-3 h-3" />
-                    RESOLVED
-                  </span>
-                </div>
+            resolvedIssues.map((issue) => {
+              const entity = formatResponsibleEntity(issue);
 
-                {/* Micro Before/After Thumbnails */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="relative rounded-lg overflow-hidden aspect-video bg-slate-900 border border-slate-800">
-                    <img src={issue.imageUrl} alt="Before" className="w-full h-full object-cover" />
-                    <span className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded text-[8px] font-bold bg-rose-600/90 text-white">
-                      BEFORE
+              return (
+                <div
+                  key={issue.id}
+                  className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/40 transition-all space-y-3 cursor-pointer group"
+                  onClick={() => setSelectedIssueId(issue.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold text-emerald-400">{issue.id}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/20 flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      RESOLVED
                     </span>
                   </div>
-                  <div className="relative rounded-lg overflow-hidden aspect-video bg-slate-900 border border-slate-800">
-                    <img
-                      src={
-                        issue.repairVerificationUrl ||
-                        issue.workerSubmission?.afterImageUrl ||
-                        'https://images.unsplash.com/photo-1578885136359-16c8bd4d3a8e?w=800&auto=format&fit=crop&q=80'
-                      }
-                      alt="After"
-                      className="w-full h-full object-cover"
-                    />
-                    <span className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded text-[8px] font-bold bg-emerald-600/90 text-white">
-                      AFTER
+
+                  {/* Micro Before/After Thumbnails */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="relative rounded-lg overflow-hidden aspect-video bg-slate-900 border border-slate-800">
+                      <img src={issue.imageUrl} alt="Before" className="w-full h-full object-cover" />
+                      <span className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded text-[8px] font-bold bg-rose-600/90 text-white">
+                        BEFORE
+                      </span>
+                    </div>
+                    <div className="relative rounded-lg overflow-hidden aspect-video bg-slate-900 border border-slate-800">
+                      <img
+                        src={
+                          issue.repairVerificationUrl ||
+                          issue.workerSubmission?.afterImageUrl ||
+                          'https://images.unsplash.com/photo-1578885136359-16c8bd4d3a8e?w=800&auto=format&fit=crop&q=80'
+                        }
+                        alt="After"
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded text-[8px] font-bold bg-emerald-600/90 text-white">
+                        AFTER
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs font-bold text-slate-200 truncate">{issue.title}</p>
+                  
+                  {/* Responsible party badge */}
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold border truncate max-w-full ${entity.badgeClass}`}>
+                    {entity.tag} {entity.label}
+                  </span>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
+                    <span className="truncate max-w-[150px] text-slate-300 font-medium">
+                      {formatDisplayAddress(issue.location?.address, issue.location)}
+                    </span>
+                    <span className="text-indigo-400 group-hover:text-cyan-300 font-semibold flex items-center gap-1">
+                      Edit/View <ArrowRight className="w-3 h-3" />
                     </span>
                   </div>
                 </div>
-
-                <p className="text-xs font-bold text-slate-200 truncate">{issue.title}</p>
-                <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
-                  <span className="truncate max-w-[150px]">{issue.location?.address}</span>
-                  <span className="text-indigo-400 group-hover:text-cyan-300 font-semibold flex items-center gap-1">
-                    Edit/View <ArrowRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="col-span-full text-center py-8 text-slate-400 text-xs">
               No completed repair audits logged yet. Select an in-progress ticket above to verify work quality.

@@ -3,6 +3,7 @@ import { ThumbsUp, MapPin, Eye, AlertCircle } from 'lucide-react';
 import Button from '../common/Button';
 import SeverityBadge from './SeverityBadge';
 import PriorityScore from './PriorityScore';
+import { formatDisplayAddress } from '../../utils/geocoding';
 
 export const DuplicateIssueCard = ({ issue, onUpvote, onView }) => {
   return (
@@ -27,7 +28,7 @@ export const DuplicateIssueCard = ({ issue, onUpvote, onView }) => {
           <h4 className="text-sm font-bold text-slate-100 line-clamp-1">{issue.title}</h4>
           <p className="text-xs text-slate-400 flex items-center gap-1 line-clamp-1">
             <MapPin className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-            <span>{issue.location.address}</span>
+            <span>{formatDisplayAddress(issue.location?.address, issue.location)}</span>
           </p>
         </div>
       </div>

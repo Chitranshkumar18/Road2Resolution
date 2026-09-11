@@ -5,6 +5,7 @@ import SeverityBadge from './SeverityBadge';
 import IssueStatus from './IssueStatus';
 import PriorityScore from './PriorityScore';
 import { formatTimeAgo } from '../../utils/formatDate';
+import { formatDisplayAddress } from '../../utils/geocoding';
 
 export const IssueCard = ({ issue, onUpvote, linkPrefix = '/citizen/issue' }) => {
   return (
@@ -67,7 +68,9 @@ export const IssueCard = ({ issue, onUpvote, linkPrefix = '/citizen/issue' }) =>
         <div className="space-y-1.5 pt-2 border-t border-slate-800/80 text-xs text-slate-400">
           <div className="flex items-center gap-1.5 truncate">
             <MapPin className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-            <span className="truncate">{issue.location?.address}</span>
+            <span className="truncate font-medium text-slate-300">
+              {formatDisplayAddress(issue.location?.address, issue.location)}
+            </span>
           </div>
           {issue.department && (
             <div className="flex items-center gap-1.5 text-[11px] text-slate-400 truncate">

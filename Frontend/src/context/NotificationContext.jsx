@@ -43,6 +43,17 @@ export const NotificationProvider = ({ children }) => {
     }, 4000);
   };
 
+  const addNotification = (notif) => {
+    const newNotif = {
+      id: `notif-${Date.now()}`,
+      time: 'Just now',
+      read: false,
+      type: 'info',
+      ...notif
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
+  };
+
   const markAllAsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
@@ -60,6 +71,7 @@ export const NotificationProvider = ({ children }) => {
         unreadCount,
         toasts,
         addToast,
+        addNotification,
         markAllAsRead,
         clearNotifications,
       }}

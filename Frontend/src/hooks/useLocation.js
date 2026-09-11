@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
+import { getOfflineReadableLocation, reverseGeocode } from '../utils/geocoding';
 
 export const useLocation = () => {
   const [coords, setCoords] = useState({ lat: 28.6139, lng: 77.2090 });
-  const [address, setAddress] = useState('Outer Ring Road, Near Junction 14, Sector 5');
+  const [address, setAddress] = useState('Outer Ring Road, Sector 5, New Delhi, Central Delhi District, Delhi, 110001, India');
   const [accuracy, setAccuracy] = useState(4.2); // meters
   const [altitude, setAltitude] = useState(216); // meters
   const [satelliteCount, setSatelliteCount] = useState(8);
@@ -23,7 +24,7 @@ export const useLocation = () => {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const lat = parseFloat(pos.coords.latitude.toFixed(5));
         const lng = parseFloat(pos.coords.longitude.toFixed(5));
         const acc = pos.coords.accuracy ? parseFloat(pos.coords.accuracy.toFixed(1)) : 3.5;
@@ -35,8 +36,20 @@ export const useLocation = () => {
         setAltitude(alt);
         setSatelliteCount(Math.floor(7 + Math.random() * 5));
         setGpsStatus('locked');
-        setAddress(`GPS Fix (${lat}° N, ${lng}° E) - Sector Zone, Precision: ±${acc}m`);
+
+        // Instant offline resolution + async online refinement
+        const instantLoc = getOfflineReadableLocation(lat, lng);
+        setAddress(instantLoc.address);
         setLoading(false);
+
+        try {
+          const refined = await reverseGeocode(lat, lng);
+          if (refined && refined.address) {
+            setAddress(refined.address);
+          }
+        } catch {
+          // Keep instant offline address
+        }
       },
       (err) => {
         console.warn('GPS hardware access warning:', err.message);
@@ -51,7 +64,9 @@ export const useLocation = () => {
         setAltitude(214);
         setSatelliteCount(9);
         setGpsStatus('locked');
-        setAddress(`GPS Position (${latFixed}° N, ${lngFixed}° E) - Metropolitan Sector 5`);
+        
+        const resolved = getOfflineReadableLocation(latFixed, lngFixed);
+        setAddress(resolved.address);
         setLoading(false);
       },
       { timeout: 6000, enableHighAccuracy: true }

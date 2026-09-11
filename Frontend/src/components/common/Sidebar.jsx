@@ -12,7 +12,6 @@ import {
   ListOrdered,
   Layers,
   Radio,
-  Flame,
   TrendingUp,
   Building2,
   BarChart3,
@@ -53,12 +52,12 @@ export const Sidebar = () => {
 
   const adminNav = [
     { label: 'Command Center', to: '/admin/dashboard', icon: LayoutDashboard },
+    { label: 'Org Assignment', to: '/admin/organization-assignment', icon: Building2, badge: 'Location', highlight: true },
     { label: 'Priority Queue (AI)', to: '/admin/priority-queue', icon: ListOrdered, badge: 'High AI' },
     { label: 'Issue Management', to: '/admin/issues', icon: Layers },
     { label: 'Repair QA & Audit', to: '/admin/repair-verification', icon: CheckCircle2, badge: 'QA' },
     { label: 'Public Reviews', to: '/reviews', icon: Star, badge: 'Public' },
     { label: 'Live GPS Radar', to: '/admin/live-map', icon: Radio },
-    { label: 'GPS Hotspot Heatmap', to: '/admin/heatmap', icon: Flame },
     { label: 'Risk Prediction', to: '/admin/risk-prediction', icon: TrendingUp },
     { label: 'Departments', to: '/admin/departments', icon: Building2 },
     { label: 'Analytics & Recharts', to: '/admin/analytics', icon: BarChart3 },

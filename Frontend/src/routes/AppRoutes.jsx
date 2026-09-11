@@ -38,9 +38,9 @@ import IssueManagement from '../pages/admin/IssueManagement';
 import LiveMap from '../pages/admin/LiveMap';
 import DepartmentManagement from '../pages/admin/DepartmentManagement';
 import Analytics from '../pages/admin/Analytics';
-import Heatmap from '../pages/admin/Heatmap';
 import RiskPrediction from '../pages/admin/RiskPrediction';
 import AdminRepairVerification from '../pages/admin/RepairVerification';
+import OrganizationAssignment from '../pages/admin/OrganizationAssignment';
 
 // Route Guards
 import CitizenRoute from './CitizenRoute';
@@ -107,13 +107,13 @@ export const AppRoutes = () => {
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="organization-assignment" element={<OrganizationAssignment />} />
         <Route path="priority-queue" element={<PriorityQueue />} />
         <Route path="issues" element={<IssueManagement />} />
         <Route path="live-map" element={<LiveMap />} />
         <Route path="departments" element={<DepartmentManagement />} />
         <Route path="repair-verification" element={<AdminRepairVerification />} />
         <Route path="analytics" element={<Analytics />} />
-        <Route path="heatmap" element={<Heatmap />} />
         <Route path="risk-prediction" element={<RiskPrediction />} />
       </Route>
 

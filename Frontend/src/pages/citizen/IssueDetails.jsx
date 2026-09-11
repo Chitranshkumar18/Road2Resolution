@@ -25,6 +25,7 @@ import LocationPicker from '../../components/map/LocationPicker';
 import Button from '../../components/common/Button';
 import { formatDate } from '../../utils/formatDate';
 import { isUserComplaint } from '../../utils/helpers';
+import { formatDisplayAddress } from '../../utils/geocoding';
 
 export const IssueDetails = () => {
   const { id } = useParams();
@@ -165,7 +166,9 @@ export const IssueDetails = () => {
           <div className="flex items-center gap-6 text-xs text-slate-400 flex-wrap pt-2 border-t border-slate-800">
             <div className="flex items-center gap-1.5">
               <MapPin className="w-4 h-4 text-slate-500" />
-              <span>{issue.location?.address}</span>
+              <span className="font-semibold text-slate-200">
+                Location: {formatDisplayAddress(issue.location?.address, issue.location)}
+              </span>
             </div>
             {issue.department && (
               <div className="flex items-center gap-1.5">
@@ -206,6 +209,9 @@ export const IssueDetails = () => {
           beforeImageUrl={issue.imageUrl}
           afterImageUrl={issue.repairVerificationUrl}
           workerSubmission={issue.workerSubmission}
+          assignedOrgName={issue.assignedOrgName}
+          responsibleType={issue.responsibleType}
+          responsibleName={issue.responsibleName}
           status={issue.status}
           isAdmin={isAdmin}
           readOnly={!isAdmin}

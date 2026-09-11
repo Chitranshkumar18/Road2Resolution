@@ -17,7 +17,10 @@ import {
   Eye,
   FileCheck,
   HardHat,
-  Truck
+  Truck,
+  HeartHandshake,
+  Building2,
+  Radio
 } from 'lucide-react';
 import Button from '../common/Button';
 import aiApi from '../../api/aiApi';
@@ -34,6 +37,9 @@ export const RepairVerification = ({
   readOnly: propReadOnly,
   issueId,
   issueTitle,
+  assignedOrgName,
+  responsibleType,
+  responsibleName,
   onVerificationComplete,
   onSaveAndPublish
 }) => {
@@ -57,12 +63,17 @@ export const RepairVerification = ({
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(status === 'RESOLVED');
 
+  const isVolunteer =
+    responsibleType === 'PUBLIC_INDIVIDUAL' ||
+    workerSubmission?.submittedBy === 'PUBLIC_INDIVIDUAL' ||
+    workerSubmission?.isVolunteer;
+
   const [result, setResult] = useState(
     status === 'RESOLVED'
       ? {
           confidenceScore: 97.4,
           verificationNotes:
-            'AI Vision Differential Scan confirms complete defect rectification. Surface planar integrity restored with cold mix bituminous overlay conforming to municipal road standards.',
+            'AI Vision Differential Scan confirms complete defect rectification. Surface planar integrity restored conforming to municipal road standards.',
           rectified: true,
           auditTimestamp: new Date().toISOString()
         }
@@ -102,25 +113,39 @@ export const RepairVerification = ({
     if (!afterImageUrl) return;
     setPublishing(true);
     try {
+      const completedEntity = {
+        type: isVolunteer ? 'PUBLIC_INDIVIDUAL' : 'ORGANIZATION',
+        name: isVolunteer
+          ? (responsibleName || workerSubmission?.workerName || 'Public Citizen Volunteer')
+          : (workerSubmission?.workerName || responsibleName || 'Field Technician'),
+        organizationName: isVolunteer
+          ? null
+          : (assignedOrgName || workerSubmission?.organizationName || 'Municipal Organization')
+      };
+
+      const entityLabel = isVolunteer
+        ? `Public Volunteer (${completedEntity.name})`
+        : `${completedEntity.organizationName} (${completedEntity.name})`;
+
       const auditPayload = result || {
         confidenceScore: 97.4,
-        verificationNotes:
-          'AI differential scan confirmed defect rectification and verified field repairs.',
+        verificationNotes: `AI differential scan confirmed defect rectification and verified field repairs completed by ${entityLabel}.`,
         rectified: true,
-        verifiedBy: user?.name || 'Director S. K. Malhotra (Municipal Admin)'
+        verifiedBy: user?.name || 'Director S. K. Malhotra (Municipal Admin)',
+        completedByEntity: completedEntity
       };
 
       if (onSaveAndPublish) {
-        await onSaveAndPublish(afterImageUrl, auditPayload);
+        await onSaveAndPublish(afterImageUrl, { ...auditPayload, completedByEntity: completedEntity });
       } else if (submitRepairVerification && issueId) {
         await submitRepairVerification(
           issueId,
           afterImageUrl,
           auditPayload.verificationNotes,
-          auditPayload
+          { ...auditPayload, completedByEntity: completedEntity }
         );
         if (addToast) {
-          addToast('🎉 Post updated & published live on Citizen Portal!', 'success');
+          addToast(`🎉 Repair certified & published live on Citizen Portal (Completed by ${entityLabel})!`, 'success');
         }
       }
       setPublished(true);
@@ -161,7 +186,7 @@ export const RepairVerification = ({
             </h3>
             <p className="text-xs text-slate-400">
               {isAdmin && !readOnly
-                ? 'Authorized Municipal Admin & Field Contractor QA Inspection Console'
+                ? 'Authorized Municipal Admin QA Inspection & Public Resolution Publisher'
                 : 'Official municipal before-and-after audit ledger & computer vision confirmation'}
             </p>
           </div>
@@ -182,58 +207,78 @@ export const RepairVerification = ({
               }`}
             >
               {isCompleted ? <Check className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
-              <span>{isCompleted ? 'Repair Verified by City' : 'Work in Progress'}</span>
+              <span>{isCompleted ? 'Repair Verified & Published' : 'Work in Progress'}</span>
             </span>
           )}
         </div>
       </div>
 
-      {/* RULE 5 GUARD: ADMIN CANNOT VERIFY UNLESS WORKER UPLOADED PHOTO */}
+      {/* RULE 5 GUARD: ADMIN CANNOT VERIFY UNLESS WORKER/VOLUNTEER UPLOADED PHOTO */}
       {isAdmin && !readOnly && !hasWorkerPhoto && !isCompleted && (
         <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/40 space-y-2 animate-in fade-in">
           <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
             <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-            <span>Worker Completion Photo Required for Verification</span>
+            <span>Completion Photo Proof Required for QA Certification</span>
           </div>
           <p className="text-xs text-slate-300 leading-relaxed">
-            The assigned field worker has not yet uploaded an "After Repair" completion photo for this complaint.
-            Admin verification, AI differential QA, and public certification are <strong className="text-amber-400">locked</strong> until the field contractor submits proof of work through the Worker Portal.
+            The assigned organization or citizen volunteer has not yet uploaded an "After Repair" completion photo for this complaint.
+            Admin verification, AI differential QA, and public certification are <strong className="text-amber-400">locked</strong> until proof of work (with ≤ 250m GPS verification) is submitted.
           </p>
         </div>
       )}
 
-      {/* Worker Submission Details Banner (When available) */}
+      {/* Responsible Party Proof-of-Work Banner */}
       {workerSubmission && (
-        <div className="p-4 rounded-2xl bg-slate-950/90 border border-amber-500/30 space-y-2">
+        <div className={`p-4 rounded-2xl border space-y-2 ${
+          isVolunteer
+            ? 'bg-emerald-950/40 border-emerald-500/40'
+            : 'bg-slate-950/90 border-indigo-500/30'
+        }`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
-              <HardHat className="w-4 h-4 text-amber-400" />
-              <span>Field Worker Proof-of-Work Attached</span>
+            <div className="flex items-center gap-2 font-bold text-xs">
+              {isVolunteer ? (
+                <>
+                  <HeartHandshake className="w-4 h-4 text-emerald-400" />
+                  <span className="text-emerald-300">Public Citizen Volunteer Proof-of-Work Attached</span>
+                </>
+              ) : (
+                <>
+                  <HardHat className="w-4 h-4 text-amber-400" />
+                  <span className="text-amber-300">Registered Organization Proof-of-Work Attached</span>
+                </>
+              )}
             </div>
             <span className="text-[10px] font-mono text-slate-400">
               Submitted: {new Date(workerSubmission.submittedAt).toLocaleTimeString()}
             </span>
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300 pt-1 border-t border-slate-800">
             <div>
-              <span className="text-slate-500">Contractor: </span>
-              <strong className="text-slate-200">{workerSubmission.workerName}</strong>
+              <span className="text-slate-500">Completed By: </span>
+              <strong className={isVolunteer ? "text-emerald-300" : "text-slate-200"}>
+                {workerSubmission.workerName} {isVolunteer && '(Public Volunteer)'}
+              </strong>
             </div>
-            <div>
-              <span className="text-slate-500">Unit: </span>
-              <span className="text-slate-200 font-mono text-[11px]">{workerSubmission.contractorUnit}</span>
-            </div>
+            {!isVolunteer && (
+              <div>
+                <span className="text-slate-500">Organization: </span>
+                <span className="text-slate-200 font-mono text-[11px]">
+                  {workerSubmission.organizationName || assignedOrgName || 'Contractor Squad'}
+                </span>
+              </div>
+            )}
             <div className="sm:col-span-2 flex items-center gap-1.5 text-emerald-400 font-medium">
               <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
               <span>
                 GPS Location Verified On-Site: {workerSubmission.gpsVerification?.distanceMeters 
-                  ? `${workerSubmission.gpsVerification.distanceMeters}m from site (Within 250m perimeter)` 
+                  ? `${workerSubmission.gpsVerification.distanceMeters}m from site (≤ 250m geofence passed)` 
                   : 'Within mandatory 250m perimeter'}
               </span>
             </div>
             {workerSubmission.materialsUsed && (
               <div className="sm:col-span-2">
-                <span className="text-slate-500">Materials Applied: </span>
+                <span className="text-slate-500">Materials & Tools Applied: </span>
                 <span className="text-slate-200">{workerSubmission.materialsUsed}</span>
               </div>
             )}
@@ -285,11 +330,11 @@ export const RepairVerification = ({
             <span className="text-[10px] font-mono text-slate-400 font-bold flex items-center gap-1">
               {hasWorkerPhoto ? (
                 <span className="text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> WORKER PROOF ATTACHED
+                  <CheckCircle2 className="w-3.5 h-3.5" /> PROOF ATTACHED
                 </span>
               ) : (
                 <span className="text-amber-400 flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> AWAITING WORKER PROOF
+                  <Lock className="w-3 h-3" /> AWAITING PROOF
                 </span>
               )}
             </span>
@@ -314,9 +359,9 @@ export const RepairVerification = ({
                   <HardHat className="w-6 h-6 text-amber-400" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-200">Awaiting Worker Completion Photo</p>
+                  <p className="text-xs font-bold text-slate-200">Awaiting Completion Photo Proof</p>
                   <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
-                    Field worker must submit the on-site completion photograph through the Worker Portal before admin verification can proceed.
+                    The assigned organization or public volunteer must upload the on-site resolution photograph through the Worker Portal before Admin QA verification can proceed.
                   </p>
                 </div>
               </div>
@@ -357,7 +402,7 @@ export const RepairVerification = ({
       {/* ADMIN CONTROLS: EXECUTE AUDIT & SAVE/PUBLISH TO CITIZEN PORTAL */}
       {isAdmin && !readOnly && (
         <div className="space-y-4 pt-2">
-          {/* Action 1: Run AI Scan (DISABLED IF WORKER HAS NOT UPLOADED PHOTO) */}
+          {/* Action 1: Run AI Scan */}
           <Button
             variant="secondary"
             size="md"
@@ -375,7 +420,7 @@ export const RepairVerification = ({
               ? result
                 ? 'Re-Run Differential AI Audit'
                 : 'Execute AI Repair Verification Audit'
-              : 'Locked: Awaiting Worker Completion Photo'}
+              : 'Locked: Awaiting Resolution Proof Photo'}
           </Button>
 
           {/* Action 2: Save & Publish to Citizen Portal */}
@@ -384,7 +429,7 @@ export const RepairVerification = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Send className="w-4 h-4 text-emerald-400" />
-                  <span className="text-sm font-bold text-white">Save & Publish to Citizen Portal</span>
+                  <span className="text-sm font-bold text-white">Save & Publish to Citizen & Public Portals</span>
                 </div>
                 <span
                   className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${
@@ -393,12 +438,12 @@ export const RepairVerification = ({
                       : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                   }`}
                 >
-                  {published ? '✓ LIVE ON CITIZEN PORTAL' : 'READY TO PUBLISH'}
+                  {published ? '✓ LIVE ON PUBLIC PORTAL' : 'READY TO CERTIFY'}
                 </span>
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed">
-                Saving will permanently update this incident to <strong className="text-emerald-400">RESOLVED</strong>, attach the worker's certified repair photograph, append the audit trail, and publish the verified update across the public Citizen Portal.
+                Saving will officially certify this incident as <strong className="text-emerald-400">RESOLVED</strong>, credit <strong>{isVolunteer ? `Public Volunteer (${responsibleName || workerSubmission?.workerName})` : `${assignedOrgName || workerSubmission?.organizationName || 'Municipal Organization'}`}</strong>, attach the certified repair photo, and publish live to both the Citizen Portal and Public Review Section.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
@@ -411,8 +456,8 @@ export const RepairVerification = ({
                   className="w-full sm:flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold shadow-lg shadow-emerald-950/50"
                 >
                   {published
-                    ? '✓ Saved & Published on Citizen Portal (Click to Re-save)'
-                    : 'Save & Publish Resolution to Citizen Portal'}
+                    ? '✓ Certified & Published (Click to Re-save)'
+                    : 'Certify & Publish Resolution to Citizen & Public Portals'}
                 </Button>
 
                 {issueId && (
@@ -421,7 +466,7 @@ export const RepairVerification = ({
                     target="_blank"
                     className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 flex items-center justify-center gap-1.5 transition-all w-full sm:w-auto flex-shrink-0"
                   >
-                    <span>View Live Public Post</span>
+                    <span>Preview Live Public Post</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </Link>
                 )}

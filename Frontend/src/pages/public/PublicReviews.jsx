@@ -20,7 +20,9 @@ import {
   Send,
   UserCheck,
   ThumbsUp,
-  AlertCircle
+  AlertCircle,
+  Building2,
+  HeartHandshake
 } from 'lucide-react';
 import { IssueContext } from '../../context/IssueContext';
 import { NotificationContext } from '../../context/NotificationContext';
@@ -28,6 +30,8 @@ import Button from '../../components/common/Button';
 import SeverityBadge from '../../components/issue/SeverityBadge';
 import { formatDate } from '../../utils/formatDate';
 import { ISSUE_CATEGORIES, PLACEHOLDER_IMAGES } from '../../utils/constants';
+import { formatResponsibleEntity } from '../../utils/helpers';
+import { formatDisplayAddress } from '../../utils/geocoding';
 
 const RATING_LABELS = {
   1: 'Poor / Incomplete Repair',
@@ -286,6 +290,7 @@ export const PublicReviews = () => {
               const reviews = Array.isArray(issue.reviews) ? issue.reviews : [];
               const avgScore = getAverageRating(reviews);
               const isFormOpen = activeFormIssueId === issue.id;
+              const entity = formatResponsibleEntity(issue);
 
               return (
                 <div
@@ -317,12 +322,34 @@ export const PublicReviews = () => {
                     </div>
                   </div>
 
+                  {/* Responsible Organization Attribution Badge */}
+                  <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-3 py-1 rounded-xl text-xs font-bold border flex items-center gap-1.5 shadow-sm ${entity.badgeClass}`}>
+                        {entity.isVolunteer ? <HeartHandshake className="w-3.5 h-3.5 text-emerald-400" /> : <Building2 className="w-3.5 h-3.5 text-indigo-400" />}
+                        <span>Completed by: {entity.label}</span>
+                      </span>
+                      {issue.assignedOrgName && !entity.isVolunteer && (
+                        <span className="text-[11px] text-slate-400 font-mono hidden md:inline">
+                          • {issue.location?.city || 'Jurisdiction Area'}, {issue.location?.state || 'Delhi'}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-mono font-semibold">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      <span>{issue.workerSubmission?.gpsVerification?.distanceMeters ? `${issue.workerSubmission.gpsVerification.distanceMeters}m GPS Verified` : '250m On-Site Verified'}</span>
+                    </div>
+                  </div>
+
                   {/* Complaint Title & Location */}
                   <div className="space-y-2">
                     <h3 className="text-lg md:text-xl font-bold text-white font-display">{issue.title}</h3>
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                       <MapPin className="w-4 h-4 text-rose-400 shrink-0" />
-                      <span>{issue.location?.address || 'Municipal Sector 5'}</span>
+                      <span className="text-slate-200 font-medium">
+                        {formatDisplayAddress(issue.location?.address, issue.location)}
+                      </span>
                       {issue.location?.zone && (
                         <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-mono">
                           {issue.location.zone}

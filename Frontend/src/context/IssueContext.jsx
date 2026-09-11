@@ -5,11 +5,14 @@ export const IssueContext = createContext(null);
 
 export const IssueProvider = ({ children }) => {
   const [issues, setIssues] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     category: 'all',
     status: 'all',
     severity: 'all',
+    state: 'all',
+    city: 'all',
     search: '',
   });
 
@@ -25,9 +28,19 @@ export const IssueProvider = ({ children }) => {
     }
   }, [filters]);
 
+  const fetchOrganizations = useCallback(async () => {
+    try {
+      const orgs = await issueApi.getAllOrganizations();
+      setOrganizations(orgs);
+    } catch (err) {
+      console.error('Failed to fetch organizations:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchIssues();
-  }, [fetchIssues]);
+    fetchOrganizations();
+  }, [fetchIssues, fetchOrganizations]);
 
   const addIssue = async (newIssueData) => {
     const created = await issueApi.createIssue(newIssueData);
@@ -39,6 +52,34 @@ export const IssueProvider = ({ children }) => {
     const updated = await issueApi.updateIssueStatus(id, status, note, assignedOfficer, department);
     setIssues(prev => prev.map(item => item.id === id ? updated : item));
     return updated;
+  };
+
+  const assignIssueToOrganization = async (issueId, organizationId, notes, assignedOfficer) => {
+    const updated = await issueApi.assignIssueToOrganization(issueId, organizationId, notes, assignedOfficer);
+    setIssues(prev => prev.map(item => item.id === issueId ? updated : item));
+    return updated;
+  };
+
+  const acceptWorkAsOrganization = async (issueId, workerInfo) => {
+    const updated = await issueApi.acceptWorkAsOrganization(issueId, workerInfo);
+    setIssues(prev => prev.map(item => item.id === issueId ? updated : item));
+    return updated;
+  };
+
+  const acceptWorkAsVolunteer = async (issueId, volunteerInfo) => {
+    const updated = await issueApi.acceptWorkAsVolunteer(issueId, volunteerInfo);
+    setIssues(prev => prev.map(item => item.id === issueId ? updated : item));
+    return updated;
+  };
+
+  const createOrganization = async (orgData) => {
+    const created = await issueApi.createOrganization(orgData);
+    setOrganizations(prev => [created, ...prev]);
+    return created;
+  };
+
+  const getEligibleOrganizationsForIssue = async (issueId) => {
+    return await issueApi.getEligibleOrganizationsForIssue(issueId);
   };
 
   const upvoteIssue = async (id) => {
@@ -75,12 +116,19 @@ export const IssueProvider = ({ children }) => {
     <IssueContext.Provider
       value={{
         issues,
+        organizations,
         loading,
         filters,
         setFilters,
         refreshIssues: fetchIssues,
+        refreshOrganizations: fetchOrganizations,
         addIssue,
         updateIssueStatus,
+        assignIssueToOrganization,
+        acceptWorkAsOrganization,
+        acceptWorkAsVolunteer,
+        createOrganization,
+        getEligibleOrganizationsForIssue,
         upvoteIssue,
         submitRepairVerification,
         submitWorkerRepair,
@@ -92,3 +140,5 @@ export const IssueProvider = ({ children }) => {
     </IssueContext.Provider>
   );
 };
+
+export default IssueProvider;

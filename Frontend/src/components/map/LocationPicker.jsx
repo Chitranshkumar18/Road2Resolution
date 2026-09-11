@@ -5,6 +5,8 @@ import { Navigation, Crosshair, Radio, Sparkles, CheckCircle2, LocateFixed } fro
 import Button from '../common/Button';
 import useLocation from '../../hooks/useLocation';
 
+import { getOfflineReadableLocation, reverseGeocode } from '../../utils/geocoding';
+
 const pickerIcon = L.divIcon({
   className: 'custom-picker-pin',
   html: `
@@ -44,16 +46,40 @@ export const LocationPicker = ({
   onLocationSelect,
 }) => {
   const [position, setPosition] = useState({ lat: initialLat, lng: initialLng });
+  const [currentAddress, setCurrentAddress] = useState(() => getOfflineReadableLocation(initialLat, initialLng).address);
   const { coords, accuracy, altitude, satelliteCount, gpsStatus, loading, getCurrentPosition } = useLocation();
 
-  const handleSelect = (lat, lng) => {
+  const handleSelect = async (lat, lng) => {
     setPosition({ lat, lng });
+    const instant = getOfflineReadableLocation(lat, lng);
+    setCurrentAddress(instant.address);
+
     if (onLocationSelect) {
       onLocationSelect({
         lat,
         lng,
-        address: `GPS Pinpoint (${lat}° N, ${lng}° E) - Sector Zone`,
+        address: instant.address,
+        city: instant.city,
+        state: instant.state
       });
+    }
+
+    try {
+      const refined = await reverseGeocode(lat, lng);
+      if (refined && refined.address) {
+        setCurrentAddress(refined.address);
+        if (onLocationSelect) {
+          onLocationSelect({
+            lat,
+            lng,
+            address: refined.address,
+            city: refined.city,
+            state: refined.state
+          });
+        }
+      }
+    } catch {
+      // Keep instant address
     }
   };
 
@@ -64,31 +90,56 @@ export const LocationPicker = ({
   useEffect(() => {
     if (coords && coords.lat && coords.lng) {
       setPosition(coords);
+      const instant = getOfflineReadableLocation(coords.lat, coords.lng);
+      setCurrentAddress(instant.address);
+
       if (onLocationSelect) {
         onLocationSelect({
           lat: coords.lat,
           lng: coords.lng,
-          address: `GPS Position (${coords.lat}° N, ${coords.lng}° E) - Sector Zone, Acc: ±${accuracy}m`,
+          address: instant.address,
+          city: instant.city,
+          state: instant.state
         });
       }
+
+      (async () => {
+        try {
+          const refined = await reverseGeocode(coords.lat, coords.lng);
+          if (refined && refined.address) {
+            setCurrentAddress(refined.address);
+            if (onLocationSelect) {
+              onLocationSelect({
+                lat: coords.lat,
+                lng: coords.lng,
+                address: refined.address,
+                city: refined.city,
+                state: refined.state
+              });
+            }
+          }
+        } catch {
+          // Keep instant address
+        }
+      })();
     }
   }, [coords]);
 
   return (
     <div className="relative w-full h-full min-h-[300px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-700 shadow-xl flex flex-col">
       {/* Top GPS Telemetry Bar */}
-      <div className="bg-slate-900/95 backdrop-blur-md px-4 py-2.5 border-b border-slate-800 flex items-center justify-between gap-2 z-10">
-        <div className="flex items-center gap-2">
-          <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
-          <div>
-            <span className="text-xs font-bold text-slate-100 flex items-center gap-1.5 font-display">
-              <span>Live GPS Telemetry</span>
-              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                {satelliteCount} SATELLITES
+      <div className="bg-slate-900/95 backdrop-blur-md px-4 py-2.5 border-b border-slate-800 flex items-center justify-between gap-2 z-10 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0">
+          <Radio className="w-4 h-4 text-cyan-400 animate-pulse flex-shrink-0" />
+          <div className="min-w-0">
+            <span className="text-xs font-bold text-slate-100 flex items-center gap-1.5 font-display truncate">
+              <span className="truncate">📍 {currentAddress}</span>
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex-shrink-0">
+                {satelliteCount} SATS
               </span>
             </span>
-            <span className="text-[10px] font-mono text-cyan-400 block">
-              Lat: {position.lat.toFixed(5)}°, Lng: {position.lng.toFixed(5)}° (±{accuracy}m)
+            <span className="text-[10px] font-mono text-cyan-400 block truncate">
+              GPS: {position.lat.toFixed(5)}°, {position.lng.toFixed(5)}° (±{accuracy}m)
             </span>
           </div>
         </div>
