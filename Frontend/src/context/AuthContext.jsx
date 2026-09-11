@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const switchRole = (role) => {
-    const res = authApi.switchDemoRole(role);
+    const res = authApi.switchDemoRole(user, role);
     setUser(res.user);
     return res.user;
   };
