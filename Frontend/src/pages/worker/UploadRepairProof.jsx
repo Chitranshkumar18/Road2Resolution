@@ -38,6 +38,7 @@ import { formatDate } from '../../utils/formatDate';
 import { PLACEHOLDER_IMAGES } from '../../utils/constants';
 import { calculateDistanceKm } from '../../utils/helpers';
 import { formatDisplayAddress } from '../../utils/geocoding';
+import LiveCameraCapture from '../../components/common/LiveCameraCapture';
 
 const MAX_ALLOWED_DISTANCE_METERS = 250;
 
@@ -72,48 +73,9 @@ const SAMPLE_AFTER_PHOTOS = [
   }
 ];
 
-// Helper to compress uploaded images via HTML5 Canvas
-const compressImageFile = (file, maxWidth = 900, quality = 0.75) => {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxWidth) {
-            width = Math.round((width * maxWidth) / height);
-            height = maxWidth;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/jpeg', quality);
-        resolve(dataUrl);
-      };
-      img.onerror = () => resolve(e.target?.result || null);
-      img.src = e.target?.result;
-    };
-    reader.onerror = () => resolve(null);
-    reader.readAsDataURL(file);
-  });
-};
-
 export const UploadRepairProof = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
   const { issues = [], submitWorkerRepair } = useContext(IssueContext) || {};
   const { addToast, addNotification } = useContext(NotificationContext) || {};
   const { user } = useAuth();
@@ -122,14 +84,10 @@ export const UploadRepairProof = () => {
   const initialIssueId = searchParams.get('issueId') || issueList[0]?.id || 'CIV-2026-8941';
 
   const [selectedIssueId, setSelectedIssueId] = useState(initialIssueId);
-  const [uploadMode, setUploadMode] = useState('upload'); // 'upload' | 'samples' | 'url'
-  const [afterImageUrl, setAfterImageUrl] = useState(SAMPLE_AFTER_PHOTOS[0].url);
-  const [customImageUrl, setCustomImageUrl] = useState('');
+  const [afterImageUrl, setAfterImageUrl] = useState('');
   const [materialsUsed, setMaterialsUsed] = useState(SAMPLE_AFTER_PHOTOS[0].defaultMaterials);
   const [notes, setNotes] = useState(SAMPLE_AFTER_PHOTOS[0].defaultNotes);
   const [loading, setLoading] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   // Completing Entity Attribution State (Organization vs Individual Person)
@@ -337,95 +295,6 @@ export const UploadRepairProof = () => {
     return distanceMeters <= MAX_ALLOWED_DISTANCE_METERS;
   }, [distanceMeters]);
 
-  const handleProcessFile = async (file) => {
-    if (!file) return;
-
-    if (!isWithinRange) {
-      if (addToast) {
-        addToast(`🔒 Upload Blocked: Automatic GPS check indicates you are ${distanceMeters !== null ? distanceMeters + 'm' : 'outside the area'} from site (Limit: ≤ 250m).`, 'error');
-      }
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      if (addToast) {
-        addToast('❌ Invalid file format: Please select an image file (JPG, PNG, WEBP).', 'error');
-      }
-      return;
-    }
-
-    setUploadingImage(true);
-    try {
-      const compressed = await compressImageFile(file);
-      if (compressed) {
-        setAfterImageUrl(compressed);
-        if (addToast) {
-          addToast('📸 Photo proof loaded and optimized successfully!', 'success');
-        }
-      }
-    } catch (err) {
-      console.error('Image compression error:', err);
-      if (addToast) {
-        addToast('⚠️ Error processing image. Please try another file.', 'error');
-      }
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  const handleFileInputChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleProcessFile(file);
-    }
-    e.target.value = '';
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-    if (!isWithinRange) {
-      if (addToast) {
-        addToast(`🔒 You must physically be within 250m of the site to upload proof.`, 'error');
-      }
-      return;
-    }
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      handleProcessFile(file);
-    }
-  };
-
-  const handleApplySample = (sample) => {
-    if (!isWithinRange) {
-      if (addToast) {
-        addToast(`🔒 Selection locked: Automatic GPS requires you to be within 250m of site. Current distance: ${distanceMeters}m.`, 'error');
-      }
-      return;
-    }
-    setAfterImageUrl(sample.url);
-    if (sample.defaultMaterials) setMaterialsUsed(sample.defaultMaterials);
-    if (sample.defaultNotes) setNotes(sample.defaultNotes);
-    if (addToast) {
-      addToast(`✨ Selected "${sample.label}" proof template.`, 'info');
-    }
-  };
-
-  const handleApplyCustomUrl = (e) => {
-    e.preventDefault();
-    if (!isWithinRange) {
-      if (addToast) {
-        addToast(`🔒 URL input locked: You must be within 250m of site to submit proof.`, 'error');
-      }
-      return;
-    }
-    if (!customImageUrl.trim()) return;
-    setAfterImageUrl(customImageUrl.trim());
-    if (addToast) {
-      addToast('🔗 Custom photo URL applied as resolution proof.', 'success');
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -439,7 +308,14 @@ export const UploadRepairProof = () => {
 
     if (!afterImageUrl) {
       if (addToast) {
-        addToast('❌ Please upload or select an after-repair photo proof before submitting.', 'error');
+        addToast('❌ Please capture a live after-repair photo proof with your camera before submitting.', 'error');
+      }
+      return;
+    }
+
+    if (!afterImageUrl) {
+      if (addToast) {
+        addToast('❌ Please capture a live after-repair photo proof with your camera before submitting.', 'error');
       }
       return;
     }
@@ -841,219 +717,59 @@ export const UploadRepairProof = () => {
               )}
             </div>
 
-            {/* Section 1: Photo Input Methods Tabs */}
+            {/* Section 1: Live Camera Resolution Photo Capture */}
             <div className="space-y-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                  1. Choose "After Repair" Photo Proof
+                  1. Capture Live "After Repair" Photo Proof (Camera Only)
                 </label>
-                <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-medium">
-                  <button
-                    type="button"
-                    disabled={!isWithinRange}
-                    onClick={() => setUploadMode('upload')}
-                    className={`px-3 py-1 rounded-lg transition-colors flex items-center gap-1.5 ${
-                      !isWithinRange
-                        ? 'opacity-50 cursor-not-allowed text-slate-500'
-                        : uploadMode === 'upload'
-                        ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                        : 'text-slate-400 hover:text-slate-200 cursor-pointer'
-                    }`}
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Upload Image</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!isWithinRange}
-                    onClick={() => setUploadMode('samples')}
-                    className={`px-3 py-1 rounded-lg transition-colors flex items-center gap-1.5 ${
-                      !isWithinRange
-                        ? 'opacity-50 cursor-not-allowed text-slate-500'
-                        : uploadMode === 'samples'
-                        ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                        : 'text-slate-400 hover:text-slate-200 cursor-pointer'
-                    }`}
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Presets</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!isWithinRange}
-                    onClick={() => setUploadMode('url')}
-                    className={`px-3 py-1 rounded-lg transition-colors flex items-center gap-1.5 ${
-                      !isWithinRange
-                        ? 'opacity-50 cursor-not-allowed text-slate-500'
-                        : uploadMode === 'url'
-                        ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                        : 'text-slate-400 hover:text-slate-200 cursor-pointer'
-                    }`}
-                  >
-                    <LinkIcon className="w-3.5 h-3.5" />
-                    <span>Image URL</span>
-                  </button>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-[11px] font-mono text-amber-300">
+                  <Camera className="w-3.5 h-3.5 text-amber-400" />
+                  <span>LIVE CAMERA REQUIRED</span>
                 </div>
               </div>
 
-              {/* Upload Mode: File Picker & Drag and Drop */}
-              {uploadMode === 'upload' && (
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    if (isWithinRange) setDragOver(true);
-                  }}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={handleDrop}
-                  className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
-                    !isWithinRange
-                      ? 'border-rose-800/60 bg-rose-950/10 cursor-not-allowed'
-                      : dragOver
-                      ? 'border-amber-400 bg-amber-500/10'
-                      : 'border-slate-700 hover:border-amber-500/70 bg-slate-950/60'
-                  }`}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    disabled={!isWithinRange}
-                    onChange={handleFileInputChange}
-                    className="hidden"
-                  />
-
-                  {!isWithinRange ? (
-                    <div className="space-y-3 py-4">
-                      <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20">
-                        <Lock className="w-6 h-6" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-bold text-rose-300">
-                          Photo Proof Upload Disabled
-                        </p>
-                        <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                          Automatic GPS check calculated that you are{' '}
-                          <strong className="text-rose-400 font-mono font-bold">
-                            {distanceMeters !== null ? `${distanceMeters} meters` : 'outside location'}
-                          </strong>{' '}
-                          away from the incident location. You must physically be within{' '}
-                          <strong className="text-white">250 meters</strong> of the complaint site to take and upload resolution photos.
-                        </p>
-                      </div>
-                      <div className="pt-2">
-                        <button
-                          type="button"
-                          onClick={handleSimulate40m}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/50 transition-colors cursor-pointer"
-                        >
-                          <Navigation className="w-3.5 h-3.5" />
-                          <span>Simulate 40m to Test Upload</span>
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-slate-500 font-mono">
-                        Automatic GPS protection active &bull; Testing simulation available above
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/20 shadow-md">
-                        <Upload className="w-6 h-6" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold text-slate-200">
-                          {uploadingImage ? 'Processing & Optimizing Image...' : 'Drag & Drop Your Repair Proof Photo Here'}
-                        </p>
-                        <p className="text-[11px] text-slate-400">
-                          Or click below to browse files from your camera or local disk
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingImage}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-md shadow-amber-950/40 transition-colors cursor-pointer"
-                      >
-                        <Camera className="w-4 h-4" />
-                        <span>{uploadingImage ? 'Compressing...' : 'Browse Image File'}</span>
-                      </button>
-                      <p className="text-[10px] text-slate-500">Supports JPG, PNG, WEBP, HEIC (Auto-compressed to under 500KB)</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Upload Mode: Realistic Presets */}
-              {uploadMode === 'samples' && (
-                <div className="space-y-2">
-                  <span className="text-[11px] font-semibold text-slate-400 block">
-                    Pick a verified on-site field repair sample:
-                  </span>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    {SAMPLE_AFTER_PHOTOS.map((sample, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        disabled={!isWithinRange}
-                        onClick={() => handleApplySample(sample)}
-                        className={`relative rounded-xl overflow-hidden aspect-video border text-left transition-all ${
-                          !isWithinRange
-                            ? 'border-slate-800/40 opacity-40 cursor-not-allowed'
-                            : afterImageUrl === sample.url
-                            ? 'border-amber-500 ring-2 ring-amber-500/40 scale-[1.02] cursor-pointer'
-                            : 'border-slate-800 opacity-75 hover:opacity-100 cursor-pointer'
-                        }`}
-                      >
-                        <img src={sample.url} alt={sample.label} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex items-end p-2">
-                          <span className="text-[10px] font-bold text-white leading-tight truncate">
-                            {sample.label}
-                          </span>
-                        </div>
-                        {isWithinRange && afterImageUrl === sample.url && (
-                          <div className="absolute top-1.5 right-1.5 p-1 rounded-full bg-amber-500 text-slate-950 shadow-md">
-                            <Check className="w-3 h-3" />
-                          </div>
-                        )}
-                        {!isWithinRange && (
-                          <div className="absolute top-1.5 right-1.5 p-1 rounded-full bg-slate-950/80 text-rose-400 border border-rose-500/30">
-                            <Lock className="w-3 h-3" />
-                          </div>
-                        )}
-                      </button>
-                    ))}
+              {!isWithinRange ? (
+                <div className="border-2 border-dashed border-rose-800/60 bg-rose-950/10 rounded-2xl p-6 text-center space-y-3 py-6">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20">
+                    <Lock className="w-6 h-6" />
                   </div>
-                </div>
-              )}
-
-              {/* Upload Mode: Image URL */}
-              {uploadMode === 'url' && (
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-                  <label className="block text-xs font-semibold text-slate-300">Paste Direct Image URL:</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="url"
-                      disabled={!isWithinRange}
-                      value={customImageUrl}
-                      onChange={(e) => setCustomImageUrl(e.target.value)}
-                      placeholder="https://images.unsplash.com/photo-..."
-                      className={`flex-1 px-3.5 py-2 rounded-xl bg-slate-900 border text-xs text-slate-100 focus:outline-none focus:border-amber-500 font-mono ${
-                        !isWithinRange ? 'border-slate-800 opacity-50 cursor-not-allowed' : 'border-slate-700'
-                      }`}
-                    />
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-rose-300">
+                      Photo Proof Camera Disabled
+                    </p>
+                    <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                      Automatic GPS check calculated that you are{' '}
+                      <strong className="text-rose-400 font-mono font-bold">
+                        {distanceMeters !== null ? `${distanceMeters} meters` : 'outside location'}
+                      </strong>{' '}
+                      away from the incident location. You must physically be within{' '}
+                      <strong className="text-white">250 meters</strong> of the complaint site to take and submit live camera resolution photos.
+                    </p>
+                  </div>
+                  <div className="pt-2">
                     <button
                       type="button"
-                      disabled={!isWithinRange}
-                      onClick={handleApplyCustomUrl}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
-                        !isWithinRange
-                          ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                          : 'bg-amber-600 hover:bg-amber-500 text-white cursor-pointer'
-                      }`}
+                      onClick={handleSimulate40m}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/50 transition-colors cursor-pointer"
                     >
-                      Apply
+                      <Navigation className="w-3.5 h-3.5" />
+                      <span>Simulate 40m to Unlock Camera</span>
                     </button>
                   </div>
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    Automatic GPS protection active &bull; Testing simulation available above
+                  </p>
                 </div>
+              ) : (
+                <LiveCameraCapture
+                  currentImageUrl={afterImageUrl}
+                  onCapture={(url) => setAfterImageUrl(url)}
+                  disabled={!isWithinRange}
+                  themeColor="amber"
+                  label="Live Camera Resolution Proof Capture"
+                  sublabel="Capture live photograph of the completed repair directly through your device camera"
+                />
               )}
             </div>
 

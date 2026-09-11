@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Upload, Sparkles, Navigation, LocateFixed, Radio, MapPin, AlertTriangle, Check, Loader2 } from 'lucide-react';
+import { Camera, Sparkles, Navigation, LocateFixed, Radio, MapPin, AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { ISSUE_CATEGORIES, PLACEHOLDER_IMAGES } from '../../utils/constants';
 import Button from '../common/Button';
 import LocationPicker from '../map/LocationPicker';
 import useLocation from '../../hooks/useLocation';
 import aiApi from '../../api/aiApi';
 import { getOfflineReadableLocation, formatDisplayAddress } from '../../utils/geocoding';
+import LiveCameraCapture from '../common/LiveCameraCapture';
 
 export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
   const { coords, address: gpsAddress, accuracy, satelliteCount, loading: gpsLoading, getCurrentPosition } = useLocation();
@@ -17,7 +18,7 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
     address: 'Outer Ring Road, Sector 5, New Delhi, Central Delhi District, Delhi, 110001, India',
     lat: 28.6139,
     lng: 77.2090,
-    imageUrl: PLACEHOLDER_IMAGES.pothole,
+    imageUrl: '',
   });
 
   const [analyzingAi, setAnalyzingAi] = useState(false);
@@ -26,31 +27,22 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
 
   const handleCategoryChange = (e) => {
     const cat = e.target.value;
-    let sampleImg = PLACEHOLDER_IMAGES.pothole;
-    if (cat === 'water_leak') sampleImg = PLACEHOLDER_IMAGES.waterLeak;
-    else if (cat === 'streetlight') sampleImg = PLACEHOLDER_IMAGES.streetlight;
-    else if (cat === 'garbage') sampleImg = PLACEHOLDER_IMAGES.garbage;
-    else if (cat === 'traffic_signal') sampleImg = PLACEHOLDER_IMAGES.trafficSignal;
-
     setFormData((prev) => ({
       ...prev,
       category: cat,
-      imageUrl: sampleImg,
     }));
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setFormData((prev) => ({ ...prev, imageUrl: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleLivePhotoCapture = (dataUrl) => {
+    setFormData((prev) => ({ ...prev, imageUrl: dataUrl }));
+    setAiDetectedData(null);
   };
 
   const runAiAnalysis = async () => {
+    if (!formData.imageUrl) {
+      alert('Please capture a live photo using your camera before executing the AI scan.');
+      return;
+    }
     setAnalyzingAi(true);
     try {
       const result = await aiApi.analyzeImage(formData.imageUrl, formData.category);
@@ -87,6 +79,10 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.imageUrl) {
+      alert('Please capture a live photo of the civic defect using your camera before submitting.');
+      return;
+    }
     const finalData = {
       ...formData,
       severity: aiDetectedData?.severity || 'HIGH',
@@ -108,51 +104,19 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
       {/* Step 1: Evidence Image Dropzone & AI Scan */}
       <div className="space-y-3">
         <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-          Step 1: Evidence Photo & AI Vision Scan
+          Step 1: Evidence Photo & AI Vision Scan (Live Camera Only)
         </label>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Image Display */}
-          <div className="relative rounded-2xl border-2 border-dashed border-slate-700 bg-slate-900/60 h-64 overflow-hidden flex items-center justify-center group">
-            {formData.imageUrl ? (
-              <>
-                <img
-                  src={formData.imageUrl}
-                  alt="Civic Issue"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <label className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer flex items-center gap-1.5 shadow-lg">
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Upload New Photo</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
-                  </label>
-                </div>
-              </>
-            ) : (
-              <div className="text-center p-6">
-                <Camera className="w-10 h-10 text-slate-500 mx-auto mb-2" />
-                <p className="text-xs text-slate-400">Click to upload live incident photo</p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  id="file-upload"
-                  onChange={handleImageUpload}
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="mt-3 inline-block px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg cursor-pointer hover:bg-indigo-700"
-                >
-                  Choose File
-                </label>
-              </div>
-            )}
+          {/* Live Camera Capture Display */}
+          <div>
+            <LiveCameraCapture
+              currentImageUrl={formData.imageUrl}
+              onCapture={handleLivePhotoCapture}
+              themeColor="indigo"
+              label="Live Camera Evidence Capture"
+              sublabel="Capture live road defect photograph directly with your camera"
+            />
           </div>
 
           {/* AI Scan Trigger & Telemetry */}
