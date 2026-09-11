@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   User,
   Mail,
@@ -12,14 +12,25 @@ import {
   KeyRound,
   HardHat,
   Truck,
-  Phone
+  Phone,
+  CheckCircle2,
+  Info
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import Button from '../../components/common/Button';
 import { DEPARTMENTS } from '../../utils/constants';
 
 export const Register = () => {
-  const [role, setRole] = useState('citizen'); // 'citizen' | 'worker' | 'admin'
+  const [searchParams] = useSearchParams();
+  const initialRole = searchParams.get('role');
+  const [role, setRole] = useState(initialRole === 'worker' || initialRole === 'admin' ? initialRole : 'citizen'); // 'citizen' | 'worker' | 'admin'
+
+  useEffect(() => {
+    const qRole = searchParams.get('role');
+    if (qRole === 'worker' || qRole === 'admin' || qRole === 'citizen') {
+      setRole(qRole);
+    }
+  }, [searchParams]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -102,7 +113,7 @@ export const Register = () => {
               setRole('citizen');
               setError('');
             }}
-            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border ${
+            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border cursor-pointer ${
               role === 'citizen'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30'
                 : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
@@ -126,7 +137,7 @@ export const Register = () => {
               setRole('worker');
               setError('');
             }}
-            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border ${
+            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border cursor-pointer ${
               role === 'worker'
                 ? 'bg-amber-600 text-white border-amber-500 shadow-lg shadow-amber-600/30'
                 : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
@@ -150,7 +161,7 @@ export const Register = () => {
               setRole('admin');
               setError('');
             }}
-            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border ${
+            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border cursor-pointer ${
               role === 'admin'
                 ? 'bg-rose-600 text-white border-rose-500 shadow-lg shadow-rose-600/30'
                 : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
@@ -167,6 +178,60 @@ export const Register = () => {
             </div>
           </button>
         </div>
+
+        {/* Bilingual Role Guidance Banner */}
+        {role === 'citizen' && (
+          <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-2.5 text-xs text-slate-300">
+            <div className="space-y-1">
+              <p className="font-semibold text-indigo-300">
+                🇬🇧 If you want to <strong>report a road-related problem</strong>, you can register as a <strong>Citizen</strong> and submit your complaint with the necessary details and location.
+              </p>
+              <p className="text-[11px] text-indigo-200/90 font-medium">
+                • <strong>Citizen:</strong> Report road-related problems and track their progress.
+              </p>
+            </div>
+            <div className="pt-2 border-t border-indigo-500/20 space-y-1">
+              <p className="font-semibold text-slate-200">
+                🇮🇳 अगर आप <strong>सड़क से जुड़ी किसी समस्या की शिकायत करना चाहते हैं</strong>, तो आप <strong>Citizen</strong> के रूप में रजिस्टर करके अपनी शिकायत आवश्यक जानकारी और लोकेशन के साथ दर्ज कर सकते हैं।
+              </p>
+              <p className="text-[11px] text-slate-300 font-medium">
+                • <strong>Citizen:</strong> सड़क से जुड़ी समस्याओं की शिकायत करें और उनकी प्रगति देखें।
+              </p>
+            </div>
+          </div>
+        )}
+
+        {role === 'worker' && (
+          <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/30 space-y-2.5 text-xs text-slate-300">
+            <div className="space-y-1">
+              <p className="font-semibold text-amber-300">
+                🇬🇧 If you want to help the <strong>government improve and maintain roads</strong>, you can register as a <strong>Worker</strong> and contribute by taking responsibility for road-related work.
+              </p>
+              <p className="text-[11px] text-amber-200/90 font-medium">
+                • <strong>Worker:</strong> Help the government by working on road-related issues.
+              </p>
+            </div>
+            <div className="pt-2 border-t border-amber-500/20 space-y-1">
+              <p className="font-semibold text-slate-200">
+                🇮🇳 अगर आप <strong>सरकार की मदद करके सड़कों को बेहतर और सुरक्षित बनाने</strong> में योगदान देना चाहते हैं, तो आप <strong>Worker</strong> के रूप में रजिस्टर कर सकते हैं और सड़क से जुड़े कार्यों की जिम्मेदारी लेकर मदद कर सकते हैं।
+              </p>
+              <p className="text-[11px] text-slate-300 font-medium">
+                • <strong>Worker:</strong> सड़क से जुड़ी समस्याओं को हल करने में सरकार की मदद करें।
+              </p>
+            </div>
+          </div>
+        )}
+
+        {role === 'admin' && (
+          <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-500/30 space-y-1.5 text-xs text-slate-300">
+            <p className="font-semibold text-rose-300">
+              🏛️ <strong>Municipal Control Desk:</strong> Supervise metropolitan road maintenance, assign 75km road-repair organizations, and certify field worker repair proofs.
+            </p>
+            <p className="text-[11px] text-slate-400">
+              Use standard municipal authorization key: <code className="text-rose-400 font-mono font-bold">ADMIN-2026-HQ</code>
+            </p>
+          </div>
+        )}
 
         {/* Form Card */}
         <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-4 backdrop-blur-md">
