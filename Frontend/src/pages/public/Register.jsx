@@ -6,6 +6,7 @@ import {
   Lock,
   MapPin,
   Eye,
+  EyeOff,
   ArrowRight,
   HardHat,
   Truck,
@@ -20,6 +21,7 @@ export const Register = () => {
   const [searchParams] = useSearchParams();
   const initialRole = searchParams.get('role');
   const [role, setRole] = useState(initialRole === 'worker' ? 'worker' : 'citizen'); // 'citizen' | 'worker'
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const qRole = searchParams.get('role');
@@ -303,13 +305,22 @@ export const Register = () => {
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete="new-password"
+                  data-lpignore="true"
                   value={formData.password}
                   onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:border-indigo-500 focus:outline-none transition-colors"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
