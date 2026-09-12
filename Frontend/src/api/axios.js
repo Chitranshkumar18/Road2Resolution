@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+const rawBaseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:5000/api';
+const cleanBaseUrl = rawBaseUrl.replace(/\/+$/, '');
+const baseURL = cleanBaseUrl.endsWith('/api') ? cleanBaseUrl : `${cleanBaseUrl}/api`;
+
 const api = axios.create({
-  baseURL: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:5000/api',
+  baseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

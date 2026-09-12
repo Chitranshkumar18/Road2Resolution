@@ -61,16 +61,33 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// API Routes Mounting
+// API Routes Mounting (available with /api prefix and root aliases)
 app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
+
 app.use("/api/issues", issueRoutes);
+app.use("/issues", issueRoutes);
+
 app.use("/api/ai", aiRoutes);
+app.use("/ai", aiRoutes);
+
 app.use("/api/organizations", organizationRoutes);
+app.use("/organizations", organizationRoutes);
+
 app.use("/api/admin", adminRoutes);
+app.use("/admin", adminRoutes);
+
 app.use("/api/worker", workerRoutes);
+app.use("/worker", workerRoutes);
+
 app.use("/api/analytics", analyticsRoutes);
+app.use("/analytics", analyticsRoutes);
+
 app.use("/api/reports", reportRoutes);
+app.use("/reports", reportRoutes);
+
 app.use("/api/reviews", reviewRoutes);
+app.use("/reviews", reviewRoutes);
 
 // Error Handling
 app.use(notFound);
