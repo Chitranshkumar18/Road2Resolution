@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ShieldAlert,
   Activity,
@@ -110,12 +111,12 @@ export const AdminDashboard = () => {
               </p>
             </div>
           </div>
-          <a
-            href="/admin/repair-verification"
+          <Link
+            to="/admin/repair-verification"
             className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-colors shadow-md shadow-amber-950/40 whitespace-nowrap"
           >
             Review & Certify Repairs →
-          </a>
+          </Link>
         </div>
       )}
 
