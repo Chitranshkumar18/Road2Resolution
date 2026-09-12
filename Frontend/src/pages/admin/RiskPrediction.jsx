@@ -55,24 +55,30 @@ export const RiskPrediction = () => {
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {data?.highRiskZones.map((zone, idx) => (
-            <div
-              key={idx}
-              className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 shadow-lg hover:border-slate-700 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold text-slate-100">{zone.zone}</h4>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
-                  {zone.riskLevel}
-                </span>
-              </div>
+          {data?.highRiskZones && data.highRiskZones.length > 0 ? (
+            data.highRiskZones.map((zone, idx) => (
+              <div
+                key={idx}
+                className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 shadow-lg hover:border-slate-700 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold text-slate-100">{zone.zone}</h4>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+                    {zone.riskLevel}
+                  </span>
+                </div>
 
-              <div className="space-y-1 text-xs text-slate-300">
-                <p><strong className="text-slate-400">Primary Stress Factor:</strong> {zone.primaryFactor}</p>
-                <p><strong className="text-slate-400">Predicted Incoming Incidents:</strong> <span className="font-mono text-cyan-400 font-bold">{zone.predictedIncidents} issues</span></p>
+                <div className="space-y-1 text-xs text-slate-300">
+                  <p><strong className="text-slate-400">Primary Stress Factor:</strong> {zone.primaryFactor}</p>
+                  <p><strong className="text-slate-400">Predicted Incoming Incidents:</strong> <span className="font-mono text-cyan-400 font-bold">{zone.predictedIncidents} issues</span></p>
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="col-span-full p-8 text-center rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-500 text-xs italic">
+              No high-risk anomaly zones predicted currently. All municipal sectors operating within safe baseline thresholds.
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -91,26 +97,32 @@ export const RiskPrediction = () => {
         </div>
 
         <div className="h-80 w-full pt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data?.seasonalForecast || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
-              <XAxis dataKey="month" stroke="#64748B" fontSize={11} tickLine={false} />
-              <YAxis stroke="#64748B" fontSize={11} tickLine={false} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#0F172A',
-                  borderColor: '#334155',
-                  borderRadius: '0.75rem',
-                  fontSize: '12px',
-                  color: '#F8FAFC',
-                }}
-              />
-              <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
-              <Bar dataKey="roadDecayRisk" name="Road Decay Risk" fill="#F43F5E" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="waterLoggingRisk" name="Water Logging Risk" fill="#06B6D4" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="electricalFaultRisk" name="Electrical Fault Risk" fill="#F59E0B" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {data?.seasonalForecast && data.seasonalForecast.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.seasonalForecast} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
+                <XAxis dataKey="month" stroke="#64748B" fontSize={11} tickLine={false} />
+                <YAxis stroke="#64748B" fontSize={11} tickLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#0F172A',
+                    borderColor: '#334155',
+                    borderRadius: '0.75rem',
+                    fontSize: '12px',
+                    color: '#F8FAFC',
+                  }}
+                />
+                <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
+                <Bar dataKey="roadDecayRisk" name="Road Decay Risk" fill="#F43F5E" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="waterLoggingRisk" name="Water Logging Risk" fill="#06B6D4" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="electricalFaultRisk" name="Electrical Fault Risk" fill="#F59E0B" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-xs text-slate-500 italic">
+              No historical seasonality data available yet
+            </div>
+          )}
         </div>
       </div>
     </div>

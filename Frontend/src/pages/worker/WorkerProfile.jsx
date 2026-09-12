@@ -19,10 +19,10 @@ import Button from '../../components/common/Button';
 
 export const WorkerProfile = () => {
   const { user, updateProfile } = useAuth();
-  const [name, setName] = useState(user?.name || 'Ramesh Verma');
-  const [phone, setPhone] = useState(user?.phone || '+91 98123 45678');
-  const [contractorUnit, setContractorUnit] = useState(user?.contractorUnit || 'PWD Rapid Road Repair Unit #4');
-  const [zone, setZone] = useState(user?.zone || 'North Zone, Delhi NCR');
+  const [name, setName] = useState(user?.name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [contractorUnit, setContractorUnit] = useState(user?.contractorUnit || user?.organizationName || '');
+  const [zone, setZone] = useState(user?.zone || '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -48,18 +48,16 @@ export const WorkerProfile = () => {
       {/* Profile Header Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-950/70 via-slate-900 to-slate-900 border border-amber-500/30 p-6 md:p-8 shadow-2xl">
         <div className="flex flex-col sm:flex-row items-center gap-6">
-          <img
-            src={user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'}
-            alt={user?.name}
-            className="w-24 h-24 rounded-2xl object-cover ring-4 ring-amber-500/30 shadow-xl"
-          />
+          <div className="w-24 h-24 rounded-2xl bg-amber-500/20 border-2 border-amber-500/40 flex items-center justify-center text-amber-300 font-bold text-2xl shadow-xl">
+            {user?.name ? user.name.slice(0, 2).toUpperCase() : <HardHat className="w-10 h-10 text-amber-400" />}
+          </div>
           <div className="space-y-1.5 text-center sm:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold font-mono">
               <HardHat className="w-3.5 h-3.5" />
-              <span>{user?.badge || 'Certified Field Technician'}</span>
+              <span>{user?.badge || 'Registered Field Worker'}</span>
             </div>
-            <h1 className="text-2xl font-black text-white font-display">{user?.name || 'Ramesh Verma'}</h1>
-            <p className="text-xs text-slate-300 font-medium">{user?.contractorUnit || 'PWD Rapid Road Repair Unit #4'}</p>
+            <h1 className="text-2xl font-black text-white font-display">{user?.name || 'Field Worker'}</h1>
+            <p className="text-xs text-slate-300 font-medium">{user?.contractorUnit || user?.organizationName || 'Assigned Field Operations'}</p>
           </div>
         </div>
       </div>
@@ -68,19 +66,19 @@ export const WorkerProfile = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
           <span className="text-[11px] text-slate-400">Total Repaired</span>
-          <p className="text-2xl font-black font-mono text-amber-400">{user?.completedTasksCount || 28}</p>
+          <p className="text-2xl font-black font-mono text-amber-400">{user?.completedTasksCount || 0}</p>
         </div>
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
           <span className="text-[11px] text-slate-400">Active Tasks</span>
-          <p className="text-2xl font-black font-mono text-cyan-400">{user?.activeTasksCount || 3}</p>
+          <p className="text-2xl font-black font-mono text-cyan-400">{user?.activeTasksCount || 0}</p>
         </div>
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
           <span className="text-[11px] text-slate-400">Admin QA Pass Rate</span>
-          <p className="text-2xl font-black font-mono text-emerald-400">98.4%</p>
+          <p className="text-2xl font-black font-mono text-emerald-400">{user?.qaPassRate ? `${user.qaPassRate}%` : 'N/A'}</p>
         </div>
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
           <span className="text-[11px] text-slate-400">SLA Turnaround</span>
-          <p className="text-2xl font-black font-mono text-indigo-400">4.2 hrs</p>
+          <p className="text-2xl font-black font-mono text-indigo-400">{user?.avgTurnaroundHours ? `${user.avgTurnaroundHours} hrs` : 'N/A'}</p>
         </div>
       </div>
 

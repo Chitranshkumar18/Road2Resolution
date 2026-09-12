@@ -9,9 +9,9 @@ export const Profile = () => {
   const { addToast } = React.useContext(NotificationContext);
 
   const [formData, setFormData] = useState({
-    name: user?.name || 'Aarav Mehta',
-    phone: user?.phone || '+91 98765 43210',
-    zone: user?.zone || 'North Zone, Delhi NCR',
+    name: user?.name || '',
+    phone: user?.phone || '',
+    zone: user?.zone || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -28,37 +28,36 @@ export const Profile = () => {
     }
   };
 
+  const reputation = user?.reputationScore || 0;
   const badges = [
-    { title: 'Civic Guardian', desc: 'Reported 10+ verified infrastructure hazards', unlocked: true, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30' },
-    { title: 'Rapid Responder', desc: 'Provided first photo for 5 critical safety hazards', unlocked: true, color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30' },
-    { title: 'Quality Auditor', desc: 'Submitted 3 before/after repair verifications', unlocked: true, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
-    { title: 'City Vanguard', desc: 'Achieved 500+ community reputation points', unlocked: false, color: 'text-slate-500 bg-slate-800/40 border-slate-700' },
+    { title: 'Civic Guardian', desc: 'Reported verified infrastructure hazards', unlocked: reputation >= 100, color: reputation >= 100 ? 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30' : 'text-slate-500 bg-slate-800/40 border-slate-700' },
+    { title: 'Rapid Responder', desc: 'Provided first photo for critical safety hazards', unlocked: reputation >= 250, color: reputation >= 250 ? 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30' : 'text-slate-500 bg-slate-800/40 border-slate-700' },
+    { title: 'Quality Auditor', desc: 'Submitted verified repair reviews', unlocked: reputation >= 400, color: reputation >= 400 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' : 'text-slate-500 bg-slate-800/40 border-slate-700' },
+    { title: 'City Vanguard', desc: 'Achieved 500+ community reputation points', unlocked: reputation >= 500, color: reputation >= 500 ? 'text-amber-400 bg-amber-500/10 border-amber-500/30' : 'text-slate-500 bg-slate-800/40 border-slate-700' },
   ];
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       {/* Profile Header */}
       <div className="p-6 md:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col md:flex-row items-center gap-6">
-        <img
-          src={user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'}
-          alt={user?.name}
-          className="w-24 h-24 rounded-2xl object-cover ring-4 ring-indigo-500/30 shadow-xl"
-        />
+        <div className="w-24 h-24 rounded-2xl bg-indigo-500/20 border-2 border-indigo-500/40 flex items-center justify-center text-indigo-300 font-bold text-2xl shadow-xl">
+          {user?.name ? user.name.slice(0, 2).toUpperCase() : <User className="w-10 h-10 text-indigo-400" />}
+        </div>
 
         <div className="space-y-1 text-center md:text-left flex-1">
           <div className="flex items-center justify-center md:justify-start gap-2">
-            <h2 className="text-2xl font-black text-white font-display">{user?.name}</h2>
+            <h2 className="text-2xl font-black text-white font-display">{user?.name || 'Citizen'}</h2>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              {user?.badge || 'Civic Guardian'}
+              {user?.badge || 'Citizen Member'}
             </span>
           </div>
           <p className="text-xs text-slate-400">{user?.email}</p>
-          <p className="text-xs text-slate-400">{user?.zone}</p>
+          {user?.zone && <p className="text-xs text-slate-400">{user.zone}</p>}
         </div>
 
         <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700 text-center min-w-[140px]">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Reputation</span>
-          <span className="text-2xl font-black font-display text-cyan-400">{user?.reputationScore || 340}</span>
+          <span className="text-2xl font-black font-display text-cyan-400">{reputation}</span>
           <span className="text-[11px] text-slate-400 block">Civic Points</span>
         </div>
       </div>

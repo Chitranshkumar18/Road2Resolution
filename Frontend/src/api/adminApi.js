@@ -8,23 +8,34 @@ export const adminApi = {
       const response = await api.get('/admin/stats');
       return response.data;
     } catch {
-      const issues = await issueApi.getAllIssues();
-      const criticalCount = issues.filter(i => i.severity === 'CRITICAL').length;
-      const inProgressCount = issues.filter(i => i.status === 'IN_PROGRESS' || i.status === 'ASSIGNED').length;
-      const resolvedCount = issues.filter(i => i.status === 'RESOLVED' || i.status === 'CLOSED').length;
-      const avgResolutionHours = 18.4;
-      const totalCitizenReporters = 1420;
+      try {
+        const issues = await issueApi.getAllIssues();
+        const criticalCount = issues.filter(i => i.severity === 'CRITICAL').length;
+        const inProgressCount = issues.filter(i => i.status === 'IN_PROGRESS' || i.status === 'ASSIGNED').length;
+        const resolvedCount = issues.filter(i => i.status === 'RESOLVED' || i.status === 'CLOSED').length;
 
-      return {
-        totalIssues: issues.length,
-        criticalCount,
-        inProgressCount,
-        resolvedCount,
-        resolutionRate: Math.round((resolvedCount / Math.max(1, issues.length)) * 100),
-        avgResolutionHours,
-        totalCitizenReporters,
-        aiAccuracyScore: 98.2
-      };
+        return {
+          totalIssues: issues.length,
+          criticalCount,
+          inProgressCount,
+          resolvedCount,
+          resolutionRate: issues.length > 0 ? Math.round((resolvedCount / issues.length) * 100) : 0,
+          avgResolutionHours: 0,
+          totalCitizenReporters: 0,
+          aiAccuracyScore: 0
+        };
+      } catch {
+        return {
+          totalIssues: 0,
+          criticalCount: 0,
+          inProgressCount: 0,
+          resolvedCount: 0,
+          resolutionRate: 0,
+          avgResolutionHours: 0,
+          totalCitizenReporters: 0,
+          aiAccuracyScore: 0
+        };
+      }
     }
   },
 
@@ -59,20 +70,8 @@ export const adminApi = {
       return response.data;
     } catch {
       return {
-        highRiskZones: [
-          { zone: 'Outer Ring Road (North Corridor)', riskLevel: 'Critical (89%)', primaryFactor: 'Heavy Monsoon Freight & Drainage Clog', predictedIncidents: 14 },
-          { zone: 'Old City Central Bazaar', riskLevel: 'High (76%)', primaryFactor: 'Aging 1980s Cast Iron Water Mains', predictedIncidents: 9 },
-          { zone: 'Industrial Sector 62', riskLevel: 'Medium (62%)', primaryFactor: 'Heavy Commercial Vehicle Axle Load', predictedIncidents: 6 },
-          { zone: 'Tech Hub South Avenue', riskLevel: 'Low (28%)', primaryFactor: 'Routine Luminaire Life Cycle End', predictedIncidents: 3 }
-        ],
-        seasonalForecast: [
-          { month: 'Jun', roadDecayRisk: 45, waterLoggingRisk: 30, electricalFaultRisk: 25 },
-          { month: 'Jul (Monsoon)', roadDecayRisk: 92, waterLoggingRisk: 88, electricalFaultRisk: 65 },
-          { month: 'Aug (Monsoon Peak)', roadDecayRisk: 98, waterLoggingRisk: 94, electricalFaultRisk: 72 },
-          { month: 'Sep', roadDecayRisk: 68, waterLoggingRisk: 52, electricalFaultRisk: 40 },
-          { month: 'Oct', roadDecayRisk: 35, waterLoggingRisk: 20, electricalFaultRisk: 22 },
-          { month: 'Nov', roadDecayRisk: 25, waterLoggingRisk: 15, electricalFaultRisk: 18 }
-        ]
+        highRiskZones: [],
+        seasonalForecast: []
       };
     }
   }

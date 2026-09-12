@@ -24,7 +24,7 @@ export const ReportIssue = () => {
   const saveIssue = async (issueData) => {
     setSubmitting(true);
     try {
-      const currentUserId = user?._id || user?.id || 'usr_citizen_001';
+      const currentUserId = user?._id || user?.id || '';
       const payload = {
         ...issueData,
         userId: currentUserId,
@@ -32,15 +32,15 @@ export const ReportIssue = () => {
           id: currentUserId,
           _id: currentUserId,
           name: user?.name || 'Citizen Reporter',
-          email: user?.email || 'citizen@civicvision.ai',
-          avatar: user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
-          reputation: user?.reputationScore || 340,
+          email: user?.email || '',
+          avatar: user?.avatar || '',
+          reputation: user?.reputationScore || 0,
         },
         location: {
           address: issueData.address,
           lat: issueData.lat,
           lng: issueData.lng,
-          zone: user?.zone || 'North Zone',
+          zone: user?.zone || 'Municipal Zone',
         },
       };
 

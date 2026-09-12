@@ -1,225 +1,127 @@
 import api from './axios';
 
-// Standard demo template accounts for preview/quick-fill testing
-const DEMO_USERS = {
-  citizen: {
-    id: 'usr_citizen_demo',
-    _id: 'usr_citizen_demo',
-    name: 'Active Citizen',
-    email: 'citizen@civicvision.ai',
-    role: 'citizen',
-    password: 'citizen123',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-    phone: '+91 98765 43210',
-    zone: 'North Zone, Delhi NCR',
-    reputationScore: 340,
-    resolvedIssuesCount: 12,
-    badge: 'Civic Guardian'
-  },
-  worker: {
-    id: 'usr_worker_demo',
-    _id: 'usr_worker_demo',
-    name: 'Field Technician',
-    email: 'worker@civicvision.ai',
-    role: 'worker',
-    password: 'worker123',
-    contractorUnit: 'PWD Rapid Road Repair Unit #4',
-    department: 'Public Works Department (PWD)',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    phone: '+91 98123 45678',
-    zone: 'North Zone, Delhi NCR',
-    badge: 'Certified Field Tech',
-    completedTasksCount: 28,
-    activeTasksCount: 3
-  },
-  admin: {
-    id: 'usr_admin_demo',
-    _id: 'usr_admin_demo',
-    name: 'Municipal Admin Officer',
-    email: 'admin@civicvision.ai',
-    role: 'admin',
-    password: 'admin123',
-    department: 'Smart City Urban Command Centre',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
-    phone: '+91 11 2345 6789',
-    zone: 'Headquarters / All Zones',
-    clearanceLevel: 'Super Administrator'
-  }
-};
-
-const DEFAULT_ACCOUNTS = [DEMO_USERS.citizen, DEMO_USERS.worker, DEMO_USERS.admin];
-const USERS_STORAGE_KEY = 'civicvision_registered_users';
-
-function getRegisteredUsers() {
-  const stored = localStorage.getItem(USERS_STORAGE_KEY);
-  if (!stored) {
-    return DEFAULT_ACCOUNTS;
-  }
+// Purge legacy demo/mock storage keys on load so old data never resurfaces
+if (typeof window !== 'undefined' && window.localStorage) {
   try {
-    const parsed = JSON.parse(stored);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+    localStorage.removeItem('civicvision_registered_users');
+    localStorage.removeItem('civicvision_issues_db');
+    localStorage.removeItem('civicvision_organizations_db');
+    const currentUserStr = localStorage.getItem('civicvision_current_user');
+    if (currentUserStr) {
+      const user = JSON.parse(currentUserStr);
+      if (user?.id?.includes('demo') || user?._id?.includes('demo') || user?.email?.includes('civicvision.ai')) {
+        localStorage.removeItem('civicvision_current_user');
+        localStorage.removeItem('civicvision_auth_token');
+      }
     }
-    return DEFAULT_ACCOUNTS;
   } catch {
-    return DEFAULT_ACCOUNTS;
+    // ignore parsing errors
   }
-}
-
-function saveRegisteredUser(user) {
-  const users = getRegisteredUsers();
-  const index = users.findIndex((u) => u.email.toLowerCase() === user.email.toLowerCase());
-  if (index !== -1) {
-    users[index] = { ...users[index], ...user };
-  } else {
-    users.push(user);
-  }
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
 }
 
 export const authApi = {
   login: async (email, password, preferredRole) => {
-    try {
-      const response = await api.post('/auth/login', { email, password, role: preferredRole });
-      if (response.data?.token && response.data?.user) {
-        localStorage.setItem('civicvision_auth_token', response.data.token);
-        localStorage.setItem('civicvision_current_user', JSON.stringify(response.data.user));
-        return response.data;
-      }
-    } catch {
-      // Backend not running or offline - proceed with device-specific local authentication
-    }
-
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPassword = (password || '').trim();
 
-    if (!cleanEmail) {
-      throw new Error('Email address is required.');
+    if (!cleanEmail || !cleanPassword) {
+      throw new Error('Email address and password are required.');
     }
 
-    const users = getRegisteredUsers();
-    const existingUser = users.find((u) => u.email.toLowerCase() === cleanEmail);
-
-    if (!existingUser) {
-      throw new Error('No account found with this email. Please register first or use the quick demo credentials.');
+    // Admin login restriction: Only the configured admin email is permitted
+    if (preferredRole === 'admin' && cleanEmail !== 'chitranshkumar730@gmail.com') {
+      throw new Error('Invalid admin email address. Admin access is restricted to the authorized administrator.');
     }
 
-    // Password check if password is saved on account
-    if (existingUser.password && cleanPassword && existingUser.password !== cleanPassword) {
-      throw new Error('Invalid password. Please check your credentials.');
-    }
-
-    const role = preferredRole || existingUser.role || 'citizen';
-    const authenticatedUser = {
-      ...existingUser,
-      role: role
-    };
-
-    const token = `civicvision_jwt_${role}_${Date.now()}`;
-    localStorage.setItem('civicvision_auth_token', token);
-    localStorage.setItem('civicvision_current_user', JSON.stringify(authenticatedUser));
-
-    return { token, user: authenticatedUser };
-  },
-
-  register: async (userData) => {
     try {
-      const response = await api.post('/auth/register', userData);
+      const response = await api.post('/auth/login', {
+        email: cleanEmail,
+        password: cleanPassword,
+        role: preferredRole
+      });
+
       if (response.data?.token && response.data?.user) {
         localStorage.setItem('civicvision_auth_token', response.data.token);
         localStorage.setItem('civicvision_current_user', JSON.stringify(response.data.user));
         return response.data;
       }
-    } catch {
-      // Offline / client-side registration handler
+      throw new Error('Invalid authentication response from server.');
+    } catch (err) {
+      if (err.response?.data?.message) {
+        throw new Error(err.response.data.message);
+      }
+      if (err.message && !err.message.includes('Network Error') && !err.code && !err.isAxiosError) {
+        throw err;
+      }
+      throw new Error('Unable to connect to the server. Please try again.');
+    }
+  },
+
+  register: async (userData) => {
+    const role = userData.role || 'citizen';
+
+    // Strict Enforcement: Admin registration is prohibited
+    if (role === 'admin') {
+      throw new Error('Admin registration is not permitted. Admin accounts are provisioned exclusively by system administrators.');
     }
 
-    const role = userData.role || 'citizen';
     const cleanEmail = (userData.email || '').trim().toLowerCase();
+    const cleanPassword = (userData.password || '').trim();
     const cleanName = (userData.name || '').trim();
 
-    if (!cleanEmail) {
-      throw new Error('Email address is required.');
+    if (!cleanEmail || !cleanPassword) {
+      throw new Error('Email address and password are required.');
     }
 
-    const users = getRegisteredUsers();
-    const existing = users.find(u => u.email.toLowerCase() === cleanEmail && !u.id?.includes('demo'));
-    if (existing) {
-      throw new Error('An account with this email is already registered on this device. Please sign in.');
+    try {
+      const response = await api.post('/auth/register', {
+        ...userData,
+        name: cleanName,
+        email: cleanEmail,
+        password: cleanPassword,
+        role: role
+      });
+
+      if (response.data?.token && response.data?.user) {
+        localStorage.setItem('civicvision_auth_token', response.data.token);
+        localStorage.setItem('civicvision_current_user', JSON.stringify(response.data.user));
+        return response.data;
+      }
+      return response.data;
+    } catch (err) {
+      if (err.response?.data?.message) {
+        throw new Error(err.response.data.message);
+      }
+      if (err.message && !err.message.includes('Network Error') && !err.code && !err.isAxiosError) {
+        throw err;
+      }
+      throw new Error('Unable to connect to the server. Please try again.');
     }
-
-    const uid = `usr_${role}_${Date.now()}`;
-    let newUser;
-
-    if (role === 'admin') {
-      newUser = {
-        id: uid,
-        _id: uid,
-        name: cleanName || 'Municipal Officer',
-        email: cleanEmail,
-        password: userData.password || '',
-        role: 'admin',
-        department: userData.department || 'Public Works Department (PWD)',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
-        phone: userData.phone || '+91 11 2345 6789',
-        zone: userData.zone || 'Metropolitan Command Hub',
-        clearanceLevel: 'Municipal Operations Administrator'
-      };
-    } else if (role === 'worker') {
-      newUser = {
-        id: uid,
-        _id: uid,
-        name: cleanName || 'Field Engineer',
-        email: cleanEmail,
-        password: userData.password || '',
-        role: 'worker',
-        contractorUnit: userData.contractorUnit || 'Municipal Rapid Repair Unit',
-        department: userData.department || 'Public Works Department (PWD)',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-        phone: userData.phone || '+91 98123 45678',
-        zone: userData.zone || 'North Zone, Delhi NCR',
-        badge: 'Field Operations Specialist',
-        completedTasksCount: 0,
-        activeTasksCount: 0
-      };
-    } else {
-      newUser = {
-        id: uid,
-        _id: uid,
-        name: cleanName || 'Citizen User',
-        email: cleanEmail,
-        password: userData.password || '',
-        role: 'citizen',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-        phone: userData.phone || '+91 98765 43210',
-        zone: userData.zone || 'North Zone, Delhi NCR',
-        reputationScore: 50,
-        resolvedIssuesCount: 0,
-        badge: 'Civic Guardian'
-      };
-    }
-
-    saveRegisteredUser(newUser);
-
-    const token = `civicvision_jwt_${role}_${Date.now()}`;
-    localStorage.setItem('civicvision_auth_token', token);
-    localStorage.setItem('civicvision_current_user', JSON.stringify(newUser));
-
-    return { token, user: newUser };
   },
 
   getCurrentUser: async () => {
+    const token = localStorage.getItem('civicvision_auth_token');
+    if (!token) {
+      return null;
+    }
+
     try {
       const response = await api.get('/auth/me');
-      if (response.data?.user) return response.data.user;
-      if (response.data?.id) return response.data;
-    } catch {
-      // Backend not running or no session
+      const user = response.data?.user || (response.data?.id ? response.data : null);
+      if (user) {
+        localStorage.setItem('civicvision_current_user', JSON.stringify(user));
+        return user;
+      }
+    } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem('civicvision_auth_token');
+        localStorage.removeItem('civicvision_current_user');
+        return null;
+      }
     }
 
     const stored = localStorage.getItem('civicvision_current_user');
-    const token = localStorage.getItem('civicvision_auth_token');
-    if (stored && token) {
+    if (stored) {
       try {
         return JSON.parse(stored);
       } catch {
@@ -235,23 +137,17 @@ export const authApi = {
     try {
       const response = await api.put('/auth/profile', updates);
       if (response.data) {
-        localStorage.setItem('civicvision_current_user', JSON.stringify(response.data));
-        saveRegisteredUser(response.data);
-        return response.data;
+        const updated = response.data.user || response.data;
+        localStorage.setItem('civicvision_current_user', JSON.stringify(updated));
+        return updated;
       }
-    } catch {
-      // local fallback
+      throw new Error('Failed to update profile.');
+    } catch (err) {
+      if (err.response?.data?.message) {
+        throw new Error(err.response.data.message);
+      }
+      throw new Error('Unable to connect to the server. Please try again.');
     }
-
-    const stored = localStorage.getItem('civicvision_current_user');
-    if (!stored) {
-      throw new Error('No authenticated user session found.');
-    }
-    const current = JSON.parse(stored);
-    const updated = { ...current, ...updates };
-    localStorage.setItem('civicvision_current_user', JSON.stringify(updated));
-    saveRegisteredUser(updated);
-    return updated;
   },
 
   logout: async () => {
@@ -265,32 +161,6 @@ export const authApi = {
     sessionStorage.removeItem('civicvision_auth_token');
     sessionStorage.removeItem('civicvision_current_user');
     return { success: true };
-  },
-
-  switchDemoRole: (currentUser, role) => {
-    let updated;
-    if (currentUser && currentUser.name && !currentUser.id?.includes('demo')) {
-      updated = {
-        ...currentUser,
-        role: role,
-        ...(role === 'admin' ? {
-          department: currentUser.department || 'Smart City Urban Command Centre',
-          clearanceLevel: 'Authorized City Administrator'
-        } : role === 'worker' ? {
-          contractorUnit: currentUser.contractorUnit || 'PWD Rapid Road Repair Unit #4',
-          department: currentUser.department || 'Public Works Department (PWD)',
-          badge: 'Certified Field Tech'
-        } : {
-          badge: 'Active Citizen'
-        })
-      };
-    } else {
-      updated = role === 'admin' ? DEMO_USERS.admin : (role === 'worker' ? DEMO_USERS.worker : DEMO_USERS.citizen);
-    }
-    const token = `civicvision_jwt_${role}_${Date.now()}`;
-    localStorage.setItem('civicvision_auth_token', token);
-    localStorage.setItem('civicvision_current_user', JSON.stringify(updated));
-    return { token, user: updated };
   }
 };
 

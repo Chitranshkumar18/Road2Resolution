@@ -48,12 +48,6 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const switchRole = (role) => {
-    const res = authApi.switchDemoRole(user, role);
-    setUser(res.user);
-    return res.user;
-  };
-
   const updateProfile = async (updates) => {
     const updated = await authApi.updateProfile(updates);
     setUser(updated);
@@ -72,7 +66,6 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
-        switchRole,
         updateProfile
       }}
     >
@@ -80,3 +73,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;

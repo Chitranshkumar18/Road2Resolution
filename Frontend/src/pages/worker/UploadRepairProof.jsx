@@ -81,12 +81,12 @@ export const UploadRepairProof = () => {
   const { user } = useAuth();
 
   const issueList = Array.isArray(issues) && issues.length > 0 ? issues : [];
-  const initialIssueId = searchParams.get('issueId') || issueList[0]?.id || 'CIV-2026-8941';
+  const initialIssueId = searchParams.get('issueId') || issueList[0]?.id || '';
 
   const [selectedIssueId, setSelectedIssueId] = useState(initialIssueId);
   const [afterImageUrl, setAfterImageUrl] = useState('');
-  const [materialsUsed, setMaterialsUsed] = useState(SAMPLE_AFTER_PHOTOS[0].defaultMaterials);
-  const [notes, setNotes] = useState(SAMPLE_AFTER_PHOTOS[0].defaultNotes);
+  const [materialsUsed, setMaterialsUsed] = useState('');
+  const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -110,34 +110,25 @@ export const UploadRepairProof = () => {
   }, [searchParams]);
 
   // Target Incident Details
-  const selectedIssue = issueList.find((i) => i.id === selectedIssueId) || issueList[0] || {
-    id: selectedIssueId || 'CIV-2026-8941',
-    title: 'Pothole & Surface Defect',
-    category: 'pothole',
-    severity: 'HIGH',
-    status: 'IN_PROGRESS',
-    imageUrl: PLACEHOLDER_IMAGES.pothole,
-    location: { address: 'Outer Ring Road, Delhi NCR', lat: 28.6139, lng: 77.2090 },
-    createdAt: new Date().toISOString()
-  };
+  const selectedIssue = issueList.find((i) => i.id === selectedIssueId) || issueList[0] || null;
 
   // Sync completing entity attribution whenever selected issue changes
   useEffect(() => {
     if (selectedIssue) {
       if (selectedIssue.responsibleType === 'PUBLIC_INDIVIDUAL') {
         setCompletingEntityType('PUBLIC_INDIVIDUAL');
-        setCompletingPersonName(selectedIssue.responsibleName || user?.name || 'Public Citizen');
+        setCompletingPersonName(selectedIssue.responsibleName || user?.name || '');
         setCompletingOrgName('');
       } else {
         setCompletingEntityType('ORGANIZATION');
-        setCompletingOrgName(selectedIssue.assignedOrgName || selectedIssue.responsibleOrgName || user?.contractorUnit || 'Municipal Rapid Repair Unit');
-        setCompletingPersonName(selectedIssue.responsibleName || user?.name || 'Field Technician');
+        setCompletingOrgName(selectedIssue.assignedOrgName || selectedIssue.responsibleOrgName || user?.contractorUnit || user?.organizationName || 'Municipal Rapid Repair Unit');
+        setCompletingPersonName(selectedIssue.responsibleName || user?.name || 'Field Worker');
       }
     }
   }, [selectedIssue, user]);
 
-  const targetLat = selectedIssue.location?.lat || 28.6139;
-  const targetLng = selectedIssue.location?.lng || 77.2090;
+  const targetLat = selectedIssue?.location?.lat || 28.6139;
+  const targetLng = selectedIssue?.location?.lng || 77.2090;
 
   const isSimulatedRef = useRef(false);
 
@@ -322,26 +313,26 @@ export const UploadRepairProof = () => {
 
     setLoading(true);
 
-    const targetId = selectedIssue?.id || selectedIssueId || 'CIV-2026-8941';
-    const finalImage = afterImageUrl || SAMPLE_AFTER_PHOTOS[0].url;
+    const targetId = selectedIssue?.id || selectedIssueId || '';
+    const finalImage = afterImageUrl;
 
     const isVol = completingEntityType === 'PUBLIC_INDIVIDUAL';
-    const actorName = completingPersonName.trim() || (isVol ? 'Public Citizen Volunteer' : (user?.name || 'Field Technician'));
-    const finalOrg = isVol ? null : (completingOrgName.trim() || selectedIssue.assignedOrgName || 'Municipal Infrastructure Division');
+    const actorName = completingPersonName.trim() || (isVol ? 'Public Citizen' : (user?.name || 'Field Worker'));
+    const finalOrg = isVol ? null : (completingOrgName.trim() || selectedIssue?.assignedOrgName || 'Municipal Infrastructure Division');
 
     try {
       if (typeof submitWorkerRepair === 'function') {
         await submitWorkerRepair(targetId, {
           repairImageUrl: finalImage,
           notes: notes || (isVol ? 'Resolution completed by individual person.' : 'Repairs completed by on-site field team.'),
-          materialsUsed: materialsUsed || (isVol ? 'Individual / Community repair tools' : 'Standard municipal repair mix & compaction tools'),
+          materialsUsed: materialsUsed || (isVol ? 'Individual repair tools' : 'Standard repair mix & compaction tools'),
           submittedBy: completingEntityType,
           isVolunteer: isVol,
           organizationName: finalOrg,
           workerInfo: {
             name: actorName,
-            email: user?.email || (isVol ? 'volunteer@civicvision.ai' : 'worker@civicvision.ai'),
-            contractorUnit: isVol ? 'Individual Worker / Public Person' : (finalOrg || 'PWD Rapid Road Repair Unit #4')
+            email: user?.email || '',
+            contractorUnit: isVol ? 'Individual Worker / Public Person' : (finalOrg || '')
           },
           gpsVerification: {
             verified: true,

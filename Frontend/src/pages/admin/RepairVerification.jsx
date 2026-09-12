@@ -45,10 +45,10 @@ export const AdminRepairVerification = () => {
   );
 
   const [selectedIssueId, setSelectedIssueId] = useState(
-    workerSubmissions[0]?.id || issueList.find((i) => i.status !== 'RESOLVED')?.id || issueList[0]?.id || 'CIV-2026-8941'
+    workerSubmissions[0]?.id || issueList.find((i) => i.status !== 'RESOLVED')?.id || issueList[0]?.id || ''
   );
 
-  const selectedIssue = issueList.find((i) => i.id === selectedIssueId) || issueList[0];
+  const selectedIssue = issueList.find((i) => i.id === selectedIssueId) || issueList[0] || null;
 
   const handleSaveAndPublish = async (afterUrl, result) => {
     if (selectedIssue && submitRepairVerification) {

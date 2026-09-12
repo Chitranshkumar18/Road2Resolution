@@ -1,15 +1,26 @@
 import React from 'react';
 import { MapContainer, TileLayer, Circle, Popup } from 'react-leaflet';
 
-const HEATMAP_HOTSPOTS = [
-  { lat: 28.6139, lng: 77.2090, radius: 900, intensity: 'Critical', color: '#F43F5E', name: 'North Ring Road Corridor', count: 18 },
-  { lat: 28.6250, lng: 77.2180, radius: 750, intensity: 'High', color: '#F59E0B', name: 'Central Commercial Hub', count: 12 },
-  { lat: 28.6010, lng: 77.2020, radius: 600, intensity: 'High', color: '#F59E0B', name: 'Green Park Institutional Sector', count: 9 },
-  { lat: 28.6090, lng: 77.2270, radius: 500, intensity: 'Medium', color: '#EAB308', name: 'Mayur Vihar Sub-City', count: 7 },
-  { lat: 28.6320, lng: 77.2150, radius: 850, intensity: 'Critical', color: '#F43F5E', name: 'Kalyan Marg Intersection', count: 15 },
-];
+export const CivicHeatmap = ({ center = [28.618, 77.212], zoom = 13, issues = [] }) => {
+  const hotspots = React.useMemo(() => {
+    if (!Array.isArray(issues) || issues.length === 0) return [];
+    return issues.map((issue) => {
+      const lat = issue.location?.lat || 28.6139;
+      const lng = issue.location?.lng || 77.2090;
+      const isCritical = issue.severity === 'CRITICAL';
+      const isHigh = issue.severity === 'HIGH';
+      return {
+        lat,
+        lng,
+        radius: isCritical ? 600 : isHigh ? 450 : 300,
+        intensity: isCritical ? 'Critical' : isHigh ? 'High' : 'Moderate',
+        color: isCritical ? '#F43F5E' : isHigh ? '#F59E0B' : '#EAB308',
+        name: issue.title,
+        count: 1
+      };
+    });
+  }, [issues]);
 
-export const CivicHeatmap = ({ center = [28.618, 77.212], zoom = 13 }) => {
   return (
     <div className="relative w-full h-full min-h-[450px] rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
       <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className="w-full h-full z-0">
@@ -18,7 +29,7 @@ export const CivicHeatmap = ({ center = [28.618, 77.212], zoom = 13 }) => {
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
 
-        {HEATMAP_HOTSPOTS.map((spot, idx) => (
+        {hotspots.map((spot, idx) => (
           <Circle
             key={idx}
             center={[spot.lat, spot.lng]}
@@ -34,7 +45,7 @@ export const CivicHeatmap = ({ center = [28.618, 77.212], zoom = 13 }) => {
               <div className="p-1 text-slate-900">
                 <h4 className="font-bold text-xs">{spot.name}</h4>
                 <p className="text-[11px] text-slate-600 mt-0.5">
-                  <strong>{spot.count} Active Incidents</strong> ({spot.intensity} Risk)
+                  <strong>{spot.count} Incident</strong> ({spot.intensity} Risk)
                 </p>
               </div>
             </Popup>

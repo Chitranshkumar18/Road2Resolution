@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sparkles,
@@ -21,13 +21,14 @@ import {
 } from 'lucide-react';
 import Button from '../../components/common/Button';
 import useAuth from '../../hooks/useAuth';
-import { INITIAL_MOCK_ISSUES } from '../../utils/constants';
+import { IssueContext } from '../../context/IssueContext';
 import IssueCard from '../../components/issue/IssueCard';
 
 export const Home = () => {
   const { isAuthenticated, isAdmin } = useAuth();
+  const { issues = [] } = useContext(IssueContext) || {};
   const [lang, setLang] = useState('both'); // 'both' | 'en' | 'hi'
-  const featuredIssues = INITIAL_MOCK_ISSUES.slice(0, 3);
+  const featuredIssues = (issues || []).slice(0, 3);
 
   return (
     <div className="space-y-24 pb-20">
@@ -383,11 +384,30 @@ export const Home = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {featuredIssues.map((issue) => (
-            <IssueCard key={issue.id} issue={issue} />
-          ))}
-        </div>
+        {featuredIssues.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredIssues.map((issue) => (
+              <IssueCard key={issue.id} issue={issue} />
+            ))}
+          </div>
+        ) : (
+          <div className="p-10 text-center rounded-3xl bg-slate-900/60 border border-slate-800 space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center mx-auto">
+              <MapPin className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-white font-display">No Civic Complaints Logged Yet</h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              The municipal radar is completely fresh with zero reported hazards. Be the first citizen to report a civic issue in your area.
+            </p>
+            <div className="pt-2">
+              <Link to="/citizen/report">
+                <Button variant="outline" size="sm" leftIcon={Camera}>
+                  Report New Hazard
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* CTA Bottom Banner */}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, Lock, Mail, ArrowRight, User, Shield, HardHat, Sparkles } from 'lucide-react';
+import { Eye, Lock, Mail, ArrowRight, User, Shield, HardHat } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import Button from '../../components/common/Button';
 
@@ -15,23 +15,6 @@ export const Login = () => {
 
   const handleRoleChange = (newRole) => {
     setRole(newRole);
-    setError('');
-  };
-
-  const fillQuickDemo = (demoRole) => {
-    if (demoRole === 'admin') {
-      setRole('admin');
-      setEmail('admin@civicvision.ai');
-      setPassword('admin123');
-    } else if (demoRole === 'worker') {
-      setRole('worker');
-      setEmail('worker@civicvision.ai');
-      setPassword('worker123');
-    } else {
-      setRole('citizen');
-      setEmail('citizen@civicvision.ai');
-      setPassword('citizen123');
-    }
     setError('');
   };
 
@@ -50,7 +33,7 @@ export const Login = () => {
       }
     } catch (err) {
       console.error(err);
-      setError('Invalid email or password. Please try again or use the quick demo fill.');
+      setError(err.message || 'Unable to connect to the server. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -63,9 +46,9 @@ export const Login = () => {
   };
 
   const getEmailPlaceholder = () => {
-    if (role === 'admin') return 'admin@civicvision.ai';
-    if (role === 'worker') return 'worker@civicvision.ai';
-    return 'citizen@civicvision.ai';
+    if (role === 'admin') return 'chitranshkumar730@gmail.com';
+    if (role === 'worker') return 'worker@example.com';
+    return 'citizen@example.com';
   };
 
   const getEmailLabel = () => {
@@ -158,21 +141,6 @@ export const Login = () => {
 
         {/* Login Form Card */}
         <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-5 backdrop-blur-md">
-          {/* Quick Demo Credential Helper */}
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-[11px] text-slate-300 font-medium">Quick Demo Access:</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => fillQuickDemo(role)}
-              className="text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 underline underline-offset-2 transition-colors"
-            >
-              Fill Demo {role === 'admin' ? 'Admin' : role === 'worker' ? 'Worker' : 'Citizen'}
-            </button>
-          </div>
-
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
               {error}
@@ -254,7 +222,7 @@ export const Login = () => {
         <p className="text-center text-xs text-slate-400">
           Don't have an account?{' '}
           <Link to="/register" className="text-indigo-400 font-bold hover:text-cyan-300 underline underline-offset-4">
-            Register as Citizen, Worker, or Admin
+            Register as Citizen or Worker
           </Link>
         </p>
       </div>

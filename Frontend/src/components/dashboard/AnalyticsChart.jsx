@@ -28,6 +28,8 @@ export const AnalyticsChart = ({
   title = 'Civic Issue Inflow vs Resolution Speed',
   subtitle = 'Monthly comparison of incoming citizen reports vs municipal work completions',
 }) => {
+  const hasData = Array.isArray(data) && data.length > 0;
+
   return (
     <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg space-y-4">
       <div>
@@ -36,44 +38,50 @@ export const AnalyticsChart = ({
       </div>
 
       <div className="h-72 w-full pt-2">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="reportedGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="resolvedGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
-            <XAxis dataKey="period" stroke="#64748B" fontSize={11} tickLine={false} />
-            <YAxis stroke="#64748B" fontSize={11} tickLine={false} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend
-              wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }}
-              formatter={(value) => <span className="text-slate-300 capitalize">{value}</span>}
-            />
-            <Area
-              type="monotone"
-              dataKey="reported"
-              stroke="#6366F1"
-              strokeWidth={2.5}
-              fillOpacity={1}
-              fill="url(#reportedGrad)"
-            />
-            <Area
-              type="monotone"
-              dataKey="resolved"
-              stroke="#10B981"
-              strokeWidth={2.5}
-              fillOpacity={1}
-              fill="url(#resolvedGrad)"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {hasData ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="reportedGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="resolvedGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
+              <XAxis dataKey="period" stroke="#64748B" fontSize={11} tickLine={false} />
+              <YAxis stroke="#64748B" fontSize={11} tickLine={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }}
+                formatter={(value) => <span className="text-slate-300 capitalize">{value}</span>}
+              />
+              <Area
+                type="monotone"
+                dataKey="reported"
+                stroke="#6366F1"
+                strokeWidth={2.5}
+                fillOpacity={1}
+                fill="url(#reportedGrad)"
+              />
+              <Area
+                type="monotone"
+                dataKey="resolved"
+                stroke="#10B981"
+                strokeWidth={2.5}
+                fillOpacity={1}
+                fill="url(#resolvedGrad)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full flex items-center justify-center text-xs text-slate-500 italic">
+            No historical inflow data recorded yet
+          </div>
+        )}
       </div>
     </div>
   );

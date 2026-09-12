@@ -142,14 +142,14 @@ export const WorkerComplaints = () => {
 
   // Case 1: Accept work on behalf of Assigned Organization
   const handleAcceptAsOrg = async (issue) => {
-    const orgName = issue.assignedOrgName || user?.contractorUnit || 'Municipal Rapid Repair Division';
-    const workerName = user?.name || 'Field Technician';
+    const orgName = issue.assignedOrgName || user?.contractorUnit || user?.organizationName || 'Municipal Rapid Repair Division';
+    const workerName = user?.name || 'Field Worker';
     try {
       if (acceptWorkAsOrganization) {
         await acceptWorkAsOrganization(issue.id, {
           name: workerName,
           organizationName: orgName,
-          email: user?.email || 'worker@civicvision.ai'
+          email: user?.email || ''
         });
       } else if (startWorkerTask) {
         await startWorkerTask(issue.id, {
@@ -169,8 +169,8 @@ export const WorkerComplaints = () => {
   // Case 2: Open Modal to take work as Normal Person / Individual Worker
   const handleOpenIndividualModal = (issue) => {
     setSelectedIssueForIndividual(issue);
-    setIndividualName(user?.name || 'Public Worker / Resident');
-    setIndividualPhone(user?.phone || '+91 98000 00000');
+    setIndividualName(user?.name || '');
+    setIndividualPhone(user?.phone || '');
     setIndividualNotes('Taking personal responsibility as an individual worker to resolve this road hazard.');
     setIndividualModalOpen(true);
   };
@@ -186,7 +186,7 @@ export const WorkerComplaints = () => {
         await acceptWorkAsVolunteer(selectedIssueForIndividual.id, {
           name: volName,
           phone: individualPhone.trim(),
-          email: user?.email || 'volunteer@civicvision.ai',
+          email: user?.email || '',
           notes: individualNotes.trim()
         });
       }

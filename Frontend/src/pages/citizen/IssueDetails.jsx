@@ -35,20 +35,7 @@ export const IssueDetails = () => {
   const navigate = useNavigate();
 
   const [commentText, setCommentText] = useState('');
-  const [comments, setComments] = useState([
-    {
-      id: 'c1',
-      author: 'Er. Rajesh Sharma (PWD)',
-      text: 'Field team dispatched with cold asphalt emulsion mix. Expected completion within 4 hours.',
-      time: new Date(Date.now() - 3600000 * 3).toISOString(),
-    },
-    {
-      id: 'c2',
-      author: 'Priya Nair (Traffic Marshal)',
-      text: 'Reflective warning barricades positioned around the hazard perimeter.',
-      time: new Date(Date.now() - 3600000 * 2).toISOString(),
-    },
-  ]);
+  const [comments, setComments] = useState([]);
 
   const issue = issues.find((i) => i.id === id);
 
@@ -97,7 +84,7 @@ export const IssueDetails = () => {
       ...prev,
       {
         id: `c_${Date.now()}`,
-        author: 'Citizen Contributor',
+        author: user?.name || 'Citizen Contributor',
         text: commentText,
         time: new Date().toISOString(),
       },
@@ -245,15 +232,19 @@ export const IssueDetails = () => {
             </h4>
 
             <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-              {comments.map((c) => (
-                <div key={c.id} className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/70 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-200">{c.author}</span>
-                    <span className="text-[10px] text-slate-400">{formatDate(c.time)}</span>
+              {comments.length > 0 ? (
+                comments.map((c) => (
+                  <div key={c.id} className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/70 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-200">{c.author}</span>
+                      <span className="text-[10px] text-slate-400">{formatDate(c.time)}</span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{c.text}</p>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">{c.text}</p>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-xs text-slate-500 italic py-4 text-center">No observation notes logged yet.</p>
+              )}
             </div>
           </div>
 

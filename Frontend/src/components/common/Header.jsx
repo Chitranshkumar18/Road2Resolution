@@ -1,31 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Shield, User, LogOut, Menu, Sparkles, RefreshCw, HardHat } from 'lucide-react';
+import { Bell, User, LogOut, Menu } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import NotificationPanel from './NotificationPanel';
 import ThemeChanger from './ThemeChanger';
 import { NotificationContext } from '../../context/NotificationContext';
 
 export const Header = ({ onToggleSidebar, title, subtitle }) => {
-  const { user, isAdmin, isWorker, isCitizen, switchRole, logout } = useAuth();
+  const { user, isAdmin, isWorker, logout } = useAuth();
   const { unreadCount } = React.useContext(NotificationContext);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
-
-  // 3-way Role Switcher Cycle: Citizen -> Worker -> Admin -> Citizen
-  const handleRoleToggle = () => {
-    if (user?.role === 'citizen') {
-      switchRole('worker');
-      navigate('/worker/dashboard');
-    } else if (user?.role === 'worker' || isWorker) {
-      switchRole('admin');
-      navigate('/admin/dashboard');
-    } else {
-      switchRole('citizen');
-      navigate('/citizen/dashboard');
-    }
-  };
 
   const handleLogout = async () => {
     await logout();
@@ -75,19 +61,13 @@ export const Header = ({ onToggleSidebar, title, subtitle }) => {
 
       {/* Right section */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Role Switcher Demo Capsule (Cycles Citizen -> Worker -> Admin) */}
-        <button
-          onClick={handleRoleToggle}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-cyan-500/10 border border-indigo-500/30 text-indigo-300 hover:border-indigo-400 transition-all shadow-sm group"
-          title="Click to switch Demo Role (Citizen -> Worker -> Admin)"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400 group-hover:rotate-180 transition-transform duration-300" />
-          <span className="hidden sm:inline">Demo Role:</span>
+        {/* User Role Badge */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-950/70 border border-slate-800 text-slate-300 shadow-sm">
+          <span className="hidden sm:inline text-[11px] text-slate-400">Role:</span>
           <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${getRoleBadgeClasses()}`}>
             {getRoleLabel()}
           </span>
-          <RefreshCw className="w-3 h-3 text-slate-400 group-hover:text-cyan-300 transition-colors" />
-        </button>
+        </div>
 
         {/* Notifications */}
         <div className="relative">

@@ -24,8 +24,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // If backend isn't reachable or returns 404/500, we don't crash the client app
-    console.warn('API Response Notice / Mock Active:', error.message);
+    // If backend isn't reachable or returns 404/500, log error
+    console.warn('API request notice:', error.message);
     return Promise.reject(error);
   }
 );

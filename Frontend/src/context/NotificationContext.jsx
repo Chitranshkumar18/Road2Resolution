@@ -3,35 +3,7 @@ import React, { createContext, useState } from 'react';
 export const NotificationContext = createContext(null);
 
 export const NotificationProvider = ({ children }) => {
-  const [notifications, setNotifications] = useState([
-    {
-      id: 'notif-1',
-      title: '🚨 Live GPS Telemetry Active',
-      message: 'Municipal AI radar is scanning your sector for infrastructure updates.',
-      time: 'Just now',
-      read: false,
-      type: 'info',
-      link: '/citizen/explore'
-    },
-    {
-      id: 'notif-2',
-      title: '📋 Citizen Reports Queue',
-      message: 'Track the status and municipal resolution progress of your submitted complaints.',
-      time: '1h ago',
-      read: false,
-      type: 'info',
-      link: '/citizen/my-reports'
-    },
-    {
-      id: 'notif-3',
-      title: '🔍 Repair Audit Portal',
-      message: 'Inspect AI differential before-and-after audits for completed hazard repairs.',
-      time: '3h ago',
-      read: true,
-      type: 'success',
-      link: '/citizen/repair-verification'
-    }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const [toasts, setToasts] = useState([]);
 
