@@ -40,7 +40,7 @@ const repairSchema = new mongoose.Schema(
     },
     photoValiditySeconds: {
       type: Number,
-      default: 60,
+      default: 300,
     },
     notes: {
       type: String,

@@ -12,7 +12,7 @@ export const processWorkerRepairSubmission = async (issue, repairData, workerUse
     repairImageUrl,
     afterImageUrl,
     capturedAt,
-    photoValiditySeconds = 60,
+    photoValiditySeconds = 300,
     notes,
     materialsUsed,
     submittedBy = "ORGANIZATION",
@@ -27,7 +27,7 @@ export const processWorkerRepairSubmission = async (issue, repairData, workerUse
     throw new ApiError(400, "After-repair photo proof is mandatory.");
   }
 
-  // 60-Second Photo Validity Window Verification
+  // 5-Minute (300-Second) Photo Validity Window Verification
   const captureTimestamp = capturedAt ? new Date(capturedAt).getTime() : null;
   const now = Date.now();
   if (!captureTimestamp || isNaN(captureTimestamp)) {
@@ -38,11 +38,11 @@ export const processWorkerRepairSubmission = async (issue, repairData, workerUse
   }
 
   const ageSeconds = (now - captureTimestamp) / 1000;
-  // Enforce 60-second limit with 5-second grace for network transit / slight clock skew
-  if (ageSeconds > 65) {
+  // Enforce 5-minute (300-second) limit with 10-second grace for network transit / slight clock skew
+  if (ageSeconds > 310) {
     throw new ApiError(
       400,
-      `Photo proof expired. The photo was captured ${Math.round(ageSeconds)} seconds ago, exceeding the 60-second live submission limit. Please capture a new live photo.`
+      `Photo proof expired. The photo was captured ${Math.round(ageSeconds)} seconds ago, exceeding the 5-minute (300 seconds) live submission limit. Please capture a new live photo.`
     );
   }
   if (ageSeconds < -10) {
@@ -84,7 +84,7 @@ export const processWorkerRepairSubmission = async (issue, repairData, workerUse
     afterImageUrl: finalImageUrl,
     repairImageUrl: finalImageUrl,
     capturedAt: new Date(captureTimestamp),
-    photoValiditySeconds: 60,
+    photoValiditySeconds: 300,
     notes: notes || "Repairs completed by on-site field team.",
     materialsUsed: materialsUsed || "Standard asphalt cold-mix & tamper compaction",
     submittedBy: isVolunteer ? "PUBLIC_INDIVIDUAL" : "ORGANIZATION",
@@ -115,7 +115,7 @@ export const processWorkerRepairSubmission = async (issue, repairData, workerUse
     repairImageUrl: finalImageUrl,
     afterImageUrl: finalImageUrl,
     capturedAt: new Date(captureTimestamp),
-    photoValiditySeconds: 60,
+    photoValiditySeconds: 300,
     notes: repair.notes,
     materialsUsed: repair.materialsUsed,
     submittedBy: repair.submittedBy,

@@ -145,7 +145,7 @@ export const UploadRepairProof = () => {
     setPhotoSecondsLeft(null);
   };
 
-  // 60-Second Real-Time Countdown Timer on Upload Page
+  // 5-Minute (300-Second) Real-Time Countdown Timer on Upload Page
   useEffect(() => {
     if (!afterImageUrl || !photoCapturedAt) {
       setPhotoSecondsLeft(null);
@@ -159,7 +159,7 @@ export const UploadRepairProof = () => {
         return;
       }
       const elapsed = Math.floor((Date.now() - capTime) / 1000);
-      const remaining = Math.max(0, 60 - elapsed);
+      const remaining = Math.max(0, 300 - elapsed);
       setPhotoSecondsLeft(remaining);
     };
 
@@ -378,12 +378,12 @@ export const UploadRepairProof = () => {
       return;
     }
 
-    // Strict 60-second photo validity enforcement
+    // Strict 5-minute (300-second) photo validity enforcement
     const capTime = photoCapturedAt ? (typeof photoCapturedAt === 'number' ? photoCapturedAt : new Date(photoCapturedAt).getTime()) : null;
     const elapsedSeconds = capTime ? (Date.now() - capTime) / 1000 : Infinity;
-    if (!capTime || elapsedSeconds > 60) {
+    if (!capTime || elapsedSeconds > 300) {
       if (addToast) {
-        addToast('❌ Photo Expired: Captured photo exceeded the 60-second submission window. Please capture a new live photo with your camera before submitting.', 'error');
+        addToast('❌ Photo Expired: Captured photo exceeded the 5-minute submission window. Please capture a new live photo with your camera before submitting.', 'error');
       }
       return;
     }
@@ -402,7 +402,7 @@ export const UploadRepairProof = () => {
         await submitWorkerRepair(targetId, {
           repairImageUrl: finalImage,
           capturedAt: new Date(capTime).toISOString(),
-          photoValiditySeconds: 60,
+          photoValiditySeconds: 300,
           notes: notes || (isVol ? 'Resolution completed by individual person.' : 'Repairs completed by on-site field team.'),
           materialsUsed: materialsUsed || (isVol ? 'Individual repair tools' : 'Standard repair mix & compaction tools'),
           submittedBy: completingEntityType,
@@ -942,6 +942,7 @@ export const UploadRepairProof = () => {
                     onCapture={handleCapture}
                     onRetake={handleRetake}
                     disabled={!isWithinRange}
+                    validityDurationSeconds={300}
                     themeColor="amber"
                     label="Live Camera Resolution Proof Capture"
                     sublabel="Capture live photograph of the completed repair directly through your device camera"
@@ -1127,10 +1128,10 @@ export const UploadRepairProof = () => {
                       className="w-full py-3.5 rounded-2xl bg-rose-950/70 border-2 border-rose-500/60 text-rose-300 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-rose-950/50 hover:bg-rose-900/80 transition-all"
                     >
                       <AlertTriangle className="w-4 h-4 text-rose-400 animate-pulse" />
-                      <span>⚠️ Photo Proof Expired (60s Exceeded) &bull; Tap to Capture New Live Photo</span>
+                      <span>⚠️ Photo Proof Expired (5 min Exceeded) &bull; Tap to Capture New Live Photo</span>
                     </button>
                     <p className="text-center text-[11px] text-rose-400 font-medium">
-                      Submission blocked: Live photo expired after 60 seconds. A new live photo must be taken.
+                      Submission blocked: Live photo expired after 5 minutes (300s). A new live photo must be taken.
                     </p>
                   </div>
                 ) : (
@@ -1143,7 +1144,7 @@ export const UploadRepairProof = () => {
                     className="w-full py-3.5 bg-amber-600 hover:bg-amber-500 text-white font-bold shadow-xl shadow-amber-950/40 text-sm cursor-pointer"
                   >
                     Submit Repair Proof as {completingEntityType === 'PUBLIC_INDIVIDUAL' ? `Individual (${completingPersonName || 'Person'})` : `Organization (${completingOrgName || 'Org'})`}
-                    {photoSecondsLeft !== null ? ` (⏱️ ${photoSecondsLeft}s left)` : ''} (GPS Verified: {distanceMeters}m)
+                    {photoSecondsLeft !== null ? ` (⏱️ ${photoSecondsLeft >= 60 ? `${Math.floor(photoSecondsLeft / 60)}m ${photoSecondsLeft % 60 < 10 ? '0' : ''}${photoSecondsLeft % 60}s` : `${photoSecondsLeft}s`} left)` : ''} (GPS Verified: {distanceMeters}m)
                   </Button>
                 )
               ) : (

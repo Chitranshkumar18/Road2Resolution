@@ -260,7 +260,7 @@ const issueSchema = new mongoose.Schema(
       workerEmail: { type: String, default: "" },
       contractorUnit: { type: String, default: "" },
       capturedAt: { type: Date, default: null },
-      photoValiditySeconds: { type: Number, default: 60 },
+      photoValiditySeconds: { type: Number, default: 300 },
       submittedAt: { type: Date, default: null },
       gpsVerification: {
         verified: { type: Boolean, default: true },
