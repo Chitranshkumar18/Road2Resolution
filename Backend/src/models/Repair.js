@@ -34,6 +34,14 @@ const repairSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    capturedAt: {
+      type: Date,
+      default: null,
+    },
+    photoValiditySeconds: {
+      type: Number,
+      default: 60,
+    },
     notes: {
       type: String,
       default: "Repair proof submitted by field team.",

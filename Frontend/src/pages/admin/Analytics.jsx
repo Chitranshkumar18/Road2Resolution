@@ -17,6 +17,13 @@ import {
 } from 'recharts';
 import analyticsApi from '../../api/analyticsApi';
 
+const SEVERITY_COLORS = {
+  Critical: '#EF4444',
+  High: '#F97316',
+  Medium: '#FACC15',
+  Low: '#38BDF8',
+};
+
 export const Analytics = () => {
   const [trends, setTrends] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -103,9 +110,23 @@ export const Analytics = () => {
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={severities} innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value">
+                <Pie
+                  data={severities.map((item) => ({
+                    ...item,
+                    color: SEVERITY_COLORS[item.name] || item.color || '#38BDF8',
+                  }))}
+                  innerRadius={55}
+                  outerRadius={80}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
                   {severities.map((e, idx) => (
-                    <Cell key={`c-${idx}`} fill={e.color} stroke="#0B1120" strokeWidth={2} />
+                    <Cell
+                      key={`c-${idx}`}
+                      fill={SEVERITY_COLORS[e.name] || e.color || '#38BDF8'}
+                      stroke="#0B1120"
+                      strokeWidth={2}
+                    />
                   ))}
                 </Pie>
                 <Tooltip
@@ -117,7 +138,14 @@ export const Analytics = () => {
                     color: '#F8FAFC',
                   }}
                 />
-                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                <Legend
+                  wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                  formatter={(value) => (
+                    <span style={{ color: '#E2E8F0', fontWeight: 600, marginLeft: '4px', marginRight: '6px' }}>
+                      {value}
+                    </span>
+                  )}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>

@@ -17,25 +17,81 @@ import {
   Filter
 } from 'lucide-react';
 import { IssueContext } from '../../context/IssueContext';
+import useAuth from '../../hooks/useAuth';
 import SeverityBadge from '../../components/issue/SeverityBadge';
 import IssueStatus from '../../components/issue/IssueStatus';
 import Button from '../../components/common/Button';
 import { formatDate } from '../../utils/formatDate';
 import { formatDisplayAddress } from '../../utils/geocoding';
 
+const isSubmittedByCurrentWorker = (issue, currentUser) => {
+  if (!currentUser || !issue) return false;
+  const currentUserId = String(currentUser.id || currentUser._id || '').trim();
+  const currentUserEmail = (currentUser.email || '').toLowerCase().trim();
+  const currentUserName = (currentUser.name || '').toLowerCase().trim();
+
+  // 1. Match on issue.workerSubmission.worker or workerId
+  const submissionWorkerId = String(
+    issue.workerSubmission?.worker?._id ||
+    issue.workerSubmission?.worker ||
+    issue.workerSubmission?.workerId ||
+    ''
+  ).trim();
+  if (currentUserId && submissionWorkerId && currentUserId === submissionWorkerId) {
+    return true;
+  }
+
+  // 2. Match on issue.workerSubmission.workerEmail
+  const submissionWorkerEmail = (issue.workerSubmission?.workerEmail || '').toLowerCase().trim();
+  if (currentUserEmail && submissionWorkerEmail && currentUserEmail === submissionWorkerEmail) {
+    return true;
+  }
+
+  // 3. Match on repairs array (Repair.worker, Repair.workerEmail)
+  if (Array.isArray(issue.repairs) && issue.repairs.length > 0) {
+    for (const rep of issue.repairs) {
+      if (typeof rep === 'object' && rep !== null) {
+        const repWorkerId = String(rep.worker?._id || rep.worker || '').trim();
+        if (currentUserId && repWorkerId && currentUserId === repWorkerId) {
+          return true;
+        }
+        const repWorkerEmail = (rep.workerEmail || '').toLowerCase().trim();
+        if (currentUserEmail && repWorkerEmail && currentUserEmail === repWorkerEmail) {
+          return true;
+        }
+      }
+    }
+  }
+
+  // 4. Fallback for mock/local data without IDs or emails
+  const submissionWorkerName = (issue.workerSubmission?.workerName || '').toLowerCase().trim();
+  if (currentUserName && submissionWorkerName && currentUserName === submissionWorkerName) {
+    return true;
+  }
+
+  return false;
+};
+
 export const WorkerSubmittedRepairs = () => {
   const { issues = [] } = useContext(IssueContext) || {};
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [filterEntity, setFilterEntity] = useState('all'); // 'all' | 'org' | 'individual'
 
   const issueList = Array.isArray(issues) ? issues : [];
 
-  // Filter issues where worker submitted proof or has repairVerificationUrl
+  // Filter issues where THIS logged-in worker submitted proof
   const submittedIssues = useMemo(() => {
-    return issueList.filter(
-      (i) => i.status === 'PENDING_VERIFICATION' || Boolean(i.workerSubmission) || Boolean(i.repairVerificationUrl)
-    );
-  }, [issueList]);
+    return issueList.filter((i) => {
+      const isSubmitted =
+        i.status === 'PENDING_VERIFICATION' ||
+        i.status === 'RESOLVED' ||
+        Boolean(i.workerSubmission) ||
+        Boolean(i.repairVerificationUrl);
+      if (!isSubmitted) return false;
+      return isSubmittedByCurrentWorker(i, user);
+    });
+  }, [issueList, user]);
 
   const filteredSubmissions = useMemo(() => {
     return submittedIssues.filter((issue) => {

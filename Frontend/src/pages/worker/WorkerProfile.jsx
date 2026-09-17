@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import {
   User,
   Wrench,
@@ -15,10 +15,165 @@ import {
   Layers
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
+import { IssueContext } from '../../context/IssueContext';
 import Button from '../../components/common/Button';
+
+const isWorkerIssue = (issue, currentUser) => {
+  if (!currentUser || !issue) return false;
+  const currentUserId = String(currentUser.id || currentUser._id || '').trim();
+  const currentUserEmail = (currentUser.email || '').toLowerCase().trim();
+  const currentUserName = (currentUser.name || '').toLowerCase().trim();
+
+  const submissionWorkerId = String(
+    issue.workerSubmission?.worker?._id ||
+    issue.workerSubmission?.worker ||
+    issue.workerSubmission?.workerId ||
+    ''
+  ).trim();
+  if (currentUserId && submissionWorkerId && currentUserId === submissionWorkerId) {
+    return true;
+  }
+
+  const submissionWorkerEmail = (issue.workerSubmission?.workerEmail || '').toLowerCase().trim();
+  if (currentUserEmail && submissionWorkerEmail && currentUserEmail === submissionWorkerEmail) {
+    return true;
+  }
+
+  if (Array.isArray(issue.repairs) && issue.repairs.length > 0) {
+    for (const rep of issue.repairs) {
+      if (typeof rep === 'object' && rep !== null) {
+        const repWorkerId = String(rep.worker?._id || rep.worker || '').trim();
+        const repWorkerEmail = (rep.workerEmail || '').toLowerCase().trim();
+        if ((currentUserId && repWorkerId && currentUserId === repWorkerId) || (currentUserEmail && repWorkerEmail && currentUserEmail === repWorkerEmail)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  const submissionWorkerName = (issue.workerSubmission?.workerName || '').toLowerCase().trim();
+  if (currentUserName && submissionWorkerName && currentUserName === submissionWorkerName) {
+    return true;
+  }
+
+  return false;
+};
+
+const calculateWorkerStats = (issues = [], user = null) => {
+  if (!user) {
+    return {
+      completedTasksCount: 0,
+      activeTasksCount: 0,
+      qaPassRate: null,
+      avgTurnaroundHours: null,
+    };
+  }
+
+  const userName = (user.name || '').toLowerCase().trim();
+
+  let completedTasksCount = 0;
+  let activeTasksCount = 0;
+  let verifiedCount = 0;
+  let rejectedCount = 0;
+  let turnaroundHoursList = [];
+
+  for (const issue of issues) {
+    if (!issue) continue;
+    const isSubmittedByWorker = isWorkerIssue(issue, user);
+
+    const hasSubmission =
+      issue.status === 'PENDING_VERIFICATION' ||
+      issue.status === 'RESOLVED' ||
+      Boolean(issue.workerSubmission?.repairImageUrl || issue.workerSubmission?.afterImageUrl) ||
+      Boolean(issue.repairVerificationUrl);
+
+    if (isSubmittedByWorker && hasSubmission) {
+      completedTasksCount++;
+
+      const isVerified =
+        issue.status === 'RESOLVED' ||
+        Boolean(issue.repairAudit?.verified) ||
+        (Array.isArray(issue.repairs) && issue.repairs.some((r) => r?.verificationStatus === 'VERIFIED'));
+
+      const isRejected =
+        Array.isArray(issue.repairs) && issue.repairs.some((r) => r?.verificationStatus === 'REJECTED');
+
+      if (isVerified) {
+        verifiedCount++;
+      } else if (isRejected) {
+        rejectedCount++;
+      }
+
+      const submittedTime =
+        issue.workerSubmission?.submittedAt ||
+        issue.repairAudit?.verifiedAt ||
+        issue.updatedAt;
+
+      let startTime = null;
+      if (Array.isArray(issue.timeline)) {
+        const inProgressEntry = issue.timeline.find((t) => t.status === 'IN_PROGRESS');
+        if (inProgressEntry?.timestamp) {
+          startTime = inProgressEntry.timestamp;
+        } else {
+          const assignedEntry = issue.timeline.find((t) => t.status === 'ASSIGNED');
+          if (assignedEntry?.timestamp) {
+            startTime = assignedEntry.timestamp;
+          }
+        }
+      }
+      if (!startTime) {
+        startTime = issue.createdAt;
+      }
+
+      if (submittedTime && startTime) {
+        const startMs = new Date(startTime).getTime();
+        const endMs = new Date(submittedTime).getTime();
+        if (endMs >= startMs) {
+          const hours = (endMs - startMs) / (1000 * 60 * 60);
+          turnaroundHoursList.push(hours);
+        }
+      }
+    } else if (issue.status === 'IN_PROGRESS' && !hasSubmission) {
+      const respName = (issue.responsibleName || '').toLowerCase().trim();
+      if ((userName && respName === userName) || isSubmittedByWorker) {
+        activeTasksCount++;
+      }
+    }
+  }
+
+  const totalReviewed = verifiedCount + rejectedCount;
+  const qaPassRate = totalReviewed > 0 ? Math.round((verifiedCount / totalReviewed) * 100) : null;
+
+  let avgTurnaroundHours = null;
+  if (turnaroundHoursList.length > 0) {
+    const sum = turnaroundHoursList.reduce((acc, val) => acc + val, 0);
+    avgTurnaroundHours = Math.round((sum / turnaroundHoursList.length) * 10) / 10;
+  }
+
+  return {
+    completedTasksCount,
+    activeTasksCount,
+    qaPassRate,
+    avgTurnaroundHours,
+  };
+};
 
 export const WorkerProfile = () => {
   const { user, updateProfile } = useAuth();
+  const { issues = [] } = useContext(IssueContext) || {};
+
+  const stats = useMemo(() => {
+    if (issues.length > 0) {
+      return calculateWorkerStats(issues, user);
+    }
+    return {
+      completedTasksCount: user?.completedTasksCount || 0,
+      activeTasksCount: user?.activeTasksCount || 0,
+      qaPassRate: user?.qaPassRate ?? null,
+      avgTurnaroundHours: user?.avgTurnaroundHours ?? null,
+    };
+  }, [issues, user]);
+
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [contractorUnit, setContractorUnit] = useState(user?.contractorUnit || user?.organizationName || '');
@@ -66,19 +221,19 @@ export const WorkerProfile = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
           <span className="text-[11px] text-slate-400">Total Repaired</span>
-          <p className="text-2xl font-black font-mono text-amber-400">{user?.completedTasksCount || 0}</p>
+          <p className="text-2xl font-black font-mono text-amber-400">{stats.completedTasksCount}</p>
         </div>
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
           <span className="text-[11px] text-slate-400">Active Tasks</span>
-          <p className="text-2xl font-black font-mono text-cyan-400">{user?.activeTasksCount || 0}</p>
+          <p className="text-2xl font-black font-mono text-cyan-400">{stats.activeTasksCount}</p>
         </div>
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
           <span className="text-[11px] text-slate-400">Admin QA Pass Rate</span>
-          <p className="text-2xl font-black font-mono text-emerald-400">{user?.qaPassRate ? `${user.qaPassRate}%` : 'N/A'}</p>
+          <p className="text-2xl font-black font-mono text-emerald-400">{stats.qaPassRate !== null && stats.qaPassRate !== undefined ? `${stats.qaPassRate}%` : 'N/A'}</p>
         </div>
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
           <span className="text-[11px] text-slate-400">SLA Turnaround</span>
-          <p className="text-2xl font-black font-mono text-indigo-400">{user?.avgTurnaroundHours ? `${user.avgTurnaroundHours} hrs` : 'N/A'}</p>
+          <p className="text-2xl font-black font-mono text-indigo-400">{stats.avgTurnaroundHours !== null && stats.avgTurnaroundHours !== undefined ? `${stats.avgTurnaroundHours} hrs` : 'N/A'}</p>
         </div>
       </div>
 

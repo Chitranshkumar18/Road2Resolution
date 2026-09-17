@@ -43,6 +43,50 @@ const LOCATION_PRESETS = [
   { label: 'Uttar Pradesh (Lucknow)', lat: 26.8467, lng: 80.9462, city: 'Lucknow' }
 ];
 
+const isSubmittedByCurrentWorker = (issue, currentUser) => {
+  if (!currentUser || !issue) return false;
+  const currentUserId = String(currentUser.id || currentUser._id || '').trim();
+  const currentUserEmail = (currentUser.email || '').toLowerCase().trim();
+  const currentUserName = (currentUser.name || '').toLowerCase().trim();
+
+  const submissionWorkerId = String(
+    issue.workerSubmission?.worker?._id ||
+    issue.workerSubmission?.worker ||
+    issue.workerSubmission?.workerId ||
+    ''
+  ).trim();
+  if (currentUserId && submissionWorkerId && currentUserId === submissionWorkerId) {
+    return true;
+  }
+
+  const submissionWorkerEmail = (issue.workerSubmission?.workerEmail || '').toLowerCase().trim();
+  if (currentUserEmail && submissionWorkerEmail && currentUserEmail === submissionWorkerEmail) {
+    return true;
+  }
+
+  if (Array.isArray(issue.repairs) && issue.repairs.length > 0) {
+    for (const rep of issue.repairs) {
+      if (typeof rep === 'object' && rep !== null) {
+        const repWorkerId = String(rep.worker?._id || rep.worker || '').trim();
+        if (currentUserId && repWorkerId && currentUserId === repWorkerId) {
+          return true;
+        }
+        const repWorkerEmail = (rep.workerEmail || '').toLowerCase().trim();
+        if (currentUserEmail && repWorkerEmail && currentUserEmail === repWorkerEmail) {
+          return true;
+        }
+      }
+    }
+  }
+
+  const submissionWorkerName = (issue.workerSubmission?.workerName || '').toLowerCase().trim();
+  if (currentUserName && submissionWorkerName && currentUserName === submissionWorkerName) {
+    return true;
+  }
+
+  return false;
+};
+
 export const WorkerDashboard = () => {
   const { issues = [], startWorkerTask } = useContext(IssueContext) || {};
   const { addToast } = useContext(NotificationContext) || {};
@@ -72,9 +116,22 @@ export const WorkerDashboard = () => {
 
   const [selectedRadius, setSelectedRadius] = useState('all'); // 'all' | '50' | '100'
 
-  // 1. Calculate distance for each complaint dynamically from worker's GPS location
+  // Filter out complaints that are already completed or where repair proof has already been submitted
+  const activeComplaints = useMemo(() => {
+    return issueList.filter((issue) => {
+      const isSubmitted =
+        issue.status === 'PENDING_VERIFICATION' ||
+        issue.status === 'RESOLVED' ||
+        issue.status === 'CLOSED' ||
+        Boolean(issue.workerSubmission?.repairImageUrl || issue.workerSubmission?.afterImageUrl) ||
+        Boolean(issue.repairVerificationUrl);
+      return !isSubmitted;
+    });
+  }, [issueList]);
+
+  // 1. Calculate distance for each active complaint dynamically from worker's GPS location
   const complaintsWithDistance = useMemo(() => {
-    return issueList.map((issue) => {
+    return activeComplaints.map((issue) => {
       const issueLat = issue.location?.lat || 28.6139;
       const issueLng = issue.location?.lng || 77.2090;
       const distanceKm = calculateDistanceKm(
@@ -89,9 +146,9 @@ export const WorkerDashboard = () => {
         isWithin50Km: distanceKm <= MAX_RADIUS_KM
       };
     });
-  }, [issueList, workerLocation]);
+  }, [activeComplaints, workerLocation]);
 
-  // 2. Synchronized Citizen Complaints list (All citizen submissions visible by default with real-time GPS distances)
+  // 2. Synchronized Citizen Complaints list (All active citizen submissions with real-time GPS distances)
   const visibleIssues = useMemo(() => {
     if (selectedRadius === '50') {
       return complaintsWithDistance.filter((i) => i.isWithin50Km);
@@ -106,18 +163,24 @@ export const WorkerDashboard = () => {
     (i) => i.status !== 'RESOLVED' && i.status !== 'CLOSED' && i.status !== 'REJECTED'
   );
   const inProgressTasks = visibleIssues.filter((i) => i.status === 'IN_PROGRESS');
-  const pendingVerifications = visibleIssues.filter(
-    (i) => i.status === 'PENDING_VERIFICATION' || Boolean(i.workerSubmission && i.status !== 'RESOLVED')
-  );
-  const certifiedRepairs = visibleIssues.filter(
-    (i) => i.status === 'RESOLVED' || Boolean(i.repairVerificationUrl)
-  );
 
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'in_progress' | 'pending_qa'
+  // Scope submitted verifications and certified repairs to the logged-in worker
+  const pendingVerifications = useMemo(() => {
+    return issueList.filter(
+      (i) => (i.status === 'PENDING_VERIFICATION' || (i.status !== 'RESOLVED' && Boolean(i.workerSubmission))) && isSubmittedByCurrentWorker(i, user)
+    );
+  }, [issueList, user]);
+
+  const certifiedRepairs = useMemo(() => {
+    return issueList.filter(
+      (i) => (i.status === 'RESOLVED' || Boolean(i.repairAudit?.verified)) && isSubmittedByCurrentWorker(i, user)
+    );
+  }, [issueList, user]);
+
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'in_progress'
 
   const displayedComplaints = openComplaints.filter((item) => {
     if (activeTab === 'in_progress') return item.status === 'IN_PROGRESS';
-    if (activeTab === 'pending_qa') return item.status === 'PENDING_VERIFICATION';
     return true;
   });
 
@@ -334,16 +397,6 @@ export const WorkerDashboard = () => {
             >
               In Progress ({inProgressTasks.length})
             </button>
-            <button
-              onClick={() => setActiveTab('pending_qa')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                activeTab === 'pending_qa'
-                  ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Pending QA ({pendingVerifications.length})
-            </button>
           </div>
         </div>
 
@@ -424,13 +477,6 @@ export const WorkerDashboard = () => {
                       {formatDisplayAddress(issue.location?.address, issue.location)}
                     </span>
                   </div>
-
-                  {issue.workerSubmission && (
-                    <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-[11px] flex items-center justify-between">
-                      <span>Proof Uploaded</span>
-                      <span className="font-mono font-bold">Awaiting Admin QA</span>
-                    </div>
-                  )}
 
                   {/* Actions */}
                   <div className="grid grid-cols-2 gap-2 pt-1">

@@ -5,6 +5,7 @@ import useAuth from '../../hooks/useAuth';
 import NotificationPanel from './NotificationPanel';
 import ThemeChanger from './ThemeChanger';
 import { NotificationContext } from '../../context/NotificationContext';
+import { ADMIN_DEFAULT_AVATAR } from '../../utils/constants';
 
 export const Header = ({ onToggleSidebar, title, subtitle }) => {
   const { user, isAdmin, isWorker, logout } = useAuth();
@@ -41,6 +42,11 @@ export const Header = ({ onToggleSidebar, title, subtitle }) => {
     if (isWorker) return '/worker/profile';
     return '/citizen/profile';
   };
+
+  const adminAvatar = user?.avatar || ADMIN_DEFAULT_AVATAR;
+  const userAvatar = isAdmin
+    ? adminAvatar
+    : user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80';
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800">
@@ -97,7 +103,7 @@ export const Header = ({ onToggleSidebar, title, subtitle }) => {
             className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-800 transition-colors"
           >
             <img
-              src={user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'}
+              src={userAvatar}
               alt={user?.name || 'User'}
               className={`w-8 h-8 rounded-lg object-cover ring-2 ${
                 isAdmin ? 'ring-rose-500/30' : isWorker ? 'ring-amber-500/40' : 'ring-indigo-500/30'

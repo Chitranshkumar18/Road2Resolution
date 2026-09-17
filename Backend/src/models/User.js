@@ -71,9 +71,13 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    civicPoints: {
+      type: Number,
+      default: 0,
+    },
     reputationScore: {
       type: Number,
-      default: 100,
+      default: 0,
     },
     isActive: {
       type: Boolean,

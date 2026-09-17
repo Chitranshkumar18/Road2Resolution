@@ -14,7 +14,7 @@ export const ReportIssue = () => {
 
   const { addIssue } = useContext(IssueContext);
   const { addToast } = useContext(NotificationContext);
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   const handleFormSubmit = async (formData) => {
@@ -34,7 +34,7 @@ export const ReportIssue = () => {
           name: user?.name || 'Citizen Reporter',
           email: user?.email || '',
           avatar: user?.avatar || '',
-          reputation: user?.reputationScore || 0,
+          reputation: user?.reputationScore ?? 0,
         },
         location: {
           address: issueData.address,
@@ -46,8 +46,11 @@ export const ReportIssue = () => {
 
       const created = await addIssue(payload);
       setCreatedIssue(created);
+      if (refreshUser) {
+        await refreshUser();
+      }
       setStep('success');
-      addToast('🎉 Civic hazard reported and dispatched to Worker & Admin portals!', 'success');
+      addToast('🎉 Civic hazard reported! +10 Civic Points added to your account.', 'success');
     } catch (err) {
       console.error(err);
       addToast('Failed to submit report. Please check details and try again.', 'error');
@@ -98,6 +101,10 @@ export const ReportIssue = () => {
           </div>
 
           <div className="space-y-2 max-w-md mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-bold font-mono">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              <span>+10 Civic Points Added to Your Account</span>
+            </div>
             <h3 className="text-xl font-bold text-white font-display">Civic Report Successfully Logged!</h3>
             <p className="text-xs text-slate-300">
               Incident <strong className="text-indigo-400 font-mono">{createdIssue.id}</strong> has been created with a Priority Score of <strong className="text-amber-400 font-mono">{createdIssue.priorityScore}/100</strong> and immediately dispatched to both the <strong>Worker Portal</strong> and <strong>Admin Control Desk</strong>.

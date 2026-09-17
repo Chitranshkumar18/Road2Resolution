@@ -11,7 +11,6 @@ export const CitizenLayout = () => {
   const getPageMeta = () => {
     const p = location.pathname; //--->>>Ye current URL/path ko store karta hai.(location)
     if (p.includes('/citizen/report')) return { title: 'Report Civic Hazard', subtitle: 'Submit photo with AI visual diagnosis & live GPS' };
-    if (p.includes('/citizen/ai-analysis')) return { title: 'AI Neural Vision Scanner', subtitle: 'Automated defect classifier & severity predictor' };
     if (p.includes('/citizen/duplicate-check')) return { title: 'Duplicate Report Detector', subtitle: 'Prevent redundant submissions and merge upvotes' };
     if (p.includes('/citizen/my-reports')) return { title: 'My Submitted Issues', subtitle: 'Track resolution timeline, upvotes, and status' };
     if (p.includes('/citizen/explore')) return { title: 'Live GPS Incident Radar', subtitle: 'Real-time satellite GPS tracking across municipal sectors' };

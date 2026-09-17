@@ -200,7 +200,7 @@ const issueSchema = new mongoose.Schema(
       name: { type: String, default: "Citizen Reporter" },
       email: { type: String, default: "" },
       avatar: { type: String, default: "" },
-      reputation: { type: Number, default: 100 },
+      reputation: { type: Number, default: 0 },
     },
     userId: {
       type: String,
@@ -239,6 +239,8 @@ const issueSchema = new mongoose.Schema(
       default: "",
     },
     workerSubmission: {
+      worker: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+      workerId: { type: String, default: "" },
       repairImageUrl: { type: String, default: "" },
       afterImageUrl: { type: String, default: "" },
       notes: { type: String, default: "" },
@@ -249,6 +251,8 @@ const issueSchema = new mongoose.Schema(
       workerName: { type: String, default: "" },
       workerEmail: { type: String, default: "" },
       contractorUnit: { type: String, default: "" },
+      capturedAt: { type: Date, default: null },
+      photoValiditySeconds: { type: Number, default: 60 },
       submittedAt: { type: Date, default: null },
       gpsVerification: {
         verified: { type: Boolean, default: true },

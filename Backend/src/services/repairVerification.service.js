@@ -11,6 +11,8 @@ export const processWorkerRepairSubmission = async (issue, repairData, workerUse
   const {
     repairImageUrl,
     afterImageUrl,
+    capturedAt,
+    photoValiditySeconds = 60,
     notes,
     materialsUsed,
     submittedBy = "ORGANIZATION",
@@ -23,6 +25,28 @@ export const processWorkerRepairSubmission = async (issue, repairData, workerUse
   const rawImage = repairImageUrl || afterImageUrl;
   if (!rawImage) {
     throw new ApiError(400, "After-repair photo proof is mandatory.");
+  }
+
+  // 60-Second Photo Validity Window Verification
+  const captureTimestamp = capturedAt ? new Date(capturedAt).getTime() : null;
+  const now = Date.now();
+  if (!captureTimestamp || isNaN(captureTimestamp)) {
+    throw new ApiError(
+      400,
+      "Live camera photo capture timestamp is required. Please capture a live photograph using your device camera."
+    );
+  }
+
+  const ageSeconds = (now - captureTimestamp) / 1000;
+  // Enforce 60-second limit with 5-second grace for network transit / slight clock skew
+  if (ageSeconds > 65) {
+    throw new ApiError(
+      400,
+      `Photo proof expired. The photo was captured ${Math.round(ageSeconds)} seconds ago, exceeding the 60-second live submission limit. Please capture a new live photo.`
+    );
+  }
+  if (ageSeconds < -10) {
+    throw new ApiError(400, "Invalid capture timestamp detected. Please capture a fresh live photo.");
   }
 
   // Upload or process image
@@ -45,25 +69,29 @@ export const processWorkerRepairSubmission = async (issue, repairData, workerUse
     }
   }
 
-  const actorName = workerInfo.name || workerUser?.name || (isVolunteer ? "Public Citizen" : "Field Worker");
+  const workerUserId = workerUser?._id || workerUser?.id || repairData.workerId || workerInfo.id || workerInfo._id || null;
+  const actorName = repairData.workerName || workerInfo.name || workerUser?.name || (isVolunteer ? "Public Citizen" : "Field Worker");
+  const actorEmail = repairData.workerEmail || workerInfo.email || workerUser?.email || "";
   const actorOrg = isVolunteer ? null : (organizationName || workerInfo.contractorUnit || issue.assignedOrgName || "Municipal Infrastructure Division");
 
   // Create Repair document
   const repair = await Repair.create({
     issue: issue._id,
     issueCustomId: issue.customId || issue.id,
-    worker: workerUser?._id || null,
+    worker: workerUserId,
     organization: null,
     beforeImageUrl: issue.imageUrl,
     afterImageUrl: finalImageUrl,
     repairImageUrl: finalImageUrl,
+    capturedAt: new Date(captureTimestamp),
+    photoValiditySeconds: 60,
     notes: notes || "Repairs completed by on-site field team.",
     materialsUsed: materialsUsed || "Standard asphalt cold-mix & tamper compaction",
     submittedBy: isVolunteer ? "PUBLIC_INDIVIDUAL" : "ORGANIZATION",
     isVolunteer: Boolean(isVolunteer),
     organizationName: actorOrg || "",
     workerName: actorName,
-    workerEmail: workerInfo.email || workerUser?.email || "",
+    workerEmail: actorEmail,
     contractorUnit: isVolunteer ? "Individual Worker / Public Person" : (actorOrg || ""),
     gpsVerification: {
       verified: geoCheck.verified,
@@ -82,8 +110,12 @@ export const processWorkerRepairSubmission = async (issue, repairData, workerUse
   // Update Issue status to PENDING_VERIFICATION (QA) and attach worker submission
   issue.status = "PENDING_VERIFICATION";
   issue.workerSubmission = {
+    worker: workerUserId,
+    workerId: workerUserId ? String(workerUserId) : "",
     repairImageUrl: finalImageUrl,
     afterImageUrl: finalImageUrl,
+    capturedAt: new Date(captureTimestamp),
+    photoValiditySeconds: 60,
     notes: repair.notes,
     materialsUsed: repair.materialsUsed,
     submittedBy: repair.submittedBy,

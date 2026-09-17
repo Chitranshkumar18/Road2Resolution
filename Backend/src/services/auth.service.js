@@ -1,7 +1,9 @@
 import User from "../models/User.js";
+import Issue from "../models/Issue.js";
 import ApiError from "../utils/ApiError.js";
 import { generateToken } from "../utils/generateToken.js";
-import { sanitizeUser } from "../utils/helpers.js";
+import { sanitizeUser, calculateWorkerStats } from "../utils/helpers.js";
+import { uploadImage } from "./cloudinary.service.js";
 import { ENV } from "../config/env.js";
 
 /**
@@ -35,6 +37,11 @@ export const register = async (userData) => {
   });
 
   const sanitized = sanitizeUser(user);
+  if (user.role === "worker") {
+    const issues = await Issue.find({}).populate("repairs").lean();
+    const stats = calculateWorkerStats(issues, user);
+    Object.assign(sanitized, stats);
+  }
   const token = generateToken(user._id, user.role);
 
   return {
@@ -72,6 +79,11 @@ export const login = async (email, password, preferredRole = "citizen") => {
   }
 
   const sanitized = sanitizeUser(user);
+  if (user.role === "worker") {
+    const issues = await Issue.find({}).populate("repairs").lean();
+    const stats = calculateWorkerStats(issues, user);
+    Object.assign(sanitized, stats);
+  }
   const token = generateToken(user._id, user.role);
 
   return {
@@ -88,7 +100,13 @@ export const getCurrentUser = async (userId) => {
   if (!user) {
     throw new ApiError(404, "User not found.");
   }
-  return sanitizeUser(user);
+  const sanitized = sanitizeUser(user);
+  if (user.role === "worker") {
+    const issues = await Issue.find({}).populate("repairs").lean();
+    const stats = calculateWorkerStats(issues, user);
+    Object.assign(sanitized, stats);
+  }
+  return sanitized;
 };
 
 /**
@@ -100,6 +118,14 @@ export const updateProfile = async (userId, updates = {}) => {
   delete updates.role;
   delete updates._id;
 
+  if (updates.avatar && typeof updates.avatar === "string" && (updates.avatar.startsWith("data:") || updates.avatar.startsWith("http"))) {
+    try {
+      updates.avatar = await uploadImage(updates.avatar, "civicvision/avatars");
+    } catch (e) {
+      console.warn("Avatar upload processing note:", e.message);
+    }
+  }
+
   const user = await User.findByIdAndUpdate(
     userId,
     { $set: updates },
@@ -110,7 +136,13 @@ export const updateProfile = async (userId, updates = {}) => {
     throw new ApiError(404, "User not found.");
   }
 
-  return sanitizeUser(user);
+  const sanitized = sanitizeUser(user);
+  if (user.role === "worker") {
+    const issues = await Issue.find({}).populate("repairs").lean();
+    const stats = calculateWorkerStats(issues, user);
+    Object.assign(sanitized, stats);
+  }
+  return sanitized;
 };
 
 export default {

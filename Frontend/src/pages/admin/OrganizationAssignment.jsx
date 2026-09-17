@@ -59,9 +59,20 @@ export const OrganizationAssignment = () => {
   const issueList = Array.isArray(issues) ? issues : [];
   const orgList = Array.isArray(organizations) ? organizations : [];
 
+  // Helper to identify verified/resolved issues
+  const isVerifiedIssue = (issue) =>
+    issue.status === 'RESOLVED' ||
+    Boolean(issue.repairAudit?.verified);
+
+  // Active unverified complaints that require organization assignment / workflow management.
+  // Verified complaints are automatically removed and routed to Repair QA & Audit.
+  const activeUnverifiedIssues = useMemo(() => {
+    return issueList.filter((item) => !isVerifiedIssue(item));
+  }, [issueList]);
+
   // Filtered complaints
   const filteredIssues = useMemo(() => {
-    return issueList.filter((item) => {
+    return activeUnverifiedIssues.filter((item) => {
       if (selectedState !== 'all') {
         const itemState = (item.location?.state || 'Delhi').toLowerCase();
         if (itemState !== selectedState.toLowerCase()) return false;
@@ -91,11 +102,11 @@ export const OrganizationAssignment = () => {
       }
       return true;
     });
-  }, [issueList, selectedState, selectedCategory, selectedStatus, search]);
+  }, [activeUnverifiedIssues, selectedState, selectedCategory, selectedStatus, search]);
 
   // Statistics
-  const unassignedCount = issueList.filter((i) => !i.assignedOrgId).length;
-  const assignedCount = issueList.filter((i) => !!i.assignedOrgId).length;
+  const unassignedCount = activeUnverifiedIssues.filter((i) => !i.assignedOrgId).length;
+  const assignedCount = activeUnverifiedIssues.filter((i) => !!i.assignedOrgId).length;
 
   // Eligible organizations for the currently active complaint in modal (75 km radius)
   const eligibleOrgsForActive = useMemo(() => {
@@ -108,6 +119,10 @@ export const OrganizationAssignment = () => {
 
   // Open the Assignment Modal for a specific complaint
   const handleOpenAssignModal = (complaint) => {
+    if (complaint.status === 'RESOLVED' || complaint.repairAudit?.verified) {
+      if (addToast) addToast('Cannot reassign organization: this complaint is already verified & resolved.', 'warning');
+      return;
+    }
     setActiveComplaint(complaint);
     // Find eligible orgs for this complaint
     const orgs = getEligibleOrganizations(complaint, orgList, MAX_ASSIGNMENT_RADIUS_KM);
@@ -180,8 +195,8 @@ export const OrganizationAssignment = () => {
           {/* Quick Counter Badges */}
           <div className="flex items-center gap-2.5 flex-wrap">
             <div className="px-3.5 py-2 rounded-2xl bg-slate-950 border border-slate-800 text-center">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Total Reports</span>
-              <span className="text-sm font-bold font-mono text-white">{issueList.length}</span>
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Active Complaints</span>
+              <span className="text-sm font-bold font-mono text-white">{activeUnverifiedIssues.length}</span>
             </div>
             <div className="px-3.5 py-2 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-center">
               <span className="text-[10px] font-mono text-amber-300 uppercase tracking-wider block">Awaiting Org</span>
@@ -253,12 +268,11 @@ export const OrganizationAssignment = () => {
             onChange={(e) => setSelectedStatus(e.target.value)}
             className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
           >
-            <option value="all">All Statuses ({filteredIssues.length})</option>
+            <option value="all">All Active Statuses ({filteredIssues.length})</option>
             <option value="unassigned">⚡ Unassigned (Awaiting Org)</option>
             <option value="assigned">🏢 Assigned to Organization</option>
             <option value="IN_PROGRESS">🛠️ Work In Progress</option>
             <option value="PENDING_VERIFICATION">📸 Proof Awaiting Admin QA</option>
-            <option value="RESOLVED">✅ Verified & Certified</option>
           </select>
         </div>
       </div>
@@ -267,6 +281,7 @@ export const OrganizationAssignment = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredIssues.length > 0 ? (
           filteredIssues.map((issue) => {
+            const isVerified = issue.status === 'RESOLVED' || Boolean(issue.repairAudit?.verified);
             const isAssigned = !!issue.assignedOrgId;
             const issueCity = issue.location?.city || 'City';
             const issueState = issue.location?.state || 'Delhi';
@@ -306,7 +321,12 @@ export const OrganizationAssignment = () => {
 
                   {/* 2. Directly Below Photo: “Assign Complaint” Button */}
                   <div>
-                    {isAssigned ? (
+                    {isVerified ? (
+                      <div className="w-full py-2.5 px-4 rounded-xl bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span>Repair Verified (Assignment Locked)</span>
+                      </div>
+                    ) : isAssigned ? (
                       <button
                         onClick={() => handleOpenAssignModal(issue)}
                         className="w-full py-2.5 px-4 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
@@ -369,9 +389,13 @@ export const OrganizationAssignment = () => {
                           Org: <strong className="text-indigo-300 font-bold">{issue.assignedOrgName}</strong>
                         </span>
                       </div>
-                      <span className="text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-500/30 flex-shrink-0">
-                        ASSIGNED
+                      <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border flex-shrink-0 ${isVerified ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'}`}>
+                        {isVerified ? 'VERIFIED' : 'ASSIGNED'}
                       </span>
+                    </div>
+                  ) : isVerified ? (
+                    <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-emerald-300 font-medium">✅ Verified by Municipal QA</span>
                     </div>
                   ) : (
                     <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-xs flex items-center justify-between gap-2">

@@ -6,6 +6,18 @@ export const validateSubmitRepair = (data = {}) => {
     errors.push("After-repair photographic proof is required.");
   }
 
+  if (data.capturedAt) {
+    const capTime = new Date(data.capturedAt).getTime();
+    if (isNaN(capTime)) {
+      errors.push("Invalid photo capture timestamp.");
+    } else {
+      const ageSeconds = (Date.now() - capTime) / 1000;
+      if (ageSeconds > 65) {
+        errors.push("Captured photo proof expired (exceeded 60-second limit). Please capture a new live photo.");
+      }
+    }
+  }
+
   return {
     isValid: errors.length === 0,
     errors,

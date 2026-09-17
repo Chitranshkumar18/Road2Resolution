@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Issue from "../models/Issue.js";
+import User from "../models/User.js";
 import Organization from "../models/Organization.js";
 import Review from "../models/Review.js";
 import ApiError from "../utils/ApiError.js";
@@ -16,9 +17,9 @@ import { emitIssueUpdated } from "../sockets/socket.js";
 export const findIssueByIdOrCustomId = async (id) => {
   if (!id) return null;
 
-  let issue = await Issue.findOne({ customId: id });
+  let issue = await Issue.findOne({ customId: id }).populate("repairs");
   if (!issue && mongoose.Types.ObjectId.isValid(id)) {
-    issue = await Issue.findById(id);
+    issue = await Issue.findById(id).populate("repairs");
   }
   return issue;
 };
@@ -82,7 +83,7 @@ export const getAllIssues = async (filters = {}) => {
     ];
   }
 
-  const issues = await Issue.find(query).sort({ createdAt: -1 }).lean();
+  const issues = await Issue.find(query).sort({ createdAt: -1 }).populate("repairs").lean();
 
   return issues.map((issue) => formatIssueForFrontend(issue));
 };
@@ -143,13 +144,46 @@ export const createIssue = async (issueData, currentUser = null) => {
 
   const dept = getDepartmentForCategory(category);
 
+  const reporterUserId = currentUser?._id || currentUser?.id || reporter?._id || reporter?.id || userId || "";
+  const currentReputation = currentUser?.reputationScore ?? reporter?.reputation ?? 0;
+  let updatedCivicPoints = currentUser?.civicPoints ?? 0;
+
+  // Add +10 Civic Points whenever a citizen successfully submits a complaint (reputation stays unchanged)
+  if (reporterUserId) {
+    try {
+      let userDoc = null;
+      if (mongoose.Types.ObjectId.isValid(reporterUserId)) {
+        userDoc = await User.findByIdAndUpdate(
+          reporterUserId,
+          { $inc: { civicPoints: 10 } },
+          { returnDocument: "after" }
+        );
+      } else if (currentUser?.email || reporter?.email) {
+        userDoc = await User.findOneAndUpdate(
+          { email: (currentUser?.email || reporter?.email).toLowerCase() },
+          { $inc: { civicPoints: 10 } },
+          { returnDocument: "after" }
+        );
+      }
+      if (userDoc) {
+        updatedCivicPoints = userDoc.civicPoints ?? 0;
+      } else {
+        updatedCivicPoints += 10;
+      }
+    } catch (e) {
+      console.warn("Failed to increment user civic points:", e.message);
+      updatedCivicPoints += 10;
+    }
+  }
+
   const reporterInfo = {
-    id: currentUser?.id || currentUser?._id || reporter?.id || userId || "",
-    _id: currentUser?._id || currentUser?.id || reporter?._id || userId || "",
+    id: reporterUserId,
+    _id: reporterUserId,
     name: currentUser?.name || reporter?.name || "Citizen Reporter",
     email: currentUser?.email || reporter?.email || "",
     avatar: currentUser?.avatar || reporter?.avatar || "",
-    reputation: currentUser?.reputationScore || reporter?.reputation || 100,
+    reputation: currentReputation,
+    civicPoints: updatedCivicPoints,
   };
 
   const newIssue = await Issue.create({
@@ -234,6 +268,10 @@ export const assignIssueToOrganization = async (issueId, organizationId, notes =
   const issue = await findIssueByIdOrCustomId(issueId);
   if (!issue) {
     throw new ApiError(404, `Issue with ID '${issueId}' not found.`);
+  }
+
+  if (issue.status === "RESOLVED" || issue.repairAudit?.verified) {
+    throw new ApiError(400, "Cannot reassign organization: this complaint has already been verified and resolved.");
   }
 
   const organization = await Organization.findOne({

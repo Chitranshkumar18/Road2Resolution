@@ -63,6 +63,8 @@ export const sanitizeUser = (userDoc) => {
   if (!user.id && user._id) {
     user.id = String(user._id);
   }
+  user.civicPoints = user.civicPoints ?? 0;
+  user.reputationScore = user.reputationScore ?? 0;
   return user;
 };
 
@@ -111,9 +113,17 @@ export const formatIssueForFrontend = (doc) => {
     reputation: issue.reporter?.reputation || issue.reporter?.reputationScore || 0,
   };
 
+  const workerId = issue.workerSubmission?.worker?._id
+    ? String(issue.workerSubmission.worker._id)
+    : issue.workerSubmission?.worker
+    ? String(issue.workerSubmission.worker)
+    : (issue.workerSubmission?.workerId || "");
+
   // Worker submission mapping
   const workerSubmission = issue.workerSubmission
     ? {
+        worker: workerId,
+        workerId: workerId,
         repairImageUrl: issue.workerSubmission.repairImageUrl || issue.workerSubmission.afterImageUrl || "",
         afterImageUrl: issue.workerSubmission.afterImageUrl || issue.workerSubmission.repairImageUrl || "",
         notes: issue.workerSubmission.notes || "",
@@ -123,6 +133,7 @@ export const formatIssueForFrontend = (doc) => {
         organizationName: issue.workerSubmission.organizationName || issue.assignedOrgName || "",
         workerName: issue.workerSubmission.workerName || "",
         workerEmail: issue.workerSubmission.workerEmail || "",
+        contractorUnit: issue.workerSubmission.contractorUnit || "",
         submittedAt: issue.workerSubmission.submittedAt || issue.updatedAt || new Date().toISOString(),
         gpsVerification: issue.workerSubmission.gpsVerification || {
           verified: true,
@@ -173,8 +184,154 @@ export const formatIssueForFrontend = (doc) => {
     upvotedBy: issue.upvotedBy || [],
     reviews: Array.isArray(issue.reviews) ? issue.reviews : [],
     timeline: Array.isArray(issue.timeline) ? issue.timeline : [],
+    repairs: Array.isArray(issue.repairs)
+      ? issue.repairs.map((r) => {
+          if (!r || typeof r !== "object") return r;
+          const repObj = typeof r.toObject === "function" ? r.toObject() : { ...r };
+          return {
+            ...repObj,
+            id: repObj._id ? String(repObj._id) : repObj.id,
+            worker: repObj.worker?._id ? String(repObj.worker._id) : (repObj.worker ? String(repObj.worker) : null),
+            workerEmail: repObj.workerEmail || "",
+            workerName: repObj.workerName || "",
+          };
+        })
+      : [],
     createdAt: issue.createdAt || new Date().toISOString(),
     updatedAt: issue.updatedAt || new Date().toISOString(),
+  };
+};
+
+/**
+ * Calculates real-time stats for a given worker from actual issues & repairs
+ */
+export const calculateWorkerStats = (issues = [], user = null) => {
+  if (!user) {
+    return {
+      completedTasksCount: 0,
+      activeTasksCount: 0,
+      qaPassRate: null,
+      avgTurnaroundHours: null,
+    };
+  }
+
+  const userId = String(user._id || user.id || "").trim();
+  const userEmail = (user.email || "").toLowerCase().trim();
+  const userName = (user.name || "").toLowerCase().trim();
+
+  let completedTasksCount = 0;
+  let activeTasksCount = 0;
+  let verifiedCount = 0;
+  let rejectedCount = 0;
+  let turnaroundHoursList = [];
+
+  for (const issue of issues) {
+    if (!issue) continue;
+    const subWorkerId = String(
+      issue.workerSubmission?.worker?._id ||
+      issue.workerSubmission?.worker ||
+      issue.workerSubmission?.workerId ||
+      ""
+    ).trim();
+    const subWorkerEmail = (issue.workerSubmission?.workerEmail || "").toLowerCase().trim();
+    const subWorkerName = (issue.workerSubmission?.workerName || "").toLowerCase().trim();
+
+    let isSubmittedByWorker = false;
+    if (userId && subWorkerId && userId === subWorkerId) {
+      isSubmittedByWorker = true;
+    } else if (userEmail && subWorkerEmail && userEmail === subWorkerEmail) {
+      isSubmittedByWorker = true;
+    } else if (Array.isArray(issue.repairs) && issue.repairs.length > 0) {
+      for (const rep of issue.repairs) {
+        if (typeof rep === "object" && rep !== null) {
+          const repWorkerId = String(rep.worker?._id || rep.worker || "").trim();
+          const repWorkerEmail = (rep.workerEmail || "").toLowerCase().trim();
+          if ((userId && repWorkerId && userId === repWorkerId) || (userEmail && repWorkerEmail && userEmail === repWorkerEmail)) {
+            isSubmittedByWorker = true;
+            break;
+          }
+        }
+      }
+    } else if (userName && subWorkerName && userName === subWorkerName) {
+      isSubmittedByWorker = true;
+    }
+
+    const hasSubmission =
+      issue.status === "PENDING_VERIFICATION" ||
+      issue.status === "RESOLVED" ||
+      Boolean(issue.workerSubmission?.repairImageUrl || issue.workerSubmission?.afterImageUrl) ||
+      Boolean(issue.repairVerificationUrl);
+
+    if (isSubmittedByWorker && hasSubmission) {
+      completedTasksCount++;
+
+      // QA verification check
+      const isVerified =
+        issue.status === "RESOLVED" ||
+        Boolean(issue.repairAudit?.verified) ||
+        (Array.isArray(issue.repairs) && issue.repairs.some((r) => r?.verificationStatus === "VERIFIED"));
+
+      const isRejected =
+        Array.isArray(issue.repairs) && issue.repairs.some((r) => r?.verificationStatus === "REJECTED");
+
+      if (isVerified) {
+        verifiedCount++;
+      } else if (isRejected) {
+        rejectedCount++;
+      }
+
+      // Turnaround calculation
+      const submittedTime =
+        issue.workerSubmission?.submittedAt ||
+        issue.repairAudit?.verifiedAt ||
+        issue.updatedAt;
+
+      let startTime = null;
+      if (Array.isArray(issue.timeline)) {
+        const inProgressEntry = issue.timeline.find((t) => t.status === "IN_PROGRESS");
+        if (inProgressEntry?.timestamp) {
+          startTime = inProgressEntry.timestamp;
+        } else {
+          const assignedEntry = issue.timeline.find((t) => t.status === "ASSIGNED");
+          if (assignedEntry?.timestamp) {
+            startTime = assignedEntry.timestamp;
+          }
+        }
+      }
+      if (!startTime) {
+        startTime = issue.createdAt;
+      }
+
+      if (submittedTime && startTime) {
+        const startMs = new Date(startTime).getTime();
+        const endMs = new Date(submittedTime).getTime();
+        if (endMs >= startMs) {
+          const hours = (endMs - startMs) / (1000 * 60 * 60);
+          turnaroundHoursList.push(hours);
+        }
+      }
+    } else if (issue.status === "IN_PROGRESS" && !hasSubmission) {
+      const respName = (issue.responsibleName || "").toLowerCase().trim();
+      if ((userName && respName === userName) || isSubmittedByWorker) {
+        activeTasksCount++;
+      }
+    }
+  }
+
+  const totalReviewed = verifiedCount + rejectedCount;
+  const qaPassRate = totalReviewed > 0 ? Math.round((verifiedCount / totalReviewed) * 100) : null;
+
+  let avgTurnaroundHours = null;
+  if (turnaroundHoursList.length > 0) {
+    const sum = turnaroundHoursList.reduce((acc, val) => acc + val, 0);
+    avgTurnaroundHours = Math.round((sum / turnaroundHoursList.length) * 10) / 10;
+  }
+
+  return {
+    completedTasksCount,
+    activeTasksCount,
+    qaPassRate,
+    avgTurnaroundHours,
   };
 };
 
@@ -185,4 +342,5 @@ export default {
   generateIssueId,
   sanitizeUser,
   formatIssueForFrontend,
+  calculateWorkerStats,
 };

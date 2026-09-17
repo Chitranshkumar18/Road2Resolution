@@ -52,9 +52,9 @@ export const getSeverityBreakdown = async () => {
 
   return [
     { name: "Critical", value: severityMap["CRITICAL"] || (total > 0 ? 0 : 4), color: "#EF4444" },
-    { name: "High", value: severityMap["HIGH"] || (total > 0 ? 0 : 8), color: "#F59E0B" },
-    { name: "Medium", value: severityMap["MEDIUM"] || (total > 0 ? 0 : 12), color: "#EAB308" },
-    { name: "Low", value: severityMap["LOW"] || (total > 0 ? 0 : 6), color: "#64748B" },
+    { name: "High", value: severityMap["HIGH"] || (total > 0 ? 0 : 8), color: "#F97316" },
+    { name: "Medium", value: severityMap["MEDIUM"] || (total > 0 ? 0 : 12), color: "#FACC15" },
+    { name: "Low", value: severityMap["LOW"] || (total > 0 ? 0 : 6), color: "#38BDF8" },
   ];
 };
 

@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   PlusCircle,
-  ScanEye,
   CopyCheck,
   FileText,
   Navigation,
@@ -25,6 +24,7 @@ import {
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import { cn } from '../../utils/helpers';
+import { ADMIN_DEFAULT_AVATAR } from '../../utils/constants';
 
 export const Sidebar = () => {
   const { user, isAdmin, isWorker, logout } = useAuth();
@@ -33,7 +33,6 @@ export const Sidebar = () => {
     { label: 'Citizen Hub', to: '/citizen/dashboard', icon: LayoutDashboard },
     { label: 'Report Issue (GPS)', to: '/citizen/report', icon: PlusCircle, highlight: true },
     { label: 'Public Reviews', to: '/reviews', icon: Star, badge: 'Public' },
-    { label: 'AI Vision Scan', to: '/citizen/ai-analysis', icon: ScanEye },
     { label: 'Duplicate Check', to: '/citizen/duplicate-check', icon: CopyCheck },
     { label: 'My Submissions', to: '/citizen/my-reports', icon: FileText },
     { label: 'Live GPS Radar', to: '/citizen/explore', icon: Navigation },
@@ -76,6 +75,11 @@ export const Sidebar = () => {
     if (isWorker) return 'FIELD REPAIR SQUAD';
     return 'COMMUNITY NAVIGATION';
   };
+
+  const adminAvatar = user?.avatar || ADMIN_DEFAULT_AVATAR;
+  const userAvatar = isAdmin
+    ? adminAvatar
+    : user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80';
 
   return (
     <aside className="hidden lg:flex flex-col w-64 bg-slate-900 border-r border-slate-800 h-screen sticky top-0">
@@ -146,7 +150,7 @@ export const Sidebar = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             <img
-              src={user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80'}
+              src={userAvatar}
               alt={user?.name}
               className={`w-9 h-9 rounded-lg object-cover ring-2 flex-shrink-0 ${
                 isAdmin ? 'ring-rose-500/30' : isWorker ? 'ring-amber-500/40' : 'ring-indigo-500/30'
@@ -155,7 +159,7 @@ export const Sidebar = () => {
             <div className="min-w-0">
               <p className="text-xs font-semibold text-slate-200 truncate">{user?.name || 'User'}</p>
               <p className="text-[10px] text-slate-400 truncate">
-                {isAdmin ? 'Municipal Director' : isWorker ? (user?.contractorUnit || 'Field Tech') : `Rep: ${user?.reputationScore || 340} pts`}
+                {isAdmin ? 'Municipal Director' : isWorker ? (user?.contractorUnit || 'Field Tech') : `Civic Points: ${user?.civicPoints ?? 0} pts`}
               </p>
             </div>
           </div>

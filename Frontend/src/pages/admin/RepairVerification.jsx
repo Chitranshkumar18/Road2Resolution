@@ -41,7 +41,10 @@ export const AdminRepairVerification = () => {
   const issueList = Array.isArray(issues) ? issues : [];
 
   const workerSubmissions = issueList.filter(
-    (i) => i.status === 'PENDING_VERIFICATION' || (Boolean(i.workerSubmission) && i.status !== 'RESOLVED')
+    (i) =>
+      (i.status === 'PENDING_VERIFICATION' || Boolean(i.workerSubmission)) &&
+      i.status !== 'RESOLVED' &&
+      !i.repairAudit?.verified
   );
 
   const [selectedIssueId, setSelectedIssueId] = useState(
@@ -65,7 +68,7 @@ export const AdminRepairVerification = () => {
   };
 
   const resolvedIssues = issueList.filter(
-    (i) => i.status === 'RESOLVED' || Boolean(i.repairVerificationUrl)
+    (i) => i.status === 'RESOLVED' || Boolean(i.repairVerificationUrl) || Boolean(i.repairAudit?.verified)
   );
 
   return (

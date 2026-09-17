@@ -8,12 +8,16 @@ import {
   Lock,
   Sparkles,
   Zap,
-  Eye
+  Eye,
+  Clock,
+  ShieldAlert
 } from 'lucide-react';
 
 export const LiveCameraCapture = ({
   currentImageUrl,
+  capturedAt = null,
   onCapture,
+  onRetake,
   disabled = false,
   themeColor = 'indigo', // 'indigo' | 'amber'
   aspectRatio = 'aspect-video',
@@ -26,6 +30,7 @@ export const LiveCameraCapture = ({
   const [cameraError, setCameraError] = useState(null);
   const [flash, setFlash] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(null);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -106,8 +111,11 @@ export const LiveCameraCapture = ({
 
     // Get high-quality JPEG data URL
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    const captureTimestamp = Date.now();
 
-    onCapture(dataUrl);
+    if (typeof onCapture === 'function') {
+      onCapture(dataUrl, captureTimestamp);
+    }
     stopCamera();
     setCapturing(false);
   };
@@ -119,12 +127,49 @@ export const LiveCameraCapture = ({
       const reader = new FileReader();
       reader.onload = () => {
         if (reader.result) {
-          onCapture(reader.result);
+          const captureTimestamp = Date.now();
+          if (typeof onCapture === 'function') {
+            onCapture(reader.result, captureTimestamp);
+          }
         }
       };
       reader.readAsDataURL(file);
     }
   };
+
+  // Handle Retake Photo Action
+  const handleRetake = () => {
+    if (typeof onRetake === 'function') {
+      onRetake();
+    }
+    startCamera();
+  };
+
+  // 60-Second Real-Time Validity Countdown Timer
+  useEffect(() => {
+    if (!currentImageUrl || !capturedAt) {
+      setSecondsLeft(null);
+      return;
+    }
+
+    const updateRemaining = () => {
+      const capTime = typeof capturedAt === 'number' ? capturedAt : new Date(capturedAt).getTime();
+      if (isNaN(capTime)) {
+        setSecondsLeft(null);
+        return;
+      }
+      const elapsed = Math.floor((Date.now() - capTime) / 1000);
+      const remaining = Math.max(0, 60 - elapsed);
+      setSecondsLeft(remaining);
+    };
+
+    updateRemaining();
+    const timerInterval = setInterval(updateRemaining, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, [currentImageUrl, capturedAt]);
+
+  const isPhotoExpired = Boolean(currentImageUrl && secondsLeft === 0);
 
   // Sync video element when stream is ready
   useEffect(() => {
@@ -168,6 +213,10 @@ export const LiveCameraCapture = ({
         className={`relative ${aspectRatio} rounded-2xl overflow-hidden bg-slate-950 border-2 ${
           isCameraActive
             ? `${primaryBorder} ring-2 ${isIndigo ? 'ring-indigo-500/30' : 'ring-amber-500/30'}`
+            : isPhotoExpired
+            ? 'border-rose-500/60 ring-2 ring-rose-500/30'
+            : currentImageUrl
+            ? 'border-emerald-500/40'
             : 'border-slate-800'
         } flex items-center justify-center shadow-xl group`}
       >
@@ -236,32 +285,84 @@ export const LiveCameraCapture = ({
             <img
               src={currentImageUrl}
               alt="Live Captured Photo"
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover transition-all ${isPhotoExpired ? 'filter grayscale contrast-125 opacity-40' : ''}`}
             />
 
-            {/* Overlay Badges */}
+            {/* Top Left Verified Badge */}
             <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-bold backdrop-blur-md shadow">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>LIVE CAMERA CAPTURE VERIFIED</span>
+              <span>LIVE CAMERA CAPTURED</span>
             </div>
 
-            {/* Hover Action Overlay */}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4 backdrop-blur-[2px]">
-              <p className="text-xs font-bold text-white text-center">
-                Photo captured via device camera
-              </p>
-              <div className="flex items-center gap-2">
+            {/* Top Right 60-Second Live Countdown HUD Badge */}
+            {secondsLeft !== null && !isPhotoExpired && (
+              <div className={`absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1 rounded-full font-mono text-xs font-bold backdrop-blur-md shadow-lg border transition-all ${
+                secondsLeft <= 15
+                  ? 'bg-rose-950/90 text-rose-300 border-rose-500/60 animate-pulse ring-2 ring-rose-500/30'
+                  : secondsLeft <= 30
+                  ? 'bg-amber-950/90 text-amber-300 border-amber-500/60'
+                  : 'bg-black/80 text-emerald-300 border-emerald-500/40'
+              }`}>
+                <Clock className={`w-3.5 h-3.5 ${secondsLeft <= 15 ? 'text-rose-400 animate-spin' : secondsLeft <= 30 ? 'text-amber-400' : 'text-emerald-400'}`} />
+                <span>⏱️ {secondsLeft}s LEFT TO SUBMIT</span>
+              </div>
+            )}
+
+            {/* Progress Bar of 60-Second Window */}
+            {secondsLeft !== null && !isPhotoExpired && (
+              <div className="absolute top-0 inset-x-0 h-1 bg-slate-900/60 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-1000 ease-linear ${
+                    secondsLeft <= 15 ? 'bg-rose-500' : secondsLeft <= 30 ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${Math.min(100, Math.max(0, (secondsLeft / 60) * 100))}%` }}
+                />
+              </div>
+            )}
+
+            {/* EXPIRED OVERLAY (When 60-second countdown reaches 0) */}
+            {isPhotoExpired ? (
+              <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center space-y-3.5 z-20">
+                <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-400 flex items-center justify-center shadow-lg shadow-rose-950/50 animate-pulse">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+                <div className="space-y-1 max-w-sm">
+                  <h4 className="text-sm font-black text-rose-300 font-display">
+                    Photo Proof Expired (60s Limit Exceeded)
+                  </h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Live camera evidence must be submitted within <strong>60 seconds</strong> of capture. This photo is no longer valid.
+                  </p>
+                </div>
                 <button
                   type="button"
                   disabled={disabled}
-                  onClick={() => startCamera()}
-                  className={`px-4 py-2 rounded-xl ${primaryBg} text-white text-xs font-bold shadow-lg ${glowShadow} flex items-center gap-1.5 transition-all cursor-pointer`}
+                  onClick={handleRetake}
+                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-2 shadow-xl shadow-rose-950/60 border border-rose-400/40 active:scale-95 transition-all cursor-pointer"
                 >
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Retake Live Photo</span>
+                  <Camera className="w-4 h-4" />
+                  <span>Capture New Live Photo</span>
                 </button>
               </div>
-            </div>
+            ) : (
+              /* Normal Hover Action Overlay */
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4 backdrop-blur-[2px]">
+                <p className="text-xs font-bold text-white text-center">
+                  Live photo captured &bull; {secondsLeft !== null ? `${secondsLeft}s validity remaining` : 'Submit within 60s'}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={handleRetake}
+                    className={`px-4 py-2 rounded-xl ${primaryBg} text-white text-xs font-bold shadow-lg ${glowShadow} flex items-center gap-1.5 transition-all cursor-pointer`}
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Retake Live Photo</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* 3. Initial State: Prompt to Open Live Camera */
@@ -275,7 +376,7 @@ export const LiveCameraCapture = ({
                 Live Camera Photo Capture Only
               </h4>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Gallery/file upload is disabled. Please capture a live photograph of the road defect directly with your camera.
+                Gallery/file upload is disabled. Capture a live photo directly with your camera. You will have <strong>60 seconds</strong> to submit it.
               </p>
             </div>
 
@@ -294,14 +395,60 @@ export const LiveCameraCapture = ({
         )}
       </div>
 
+      {/* 60-Second Timer Alert Banner / Countdown Status */}
+      {currentImageUrl && !isCameraActive && (
+        <>
+          {isPhotoExpired ? (
+            <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs flex items-center justify-between gap-3 shadow-lg">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                <span className="font-semibold">
+                  Captured photo expired (60s limit reached). You must capture a new live photo.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleRetake}
+                className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] flex-shrink-0 cursor-pointer shadow"
+              >
+                Retake Now
+              </button>
+            </div>
+          ) : secondsLeft !== null ? (
+            <div className={`p-3 rounded-2xl border text-xs flex items-center justify-between gap-3 transition-all ${
+              secondsLeft <= 15
+                ? 'bg-rose-950/40 border-rose-500/40 text-rose-300 animate-pulse'
+                : secondsLeft <= 30
+                ? 'bg-amber-950/30 border-amber-500/30 text-amber-300'
+                : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
+            }`}>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 flex-shrink-0" />
+                <span>
+                  <strong>60-Second Rule Active:</strong> Live photo captured. You have{' '}
+                  <strong className="font-mono text-sm underline">{secondsLeft}s</strong> remaining to submit.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleRetake}
+                className="text-[11px] font-bold text-slate-300 hover:text-white underline cursor-pointer"
+              >
+                Retake
+              </button>
+            </div>
+          ) : null}
+        </>
+      )}
+
       {/* Footer Controls & Live Camera Indicator */}
       <div className="flex items-center justify-between gap-3 text-xs flex-wrap">
         <div className="flex items-center gap-2">
           <span className={`px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold border ${activePill}`}>
-            📷 LIVE CAMERA ONLY
+            📷 LIVE CAMERA &bull; 60s VALIDITY
           </span>
           <span className="text-[11px] text-slate-400">
-            Gallery uploads disabled &bull; Real-time capture enforced
+            Real-time capture & 60-second submission window enforced
           </span>
         </div>
 
@@ -309,7 +456,7 @@ export const LiveCameraCapture = ({
           <button
             type="button"
             disabled={disabled}
-            onClick={() => startCamera()}
+            onClick={handleRetake}
             className="text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />

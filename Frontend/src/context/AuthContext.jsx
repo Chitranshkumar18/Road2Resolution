@@ -54,10 +54,22 @@ export const AuthProvider = ({ children }) => {
     return updated;
   };
 
+  const refreshUser = async () => {
+    try {
+      const currentUser = await authApi.getCurrentUser();
+      setUser(currentUser);
+      return currentUser;
+    } catch (e) {
+      console.error('Failed to refresh user', e);
+      return null;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         loading,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
@@ -66,7 +78,8 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
-        updateProfile
+        updateProfile,
+        refreshUser,
       }}
     >
       {children}

@@ -22,7 +22,16 @@ export const IssueManagement = () => {
 
   const issueList = Array.isArray(issues) ? issues : [];
 
-  const filtered = issueList.filter((issue) => {
+  // Helper to identify verified/resolved issues
+  const isVerifiedIssue = (issue) =>
+    issue.status === 'RESOLVED' ||
+    Boolean(issue.repairAudit?.verified);
+
+  // Requirement: Remove verified complaints from active Issue Management.
+  // Complaints with worker proof submitted (PENDING_VERIFICATION) appear here until Admin verifies them.
+  const activeIssues = issueList.filter((issue) => !isVerifiedIssue(issue));
+
+  const filtered = activeIssues.filter((issue) => {
     if (categoryFilter !== 'all' && issue.category !== categoryFilter) return false;
     if (statusFilter !== 'all' && issue.status !== statusFilter) return false;
     if (searchQuery) {
@@ -30,7 +39,7 @@ export const IssueManagement = () => {
       return (
         issue.id.toLowerCase().includes(q) ||
         issue.title.toLowerCase().includes(q) ||
-        issue.location?.address.toLowerCase().includes(q) ||
+        issue.location?.address?.toLowerCase().includes(q) ||
         (issue.assignedOrgName && issue.assignedOrgName.toLowerCase().includes(q))
       );
     }
@@ -56,7 +65,7 @@ export const IssueManagement = () => {
                 Civic Issue Lifecycle & Triage Management
               </h2>
               <p className="text-xs text-slate-400">
-                Complete database of citizen reports, location-based organization routing, and resolution audit status.
+                Active municipal complaints triage queue. Verified complaints are automatically moved to Repair QA & Audit.
               </p>
             </div>
           </div>
@@ -70,7 +79,7 @@ export const IssueManagement = () => {
               <span>Organization Assignment Hub</span>
             </Link>
             <span className="px-3 py-2 rounded-xl text-xs font-mono font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-              {filtered.length} Total Records
+              {filtered.length} Active Records
             </span>
           </div>
         </div>
@@ -102,14 +111,12 @@ export const IssueManagement = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
             >
-              <option value="all">All Statuses</option>
+              <option value="all">All Active Statuses</option>
               <option value="PENDING">Pending AI Scan</option>
               <option value="VERIFIED">AI Verified / Open</option>
               <option value="ASSIGNED">Assigned to Org</option>
               <option value="IN_PROGRESS">In Progress</option>
-              <option value="PENDING_VERIFICATION">Proof Submitted (QA)</option>
-              <option value="RESOLVED">Resolved & Certified</option>
-              <option value="CLOSED">Closed</option>
+              <option value="PENDING_VERIFICATION">Proof Submitted (Pending QA)</option>
             </select>
           </div>
 
@@ -148,6 +155,7 @@ export const IssueManagement = () => {
             {filtered.map((issue) => {
               const entity = formatResponsibleEntity(issue);
               const issueLocation = `${issue.location?.city || 'Delhi'}, ${issue.location?.state || 'Delhi'}`;
+              const verified = isVerifiedIssue(issue);
 
               return (
                 <tr key={issue.id} className="hover:bg-slate-850/60 transition-colors">
@@ -194,7 +202,7 @@ export const IssueManagement = () => {
                       <option value="ASSIGNED">Assigned</option>
                       <option value="IN_PROGRESS">In Progress</option>
                       <option value="PENDING_VERIFICATION">Pending QA</option>
-                      <option value="RESOLVED">Resolved</option>
+                      <option value="RESOLVED">Resolved & Verified</option>
                       <option value="CLOSED">Closed</option>
                       <option value="REJECTED">Rejected</option>
                     </select>
@@ -219,13 +227,20 @@ export const IssueManagement = () => {
 
                   {/* Actions */}
                   <td className="px-5 py-4 text-right space-x-2">
-                    <Link
-                      to={`/admin/organization-assignment`}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-semibold transition-all"
-                    >
-                      <Building2 className="w-3 h-3" />
-                      <span>Assign Org</span>
-                    </Link>
+                    {!verified ? (
+                      <Link
+                        to={`/admin/organization-assignment`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-semibold transition-all"
+                      >
+                        <Building2 className="w-3 h-3" />
+                        <span>Assign Org</span>
+                      </Link>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-medium">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                        <span>Verified</span>
+                      </span>
+                    )}
                   </td>
                 </tr>
               );

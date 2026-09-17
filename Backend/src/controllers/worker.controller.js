@@ -3,6 +3,9 @@ import issueService from "../services/issue.service.js";
 import repairVerificationService from "../services/repairVerification.service.js";
 import ApiError from "../utils/ApiError.js";
 
+import Issue from "../models/Issue.js";
+import { sanitizeUser, calculateWorkerStats } from "../utils/helpers.js";
+
 export const getAssignedIssues = asyncHandler(async (req, res) => {
   const workerUnit = req.user?.contractorUnit || req.user?.organizationName || "";
   const issues = await issueService.getAllIssues({
@@ -15,9 +18,16 @@ export const getAssignedIssues = asyncHandler(async (req, res) => {
 });
 
 export const getProfile = asyncHandler(async (req, res) => {
+  const issues = await Issue.find({}).populate("repairs").lean();
+  const stats = calculateWorkerStats(issues, req.user);
+  const sanitized = sanitizeUser(req.user);
+  if (sanitized) {
+    Object.assign(sanitized, stats);
+  }
+
   return res.status(200).json({
     success: true,
-    user: req.user,
+    user: sanitized,
   });
 });
 

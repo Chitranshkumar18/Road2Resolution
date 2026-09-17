@@ -26,7 +26,9 @@ import {
   Satellite,
   UserCheck,
   User,
-  HeartHandshake
+  HeartHandshake,
+  ClipboardList,
+  LayoutDashboard
 } from 'lucide-react';
 import { IssueContext } from '../../context/IssueContext';
 import { NotificationContext } from '../../context/NotificationContext';
@@ -81,10 +83,28 @@ export const UploadRepairProof = () => {
   const { user } = useAuth();
 
   const issueList = Array.isArray(issues) && issues.length > 0 ? issues : [];
-  const initialIssueId = searchParams.get('issueId') || issueList[0]?.id || '';
+
+  // Strictly filter only eligible, unsubmitted complaints (not resolved, closed, or pending verification)
+  const unsubmittedIssues = useMemo(() => {
+    return issueList.filter((i) => {
+      const isSubmitted =
+        i.status === 'PENDING_VERIFICATION' ||
+        i.status === 'RESOLVED' ||
+        i.status === 'CLOSED' ||
+        Boolean(i.workerSubmission?.repairImageUrl || i.workerSubmission?.afterImageUrl) ||
+        Boolean(i.repairVerificationUrl) ||
+        Boolean(i.repairAudit?.verified);
+      return !isSubmitted;
+    });
+  }, [issueList]);
+
+  // Initial ID: strictly from URL param ?issueId=... (do NOT auto-select old/solved complaints)
+  const initialIssueId = searchParams.get('issueId') || '';
 
   const [selectedIssueId, setSelectedIssueId] = useState(initialIssueId);
   const [afterImageUrl, setAfterImageUrl] = useState('');
+  const [photoCapturedAt, setPhotoCapturedAt] = useState(null);
+  const [photoSecondsLeft, setPhotoSecondsLeft] = useState(null);
   const [materialsUsed, setMaterialsUsed] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -101,16 +121,60 @@ export const UploadRepairProof = () => {
   const [gpsStatus, setGpsStatus] = useState('acquiring'); // 'acquiring' | 'locked' | 'denied' | 'error' | 'unsupported'
   const [gpsErrorMsg, setGpsErrorMsg] = useState(null);
 
-  // Sync with URL search params if changed
+  // Sync with URL search params if explicitly provided/changed
   useEffect(() => {
     const qId = searchParams.get('issueId');
-    if (qId) {
+    if (qId && selectedIssueId !== qId) {
       setSelectedIssueId(qId);
+      setAfterImageUrl('');
+      setPhotoCapturedAt(null);
+      setPhotoSecondsLeft(null);
     }
-  }, [searchParams]);
+  }, [searchParams, selectedIssueId]);
 
-  // Target Incident Details
-  const selectedIssue = issueList.find((i) => i.id === selectedIssueId) || issueList[0] || null;
+  // Handle Photo Capture with timestamp
+  const handleCapture = (url, timestamp) => {
+    setAfterImageUrl(url);
+    setPhotoCapturedAt(timestamp || Date.now());
+  };
+
+  // Handle Photo Retake / Clear
+  const handleRetake = () => {
+    setAfterImageUrl('');
+    setPhotoCapturedAt(null);
+    setPhotoSecondsLeft(null);
+  };
+
+  // 60-Second Real-Time Countdown Timer on Upload Page
+  useEffect(() => {
+    if (!afterImageUrl || !photoCapturedAt) {
+      setPhotoSecondsLeft(null);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const capTime = typeof photoCapturedAt === 'number' ? photoCapturedAt : new Date(photoCapturedAt).getTime();
+      if (isNaN(capTime)) {
+        setPhotoSecondsLeft(null);
+        return;
+      }
+      const elapsed = Math.floor((Date.now() - capTime) / 1000);
+      const remaining = Math.max(0, 60 - elapsed);
+      setPhotoSecondsLeft(remaining);
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, [afterImageUrl, photoCapturedAt]);
+
+  const isPhotoExpired = Boolean(afterImageUrl && photoCapturedAt && photoSecondsLeft === 0);
+
+  // Target Incident Details - Strictly from eligible unsubmitted issues. No fallback to old/solved complaints!
+  const selectedIssue = useMemo(() => {
+    if (!selectedIssueId) return null;
+    return unsubmittedIssues.find((i) => i.id === selectedIssueId) || null;
+  }, [unsubmittedIssues, selectedIssueId]);
 
   // Sync completing entity attribution whenever selected issue changes
   useEffect(() => {
@@ -124,6 +188,9 @@ export const UploadRepairProof = () => {
         setCompletingOrgName(selectedIssue.assignedOrgName || selectedIssue.responsibleOrgName || user?.contractorUnit || user?.organizationName || 'Municipal Rapid Repair Unit');
         setCompletingPersonName(selectedIssue.responsibleName || user?.name || 'Field Worker');
       }
+    } else {
+      setCompletingPersonName(user?.name || '');
+      setCompletingOrgName(user?.contractorUnit || user?.organizationName || 'Municipal Rapid Repair Unit');
     }
   }, [selectedIssue, user]);
 
@@ -275,19 +342,26 @@ export const UploadRepairProof = () => {
 
   // AUTOMATIC DISTANCE CALCULATION (Haversine formula in meters)
   const distanceMeters = useMemo(() => {
-    if (!userCoords?.lat || !userCoords?.lng) return null;
+    if (!selectedIssue || !userCoords?.lat || !userCoords?.lng) return null;
     const km = calculateDistanceKm(userCoords.lat, userCoords.lng, targetLat, targetLng);
     return Math.round(km * 1000);
-  }, [userCoords, targetLat, targetLng]);
+  }, [selectedIssue, userCoords, targetLat, targetLng]);
 
   // STRICT 250M GEOFENCING: Photo proof upload is enabled ONLY when within 250 meters
   const isWithinRange = useMemo(() => {
-    if (distanceMeters === null) return false;
+    if (!selectedIssue || distanceMeters === null) return false;
     return distanceMeters <= MAX_ALLOWED_DISTANCE_METERS;
-  }, [distanceMeters]);
+  }, [selectedIssue, distanceMeters]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!selectedIssue) {
+      if (addToast) {
+        addToast('❌ Please select an active citizen complaint to resolve before submitting.', 'error');
+      }
+      return;
+    }
 
     // Strict 250m validation enforcement - No bypass permitted
     if (!isWithinRange) {
@@ -304,9 +378,12 @@ export const UploadRepairProof = () => {
       return;
     }
 
-    if (!afterImageUrl) {
+    // Strict 60-second photo validity enforcement
+    const capTime = photoCapturedAt ? (typeof photoCapturedAt === 'number' ? photoCapturedAt : new Date(photoCapturedAt).getTime()) : null;
+    const elapsedSeconds = capTime ? (Date.now() - capTime) / 1000 : Infinity;
+    if (!capTime || elapsedSeconds > 60) {
       if (addToast) {
-        addToast('❌ Please capture a live after-repair photo proof with your camera before submitting.', 'error');
+        addToast('❌ Photo Expired: Captured photo exceeded the 60-second submission window. Please capture a new live photo with your camera before submitting.', 'error');
       }
       return;
     }
@@ -324,12 +401,19 @@ export const UploadRepairProof = () => {
       if (typeof submitWorkerRepair === 'function') {
         await submitWorkerRepair(targetId, {
           repairImageUrl: finalImage,
+          capturedAt: new Date(capTime).toISOString(),
+          photoValiditySeconds: 60,
           notes: notes || (isVol ? 'Resolution completed by individual person.' : 'Repairs completed by on-site field team.'),
           materialsUsed: materialsUsed || (isVol ? 'Individual repair tools' : 'Standard repair mix & compaction tools'),
           submittedBy: completingEntityType,
           isVolunteer: isVol,
           organizationName: finalOrg,
+          workerId: user?.id || user?._id || '',
+          workerEmail: user?.email || '',
+          workerName: actorName,
           workerInfo: {
+            id: user?.id || user?._id || '',
+            _id: user?.id || user?._id || '',
             name: actorName,
             email: user?.email || '',
             contractorUnit: isVol ? 'Individual Worker / Public Person' : (finalOrg || '')
@@ -380,7 +464,7 @@ export const UploadRepairProof = () => {
   };
 
   const issuesWithProximity = useMemo(() => {
-    return issueList.map((i) => {
+    return unsubmittedIssues.map((i) => {
       const iLat = i.location?.lat || 28.6139;
       const iLng = i.location?.lng || 77.2090;
       const distKm = userCoords ? calculateDistanceKm(userCoords.lat, userCoords.lng, iLat, iLng) : 0;
@@ -394,9 +478,12 @@ export const UploadRepairProof = () => {
       if (!a.isNearby && b.isNearby) return 1;
       return a.distKm - b.distKm;
     });
-  }, [issueList, userCoords]);
+  }, [unsubmittedIssues, userCoords]);
 
-  const selectedWithProximity = issuesWithProximity.find((i) => i.id === selectedIssueId) || issuesWithProximity[0];
+  const selectedWithProximity = useMemo(() => {
+    if (!selectedIssueId) return null;
+    return issuesWithProximity.find((i) => i.id === selectedIssueId) || null;
+  }, [issuesWithProximity, selectedIssueId]);
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -426,7 +513,9 @@ export const UploadRepairProof = () => {
 
       {/* Automatic GPS Location Verification Status Card */}
       <div className={`p-6 rounded-3xl border shadow-2xl transition-all ${
-        gpsStatus === 'acquiring'
+        !selectedIssue
+          ? 'bg-slate-900 border-slate-800 shadow-slate-950/20'
+          : gpsStatus === 'acquiring'
           ? 'bg-slate-900 border-amber-500/30 shadow-amber-950/20'
           : isWithinRange
           ? 'bg-emerald-950/30 border-emerald-500/40 shadow-emerald-950/20'
@@ -435,13 +524,17 @@ export const UploadRepairProof = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
           <div className="flex items-center gap-3">
             <div className={`p-2.5 rounded-xl border ${
-              gpsStatus === 'acquiring'
+              !selectedIssue
+                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                : gpsStatus === 'acquiring'
                 ? 'bg-amber-500/15 text-amber-400 border-amber-500/30 animate-spin'
                 : isWithinRange
                 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                 : 'bg-rose-500/15 text-rose-400 border-rose-500/30 animate-pulse'
             }`}>
-              {gpsStatus === 'acquiring' ? (
+              {!selectedIssue ? (
+                <ClipboardList className="w-5 h-5 text-amber-400" />
+              ) : gpsStatus === 'acquiring' ? (
                 <Compass className="w-5 h-5" />
               ) : isWithinRange ? (
                 <Radio className="w-5 h-5 text-emerald-400" />
@@ -454,7 +547,12 @@ export const UploadRepairProof = () => {
                 <h2 className="text-sm font-bold text-white font-display">
                   Automatic GPS Location Verification
                 </h2>
-                {gpsStatus === 'acquiring' && !userCoords ? (
+                {!selectedIssue ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    <ClipboardList className="w-3 h-3" />
+                    SELECT COMPLAINT TO RESOLVE
+                  </span>
+                ) : gpsStatus === 'acquiring' && !userCoords ? (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
                     <Satellite className="w-3 h-3" />
                     ACQUIRING LIVE GPS FIX...
@@ -482,7 +580,9 @@ export const UploadRepairProof = () => {
                 )}
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                {gpsStatus === 'acquiring' && !userCoords
+                {!selectedIssue
+                  ? 'Choose an eligible citizen complaint from the list below to automatically calculate on-site distance and verify the 250m geofence.'
+                  : gpsStatus === 'acquiring' && !userCoords
                   ? 'Accessing device satellite GPS to automatically compute distance...'
                   : gpsStatus === 'denied' && !userCoords
                   ? 'Location access blocked in browser. Please enable location permissions or use Simulate 40m for testing.'
@@ -523,10 +623,12 @@ export const UploadRepairProof = () => {
             <span className="text-[10px] font-mono uppercase text-slate-500 block">Complaint Site Location</span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <MapPin className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-              <span className="font-mono text-xs text-slate-200 truncate">{targetLat.toFixed(5)}°, {targetLng.toFixed(5)}°</span>
+              <span className="font-mono text-xs text-slate-200 truncate">
+                {selectedIssue ? `${targetLat.toFixed(5)}°, ${targetLng.toFixed(5)}°` : 'Awaiting Selection'}
+              </span>
             </div>
             <p className="text-[11px] text-slate-300 truncate mt-0.5 font-medium">
-              {formatDisplayAddress(selectedIssue.location?.address, selectedIssue.location)}
+              {selectedIssue?.location ? formatDisplayAddress(selectedIssue.location.address, selectedIssue.location) : 'Select a complaint below to verify location'}
             </p>
           </div>
 
@@ -544,19 +646,37 @@ export const UploadRepairProof = () => {
           </div>
 
           <div className={`p-3 rounded-2xl border ${
-            isWithinRange
+            !selectedIssue
+              ? 'bg-slate-950/70 border-slate-800/80 text-slate-400'
+              : isWithinRange
               ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
               : 'bg-rose-950/40 border-rose-500/30 text-rose-300'
           }`}>
             <span className="text-[10px] font-mono uppercase opacity-70 block">Auto Calculated Distance (Max 250m)</span>
             <div className="flex items-center gap-1.5 mt-0.5">
-              {isWithinRange ? <ShieldCheck className="w-4 h-4 text-emerald-400" /> : <ShieldAlert className="w-4 h-4 text-rose-400" />}
+              {!selectedIssue ? (
+                <Compass className="w-4 h-4 text-slate-400" />
+              ) : isWithinRange ? (
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <ShieldAlert className="w-4 h-4 text-rose-400" />
+              )}
               <span className="font-mono text-sm font-bold">
-                {distanceMeters !== null ? `${distanceMeters} meters away` : 'Calculating...'}
+                {!selectedIssue
+                  ? 'Select Complaint First'
+                  : distanceMeters !== null
+                  ? `${distanceMeters} meters away`
+                  : 'Calculating...'}
               </span>
             </div>
             <p className="text-[11px] opacity-80 mt-0.5">
-              {isWithinRange ? 'Within authorized perimeter (Upload Enabled)' : distanceMeters !== null ? 'Exceeds 250m threshold (Upload Blocked)' : 'Waiting for GPS fix'}
+              {!selectedIssue
+                ? 'Choose a complaint below to verify 250m perimeter'
+                : isWithinRange
+                ? 'Within authorized perimeter (Upload Enabled)'
+                : distanceMeters !== null
+                ? 'Exceeds 250m threshold (Upload Blocked)'
+                : 'Waiting for GPS fix'}
             </p>
           </div>
         </div>
@@ -586,17 +706,33 @@ export const UploadRepairProof = () => {
                 <Layers className="w-4 h-4 text-amber-400" />
                 <span>Target Citizen Complaint</span>
               </h2>
-              <span className="text-[10px] font-mono text-slate-400">{issueList.length} total</span>
+              <span className="text-[10px] font-mono text-slate-400">{unsubmittedIssues.length} available</span>
             </div>
 
-            {/* Dropdown with Proximity Info */}
+            {/* Dropdown with Proximity Info & Quick Browse Link */}
             <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1.5">Choose Incident to Resolve:</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-slate-300">Choose Incident to Resolve:</label>
+                <button
+                  type="button"
+                  onClick={() => navigate('/worker/complaints')}
+                  className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <ClipboardList className="w-3.5 h-3.5" />
+                  <span>Citizen Complaints &rarr;</span>
+                </button>
+              </div>
               <select
                 value={selectedIssueId}
-                onChange={(e) => setSelectedIssueId(e.target.value)}
+                onChange={(e) => {
+                  setSelectedIssueId(e.target.value);
+                  setAfterImageUrl('');
+                  setPhotoCapturedAt(null);
+                  setPhotoSecondsLeft(null);
+                }}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-amber-500 font-medium font-mono"
               >
+                <option value="">-- Select Complaint to Resolve ({unsubmittedIssues.length} Available) --</option>
                 {issuesWithProximity.map((i) => (
                   <option key={i.id} value={i.id}>
                     {i.isNearby ? '📍 [≤50km]' : '🌐 [>50km]'} [{i.status}] {i.id} ({i.distKm}km) - {i.title.slice(0, 22)}...
@@ -605,8 +741,8 @@ export const UploadRepairProof = () => {
               </select>
             </div>
 
-            {/* Selected Complaint Card */}
-            {selectedIssue && (
+            {/* Selected Complaint Card or Empty Selection Prompt */}
+            {selectedIssue ? (
               <div className="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-3">
                 <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 border border-slate-800">
                   <img
@@ -667,10 +803,32 @@ export const UploadRepairProof = () => {
                   <div className="flex items-center gap-1.5 pt-1 text-[11px]">
                     <MapPin className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                     <span className="truncate text-slate-200 font-medium">
-                      {formatDisplayAddress(selectedIssue.location?.address, selectedIssue.location)}
+                      {formatDisplayAddress(selectedIssue?.location?.address, selectedIssue?.location)}
                     </span>
                   </div>
                 </div>
+              </div>
+            ) : (
+              <div className="p-6 rounded-2xl bg-slate-950/80 border border-dashed border-slate-800 text-center space-y-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/20">
+                  <ClipboardList className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-slate-200">
+                    Select Complaint to Resolve
+                  </p>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                    Please pick an eligible citizen complaint from the dropdown above or browse your active Citizen Complaints list.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/worker/complaints')}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold transition-all cursor-pointer"
+                >
+                  <ClipboardList className="w-3.5 h-3.5" />
+                  <span>Go to Citizen Complaints</span>
+                </button>
               </div>
             )}
           </div>
@@ -678,292 +836,337 @@ export const UploadRepairProof = () => {
 
         {/* Right Column: Upload After Photo & Repair Details */}
         <div className="lg:col-span-7">
-          <form
-            onSubmit={handleSubmit}
-            className="p-6 md:p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-6 shadow-xl"
-          >
-            <div className="border-b border-slate-800 pb-4 flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-amber-400" />
-                  <h2 className="text-base font-bold text-white font-display">
-                    After-Repair Proof-of-Work Upload
-                  </h2>
-                </div>
-                <p className="text-xs text-slate-400 mt-1">
-                  Provide visual evidence of completed road or civic restoration for Admin verification.
+          {!selectedIssue ? (
+            <div className="p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-5 shadow-xl flex flex-col items-center justify-center text-center min-h-[440px]">
+              <div className="w-16 h-16 rounded-3xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 shadow-lg shadow-amber-500/10">
+                <Wrench className="w-8 h-8 text-amber-400" />
+              </div>
+              <div className="space-y-2 max-w-md">
+                <h2 className="text-lg font-black text-white font-display">
+                  Select a Complaint to Resolve
+                </h2>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  To capture live camera proof and submit completed repair verification to Admin, select an active complaint from the dropdown on the left or choose an assigned complaint from the Citizen Complaints list.
                 </p>
               </div>
-
-              {isWithinRange ? (
-                <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                  <Unlock className="w-3.5 h-3.5" />
-                  <span>Geofence Unlocked ({distanceMeters}m)</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1 text-rose-400 text-xs font-bold px-2.5 py-1 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Geofence Locked ({distanceMeters !== null ? `${distanceMeters}m` : 'Calculating'})</span>
-                </div>
-              )}
-            </div>
-
-            {/* Section 1: Live Camera Resolution Photo Capture */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                  1. Capture Live "After Repair" Photo Proof (Camera Only)
-                </label>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-[11px] font-mono text-amber-300">
-                  <Camera className="w-3.5 h-3.5 text-amber-400" />
-                  <span>LIVE CAMERA REQUIRED</span>
-                </div>
-              </div>
-
-              {!isWithinRange ? (
-                <div className="border-2 border-dashed border-rose-800/60 bg-rose-950/10 rounded-2xl p-6 text-center space-y-3 py-6">
-                  <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20">
-                    <Lock className="w-6 h-6" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-bold text-rose-300">
-                      Photo Proof Camera Disabled
-                    </p>
-                    <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                      Automatic GPS check calculated that you are{' '}
-                      <strong className="text-rose-400 font-mono font-bold">
-                        {distanceMeters !== null ? `${distanceMeters} meters` : 'outside location'}
-                      </strong>{' '}
-                      away from the incident location. You must physically be within{' '}
-                      <strong className="text-white">250 meters</strong> of the complaint site to take and submit live camera resolution photos.
-                    </p>
-                  </div>
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      onClick={handleSimulate40m}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/50 transition-colors cursor-pointer"
-                    >
-                      <Navigation className="w-3.5 h-3.5" />
-                      <span>Simulate 40m to Unlock Camera</span>
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-mono">
-                    Automatic GPS protection active &bull; Testing simulation available above
-                  </p>
-                </div>
-              ) : (
-                <LiveCameraCapture
-                  currentImageUrl={afterImageUrl}
-                  onCapture={(url) => setAfterImageUrl(url)}
-                  disabled={!isWithinRange}
-                  themeColor="amber"
-                  label="Live Camera Resolution Proof Capture"
-                  sublabel="Capture live photograph of the completed repair directly through your device camera"
-                />
-              )}
-            </div>
-
-            {/* Before vs After Side-by-Side Preview */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
-                  Verification Comparison Preview
-                </span>
-                <span className="text-[10px] font-mono text-emerald-400">
-                  {isWithinRange ? `GPS Match: ${distanceMeters}m from site` : `GPS Distance: ${distanceMeters !== null ? distanceMeters + 'm' : 'Unverified'}`}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="relative rounded-xl overflow-hidden aspect-video bg-slate-900 border border-slate-800 shadow-inner">
-                  <img
-                    src={selectedIssue?.imageUrl || PLACEHOLDER_IMAGES.pothole}
-                    alt="Before"
-                    className="w-full h-full object-cover"
-                  />
-                  <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded text-[9px] font-bold bg-rose-600/90 text-white shadow">
-                    BEFORE (CITIZEN REPORT)
-                  </span>
-                </div>
-                <div className="relative rounded-xl overflow-hidden aspect-video bg-slate-900 border border-slate-800 shadow-inner">
-                  <img
-                    src={afterImageUrl || PLACEHOLDER_IMAGES.repairedRoad}
-                    alt="After"
-                    className="w-full h-full object-cover"
-                  />
-                  <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-600/90 text-white shadow">
-                    AFTER (WORKER PROOF)
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* SECTION 2: COMPLETING ENTITY ATTRIBUTION (Organization vs. Individual Person) */}
-            <div className="space-y-3 p-4 rounded-2xl bg-slate-950 border border-slate-800">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                  2. Who Completed This Work? (Entity Attribution)
-                </label>
-                <span className="text-[10px] font-mono text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                  MANDATORY AUDIT RECORD
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Option A: Assigned Organization */}
-                <div
-                  onClick={() => setCompletingEntityType('ORGANIZATION')}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all space-y-1.5 ${
-                    completingEntityType === 'ORGANIZATION'
-                      ? 'bg-indigo-950/60 border-indigo-500 ring-2 ring-indigo-500/30'
-                      : 'bg-slate-900 border-slate-800 hover:border-slate-700 opacity-70'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-bold text-xs text-indigo-300">
-                      <Building2 className="w-4 h-4 text-indigo-400" />
-                      <span>Assigned Organization</span>
-                    </div>
-                    {completingEntityType === 'ORGANIZATION' && <Check className="w-4 h-4 text-indigo-400" />}
-                  </div>
-                  <p className="text-[11px] text-slate-400">
-                    Work completed by organization field crew. Attributed officially to <strong>{selectedIssue.assignedOrgName || 'Assigned Org'}</strong>.
-                  </p>
-                </div>
-
-                {/* Option B: Specific Individual Person */}
-                <div
-                  onClick={() => setCompletingEntityType('PUBLIC_INDIVIDUAL')}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all space-y-1.5 ${
-                    completingEntityType === 'PUBLIC_INDIVIDUAL'
-                      ? 'bg-emerald-950/60 border-emerald-500 ring-2 ring-emerald-500/30'
-                      : 'bg-slate-900 border-slate-800 hover:border-slate-700 opacity-70'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-bold text-xs text-emerald-300">
-                      <UserCheck className="w-4 h-4 text-emerald-400" />
-                      <span>Specific Individual Person</span>
-                    </div>
-                    {completingEntityType === 'PUBLIC_INDIVIDUAL' && <Check className="w-4 h-4 text-emerald-400" />}
-                  </div>
-                  <p className="text-[11px] text-slate-400">
-                    Work completed by an individual worker / citizen. Attributed directly to <strong>this person</strong>, NOT the organization.
-                  </p>
-                </div>
-              </div>
-
-              {/* Dynamic Inputs based on entity choice */}
-              {completingEntityType === 'ORGANIZATION' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-800/80">
-                  <div>
-                    <label className="text-[11px] font-semibold text-slate-400 block mb-1">Organization Name:</label>
-                    <input
-                      type="text"
-                      value={completingOrgName}
-                      onChange={(e) => setCompletingOrgName(e.target.value)}
-                      placeholder="e.g. Delhi PWD Metropolitan Road Division"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-slate-400 block mb-1">Field Worker / Lead Tech:</label>
-                    <input
-                      type="text"
-                      value={completingPersonName}
-                      onChange={(e) => setCompletingPersonName(e.target.value)}
-                      placeholder="e.g. Ramesh Verma"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="pt-2 border-t border-slate-800/80 space-y-1.5">
-                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Person's Full Name (Attribution):</label>
-                  <input
-                    type="text"
-                    required
-                    value={completingPersonName}
-                    onChange={(e) => setCompletingPersonName(e.target.value)}
-                    placeholder="e.g. Ajay Singh (Citizen Contributor)"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-emerald-500/50 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
-                  />
-                  <p className="text-[10px] text-emerald-400/90 italic flex items-center gap-1">
-                    <UserCheck className="w-3.5 h-3.5" />
-                    Admin and Citizen portals will record completion by this person. The organization will not be credited.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* SECTION 3: Materials Used */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                3. Materials & Equipment Applied
-              </label>
-              <input
-                type="text"
-                required
-                disabled={!isWithinRange}
-                value={materialsUsed}
-                onChange={(e) => setMaterialsUsed(e.target.value)}
-                placeholder="e.g. Cold bitumen asphalt mix, hot crack sealant, steam compaction"
-                className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border text-xs text-slate-100 focus:outline-none focus:border-amber-500 transition-colors ${
-                  !isWithinRange ? 'border-slate-800 opacity-60 cursor-not-allowed' : 'border-slate-700'
-                }`}
-              />
-            </div>
-
-            {/* SECTION 4: Field Notes */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                4. Field Completion Notes
-              </label>
-              <textarea
-                rows={3}
-                required
-                disabled={!isWithinRange}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Describe resolution actions taken on site..."
-                className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border text-xs text-slate-100 focus:outline-none focus:border-amber-500 transition-colors resize-none ${
-                  !isWithinRange ? 'border-slate-800 opacity-60 cursor-not-allowed' : 'border-slate-700'
-                }`}
-              />
-            </div>
-
-            {/* Submit Action */}
-            {isWithinRange ? (
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                isLoading={loading}
-                rightIcon={ArrowRight}
-                className="w-full py-3.5 bg-amber-600 hover:bg-amber-500 text-white font-bold shadow-xl shadow-amber-950/40 text-sm cursor-pointer"
-              >
-                Submit Repair Proof as {completingEntityType === 'PUBLIC_INDIVIDUAL' ? `Individual (${completingPersonName || 'Person'})` : `Organization (${completingOrgName || 'Org'})`} (GPS Verified: {distanceMeters}m)
-              </Button>
-            ) : (
-              <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <button
                   type="button"
-                  disabled
-                  className="w-full py-3.5 rounded-xl bg-slate-800/80 text-slate-400 font-bold text-xs flex items-center justify-center gap-2 border border-rose-500/30 cursor-not-allowed"
+                  onClick={() => navigate('/worker/complaints')}
+                  className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-lg shadow-amber-950/40 transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <Lock className="w-4 h-4 text-rose-400" />
-                  <span>
-                    {gpsStatus === 'acquiring'
-                      ? 'Acquiring Live GPS Location to Verify 250m Range...'
-                      : `Photo Upload Blocked (Distance: ${distanceMeters !== null ? `${distanceMeters}m` : 'Unverified'} > 250m limit)`}
-                  </span>
+                  <ClipboardList className="w-4 h-4" />
+                  <span>Select from Citizen Complaints</span>
                 </button>
-                <p className="text-center text-[11px] text-slate-500">
-                  Must physically be within 250m of the complaint location to submit proof. Automatic check is mandatory.
-                </p>
               </div>
-            )}
-          </form>
+            </div>
+          ) : (
+            <form
+              onSubmit={handleSubmit}
+              className="p-6 md:p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-6 shadow-xl"
+            >
+              <div className="border-b border-slate-800 pb-4 flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-amber-400" />
+                    <h2 className="text-base font-bold text-white font-display">
+                      After-Repair Proof-of-Work Upload
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Provide visual evidence of completed road or civic restoration for Admin verification.
+                  </p>
+                </div>
+
+                {isWithinRange ? (
+                  <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <Unlock className="w-3.5 h-3.5" />
+                    <span>Geofence Unlocked ({distanceMeters}m)</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-rose-400 text-xs font-bold px-2.5 py-1 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Geofence Locked ({distanceMeters !== null ? `${distanceMeters}m` : 'Calculating'})</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Section 1: Live Camera Resolution Photo Capture */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                    1. Capture Live "After Repair" Photo Proof (Camera Only)
+                  </label>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-[11px] font-mono text-amber-300">
+                    <Camera className="w-3.5 h-3.5 text-amber-400" />
+                    <span>LIVE CAMERA REQUIRED</span>
+                  </div>
+                </div>
+
+                {!isWithinRange ? (
+                  <div className="border-2 border-dashed border-rose-800/60 bg-rose-950/10 rounded-2xl p-6 text-center space-y-3 py-6">
+                    <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20">
+                      <Lock className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-rose-300">
+                        Photo Proof Camera Disabled
+                      </p>
+                      <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                        Automatic GPS check calculated that you are{' '}
+                        <strong className="text-rose-400 font-mono font-bold">
+                          {distanceMeters !== null ? `${distanceMeters} meters` : 'outside location'}
+                        </strong>{' '}
+                        away from the incident location. You must physically be within{' '}
+                        <strong className="text-white">250 meters</strong> of the complaint site to take and submit live camera resolution photos.
+                      </p>
+                    </div>
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={handleSimulate40m}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/50 transition-colors cursor-pointer"
+                      >
+                        <Navigation className="w-3.5 h-3.5" />
+                        <span>Simulate 40m to Unlock Camera</span>
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-mono">
+                      Automatic GPS protection active &bull; Testing simulation available above
+                    </p>
+                  </div>
+                ) : (
+                  <LiveCameraCapture
+                    currentImageUrl={afterImageUrl}
+                    capturedAt={photoCapturedAt}
+                    onCapture={handleCapture}
+                    onRetake={handleRetake}
+                    disabled={!isWithinRange}
+                    themeColor="amber"
+                    label="Live Camera Resolution Proof Capture"
+                    sublabel="Capture live photograph of the completed repair directly through your device camera"
+                  />
+                )}
+              </div>
+
+              {/* Before vs After Side-by-Side Preview */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
+                    Verification Comparison Preview
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-400">
+                    {isWithinRange ? `GPS Match: ${distanceMeters}m from site` : `GPS Distance: ${distanceMeters !== null ? distanceMeters + 'm' : 'Unverified'}`}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative rounded-xl overflow-hidden aspect-video bg-slate-900 border border-slate-800 shadow-inner">
+                    <img
+                      src={selectedIssue?.imageUrl || PLACEHOLDER_IMAGES.pothole}
+                      alt="Before"
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded text-[9px] font-bold bg-rose-600/90 text-white shadow">
+                      BEFORE (CITIZEN REPORT)
+                    </span>
+                  </div>
+                  <div className="relative rounded-xl overflow-hidden aspect-video bg-slate-900 border border-slate-800 shadow-inner">
+                    <img
+                      src={afterImageUrl || PLACEHOLDER_IMAGES.repairedRoad}
+                      alt="After"
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-600/90 text-white shadow">
+                      AFTER (WORKER PROOF)
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: COMPLETING ENTITY ATTRIBUTION (Organization vs. Individual Person) */}
+              <div className="space-y-3 p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                    2. Who Completed This Work? (Entity Attribution)
+                  </label>
+                  <span className="text-[10px] font-mono text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    MANDATORY AUDIT RECORD
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Option A: Assigned Organization */}
+                  <div
+                    onClick={() => setCompletingEntityType('ORGANIZATION')}
+                    className={`p-3.5 rounded-xl border cursor-pointer transition-all space-y-1.5 ${
+                      completingEntityType === 'ORGANIZATION'
+                        ? 'bg-indigo-950/60 border-indigo-500 ring-2 ring-indigo-500/30'
+                        : 'bg-slate-900 border-slate-800 hover:border-slate-700 opacity-70'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-bold text-xs text-indigo-300">
+                        <Building2 className="w-4 h-4 text-indigo-400" />
+                        <span>Assigned Organization</span>
+                      </div>
+                      {completingEntityType === 'ORGANIZATION' && <Check className="w-4 h-4 text-indigo-400" />}
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Work completed by organization field crew. Attributed officially to <strong>{selectedIssue?.assignedOrgName || completingOrgName || 'Assigned Org'}</strong>.
+                    </p>
+                  </div>
+
+                  {/* Option B: Specific Individual Person */}
+                  <div
+                    onClick={() => setCompletingEntityType('PUBLIC_INDIVIDUAL')}
+                    className={`p-3.5 rounded-xl border cursor-pointer transition-all space-y-1.5 ${
+                      completingEntityType === 'PUBLIC_INDIVIDUAL'
+                        ? 'bg-emerald-950/60 border-emerald-500 ring-2 ring-emerald-500/30'
+                        : 'bg-slate-900 border-slate-800 hover:border-slate-700 opacity-70'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-bold text-xs text-emerald-300">
+                        <UserCheck className="w-4 h-4 text-emerald-400" />
+                        <span>Specific Individual Person</span>
+                      </div>
+                      {completingEntityType === 'PUBLIC_INDIVIDUAL' && <Check className="w-4 h-4 text-emerald-400" />}
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Work completed by an individual worker / citizen. Attributed directly to <strong>this person</strong>, NOT the organization.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Dynamic Inputs based on entity choice */}
+                {completingEntityType === 'ORGANIZATION' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-800/80">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-400 block mb-1">Organization Name:</label>
+                      <input
+                        type="text"
+                        value={completingOrgName}
+                        onChange={(e) => setCompletingOrgName(e.target.value)}
+                        placeholder="e.g. Delhi PWD Metropolitan Road Division"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-400 block mb-1">Field Worker / Lead Tech:</label>
+                      <input
+                        type="text"
+                        value={completingPersonName}
+                        onChange={(e) => setCompletingPersonName(e.target.value)}
+                        placeholder="e.g. Ramesh Verma"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="pt-2 border-t border-slate-800/80 space-y-1.5">
+                    <label className="text-[11px] font-semibold text-slate-400 block mb-1">Person's Full Name (Attribution):</label>
+                    <input
+                      type="text"
+                      required
+                      value={completingPersonName}
+                      onChange={(e) => setCompletingPersonName(e.target.value)}
+                      placeholder="e.g. Ajay Singh (Citizen Contributor)"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-emerald-500/50 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
+                    />
+                    <p className="text-[10px] text-emerald-400/90 italic flex items-center gap-1">
+                      <UserCheck className="w-3.5 h-3.5" />
+                      Admin and Citizen portals will record completion by this person. The organization will not be credited.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* SECTION 3: Materials Used */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                  3. Materials & Equipment Applied
+                </label>
+                <input
+                  type="text"
+                  required
+                  disabled={!isWithinRange}
+                  value={materialsUsed}
+                  onChange={(e) => setMaterialsUsed(e.target.value)}
+                  placeholder="e.g. Cold bitumen asphalt mix, hot crack sealant, steam compaction"
+                  className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border text-xs text-slate-100 focus:outline-none focus:border-amber-500 transition-colors ${
+                    !isWithinRange ? 'border-slate-800 opacity-60 cursor-not-allowed' : 'border-slate-700'
+                  }`}
+                />
+              </div>
+
+              {/* SECTION 4: Field Notes */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                  4. Field Completion Notes
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  disabled={!isWithinRange}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Describe resolution actions taken on site..."
+                  className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border text-xs text-slate-100 focus:outline-none focus:border-amber-500 transition-colors resize-none ${
+                    !isWithinRange ? 'border-slate-800 opacity-60 cursor-not-allowed' : 'border-slate-700'
+                  }`}
+                />
+              </div>
+
+              {/* Submit Action */}
+              {isWithinRange ? (
+                isPhotoExpired ? (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleRetake}
+                      className="w-full py-3.5 rounded-2xl bg-rose-950/70 border-2 border-rose-500/60 text-rose-300 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-rose-950/50 hover:bg-rose-900/80 transition-all"
+                    >
+                      <AlertTriangle className="w-4 h-4 text-rose-400 animate-pulse" />
+                      <span>⚠️ Photo Proof Expired (60s Exceeded) &bull; Tap to Capture New Live Photo</span>
+                    </button>
+                    <p className="text-center text-[11px] text-rose-400 font-medium">
+                      Submission blocked: Live photo expired after 60 seconds. A new live photo must be taken.
+                    </p>
+                  </div>
+                ) : (
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    isLoading={loading}
+                    rightIcon={ArrowRight}
+                    className="w-full py-3.5 bg-amber-600 hover:bg-amber-500 text-white font-bold shadow-xl shadow-amber-950/40 text-sm cursor-pointer"
+                  >
+                    Submit Repair Proof as {completingEntityType === 'PUBLIC_INDIVIDUAL' ? `Individual (${completingPersonName || 'Person'})` : `Organization (${completingOrgName || 'Org'})`}
+                    {photoSecondsLeft !== null ? ` (⏱️ ${photoSecondsLeft}s left)` : ''} (GPS Verified: {distanceMeters}m)
+                  </Button>
+                )
+              ) : (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full py-3.5 rounded-xl bg-slate-800/80 text-slate-400 font-bold text-xs flex items-center justify-center gap-2 border border-rose-500/30 cursor-not-allowed"
+                  >
+                    <Lock className="w-4 h-4 text-rose-400" />
+                    <span>
+                      {gpsStatus === 'acquiring'
+                        ? 'Acquiring Live GPS Location to Verify 250m Range...'
+                        : `Photo Upload Blocked (Distance: ${distanceMeters !== null ? `${distanceMeters}m` : 'Unverified'} > 250m limit)`}
+                    </span>
+                  </button>
+                  <p className="text-center text-[11px] text-slate-500">
+                    Must physically be within 250m of the complaint location to submit proof. Automatic check is mandatory.
+                  </p>
+                </div>
+              )}
+            </form>
+          )}
         </div>
       </div>
     </div>

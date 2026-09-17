@@ -4,7 +4,6 @@ import {
   X,
   LayoutDashboard,
   PlusCircle,
-  ScanEye,
   CopyCheck,
   FileText,
   Navigation,
@@ -25,6 +24,7 @@ import {
 import useAuth from '../../hooks/useAuth';
 import { cn } from '../../utils/helpers';
 import ThemeChanger from './ThemeChanger';
+import { ADMIN_DEFAULT_AVATAR } from '../../utils/constants';
 
 export const MobileSidebar = ({ isOpen, onClose }) => {
   const { user, isAdmin, isWorker, logout } = useAuth();
@@ -35,7 +35,6 @@ export const MobileSidebar = ({ isOpen, onClose }) => {
     { label: 'Citizen Hub', to: '/citizen/dashboard', icon: LayoutDashboard },
     { label: 'Report Issue (GPS)', to: '/citizen/report', icon: PlusCircle, highlight: true },
     { label: 'Public Reviews', to: '/reviews', icon: Star, badge: 'Public' },
-    { label: 'AI Vision Scan', to: '/citizen/ai-analysis', icon: ScanEye },
     { label: 'Duplicate Check', to: '/citizen/duplicate-check', icon: CopyCheck },
     { label: 'My Submissions', to: '/citizen/my-reports', icon: FileText },
     { label: 'Live GPS Radar', to: '/citizen/explore', icon: Navigation },
@@ -138,13 +137,17 @@ export const MobileSidebar = ({ isOpen, onClose }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
               <img
-                src={user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80'}
+                src={isAdmin ? (user?.avatar || ADMIN_DEFAULT_AVATAR) : (user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80')}
                 alt={user?.name}
-                className="w-8 h-8 rounded-lg object-cover ring-1 ring-amber-500/40"
+                className={`w-8 h-8 rounded-lg object-cover ring-2 ${
+                  isAdmin ? 'ring-rose-500/30' : isWorker ? 'ring-amber-500/40' : 'ring-indigo-500/30'
+                }`}
               />
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-slate-200 truncate">{user?.name}</p>
-                <p className="text-[10px] text-slate-400 truncate">{user?.role?.toUpperCase()}</p>
+                <p className="text-xs font-semibold text-slate-200 truncate">{user?.name || 'User'}</p>
+                <p className="text-[10px] text-slate-400 truncate">
+                  {isAdmin ? 'Municipal Director' : isWorker ? (user?.contractorUnit || 'Field Tech') : `Civic Points: ${user?.civicPoints ?? 0} pts`}
+                </p>
               </div>
             </div>
             <button

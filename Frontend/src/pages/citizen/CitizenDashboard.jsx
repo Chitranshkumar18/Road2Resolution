@@ -93,11 +93,21 @@ export const CitizenDashboard = () => {
           colorScheme="emerald"
         />
         <StatCard
-          title="Reputation Score"
-          value={`${user?.reputationScore || 100} pts`}
-          subtitle="Tier: Civic Guardian"
+          title="Civic Points"
+          value={`${user?.civicPoints ?? 0} pts`}
+          subtitle={
+            (user?.civicPoints ?? 0) >= 500
+              ? 'Tier: City Vanguard'
+              : (user?.civicPoints ?? 0) >= 400
+              ? 'Tier: Quality Auditor'
+              : (user?.civicPoints ?? 0) >= 250
+              ? 'Tier: Rapid Responder'
+              : (user?.civicPoints ?? 0) >= 100
+              ? 'Tier: Civic Guardian'
+              : 'Tier: Civic Starter'
+          }
           icon={Award}
-          trend="+45 pts"
+          trend={(user?.civicPoints ?? 0) > 0 ? `+${user.civicPoints} pts earned` : '0 pts'}
           trendPositive={true}
           colorScheme="amber"
         />

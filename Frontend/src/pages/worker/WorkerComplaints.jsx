@@ -89,9 +89,22 @@ export const WorkerComplaints = () => {
 
   const issueList = Array.isArray(issues) ? issues : [];
 
-  // 1. Calculate distance for every complaint dynamically from worker's GPS location
+  // Filter out complaints that are already completed or where repair proof has already been submitted
+  const activeComplaints = useMemo(() => {
+    return issueList.filter((issue) => {
+      const isSubmitted =
+        issue.status === 'PENDING_VERIFICATION' ||
+        issue.status === 'RESOLVED' ||
+        issue.status === 'CLOSED' ||
+        Boolean(issue.workerSubmission?.repairImageUrl || issue.workerSubmission?.afterImageUrl) ||
+        Boolean(issue.repairVerificationUrl);
+      return !isSubmitted;
+    });
+  }, [issueList]);
+
+  // 1. Calculate distance for every active complaint dynamically from worker's GPS location
   const complaintsWithDistance = useMemo(() => {
-    return issueList.map((issue) => {
+    return activeComplaints.map((issue) => {
       const issueLat = issue.location?.lat || 28.6139;
       const issueLng = issue.location?.lng || 77.2090;
       const distanceKm = calculateDistanceKm(
@@ -106,7 +119,7 @@ export const WorkerComplaints = () => {
         isWithin50Km: distanceKm <= 50
       };
     });
-  }, [issueList, workerLocation]);
+  }, [activeComplaints, workerLocation]);
 
   // 2. Synchronized Citizen Complaints list (All citizen submissions visible with real-time GPS distances)
   const visibleIssues = useMemo(() => {
@@ -338,13 +351,11 @@ export const WorkerComplaints = () => {
             onChange={(e) => setSelectedStatus(e.target.value)}
             className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-amber-500 transition-colors"
           >
-            <option value="all">All Statuses</option>
+            <option value="all">All Active Statuses</option>
             <option value="PENDING">Pending AI Scan</option>
             <option value="VERIFIED">AI Verified / Open</option>
             <option value="ASSIGNED">Assigned to Dept / Org</option>
             <option value="IN_PROGRESS">Work In Progress</option>
-            <option value="PENDING_VERIFICATION">Sent to Admin for QA</option>
-            <option value="RESOLVED">Resolved & Certified</option>
           </select>
 
           {/* Severity */}
@@ -488,13 +499,6 @@ export const WorkerComplaints = () => {
                     </div>
                   </div>
 
-                  {issue.workerSubmission && (
-                    <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-[11px] flex items-center justify-between">
-                      <span>Proof Submitted to Admin</span>
-                      <span className="font-mono font-bold">In QA Queue</span>
-                    </div>
-                  )}
-
                   {/* Dual Action Controls (Both Accept as Org & Take as Person visible) */}
                   <div className="space-y-2 pt-1">
                     {isUnclaimed ? (
@@ -541,12 +545,7 @@ export const WorkerComplaints = () => {
                           PERSON WORKING
                         </span>
                       </div>
-                    ) : (
-                      <div className="w-full py-2 px-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 text-xs font-bold flex items-center justify-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>{issue.status === 'RESOLVED' ? 'Certified & Resolved' : 'Proof Submitted • In QA'}</span>
-                      </div>
-                    )}
+                    ) : null}
 
                     {/* Upload Proof Button */}
                     <button
@@ -555,17 +554,7 @@ export const WorkerComplaints = () => {
                       className="w-full py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-md shadow-amber-900/30 cursor-pointer"
                     >
                       <Camera className="w-3.5 h-3.5" />
-                      <span>
-                        {isResolvedOrPendingQA
-                          ? 'View / Update Proof'
-                          : isTakenByIndividual
-                          ? 'Upload Proof (as Person)'
-                          : isTakenByOrg
-                          ? 'Upload Proof (as Org)'
-                          : hasAssignedOrg
-                          ? 'Upload Proof (as Org)'
-                          : 'Upload Proof (as Person)'}
-                      </span>
+                      <span>Upload Proof</span>
                     </button>
                   </div>
                 </div>

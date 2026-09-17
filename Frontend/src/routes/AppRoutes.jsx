@@ -70,7 +70,6 @@ export const AppRoutes = () => {
         <Route index element={<Navigate to="/citizen/dashboard" replace />} />
         <Route path="dashboard" element={<CitizenDashboard />} />
         <Route path="report" element={<ReportIssue />} />
-        <Route path="ai-analysis" element={<AIAnalysis />} />
         <Route path="duplicate-check" element={<DuplicateCheck />} />
         <Route path="my-reports" element={<MyReports />} />
         <Route path="issue/:id" element={<IssueDetails />} />

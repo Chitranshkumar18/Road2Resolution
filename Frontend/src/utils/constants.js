@@ -1,3 +1,5 @@
+export const ADMIN_DEFAULT_AVATAR = "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=256&auto=format&fit=crop&q=80";
+
 export const PLACEHOLDER_IMAGES = {
   pothole: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=800&auto=format&fit=crop&q=80",
   streetlight: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800&auto=format&fit=crop&q=80",
