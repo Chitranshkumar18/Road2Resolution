@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo } from 'react';
+import React, { useState, useContext, useMemo, useRef, useEffect } from 'react';
 import {
   User,
   Wrench,
@@ -12,10 +12,15 @@ import {
   HardHat,
   Truck,
   Sparkles,
-  Layers
+  Layers,
+  Camera,
+  Upload,
+  Trash2,
+  Image as ImageIcon
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import { IssueContext } from '../../context/IssueContext';
+import { NotificationContext } from '../../context/NotificationContext';
 import Button from '../../components/common/Button';
 
 const isWorkerIssue = (issue, currentUser) => {
@@ -161,6 +166,8 @@ const calculateWorkerStats = (issues = [], user = null) => {
 export const WorkerProfile = () => {
   const { user, updateProfile } = useAuth();
   const { issues = [] } = useContext(IssueContext) || {};
+  const { addToast } = useContext(NotificationContext) || {};
+  const fileInputRef = useRef(null);
 
   const stats = useMemo(() => {
     if (issues.length > 0) {
@@ -178,8 +185,55 @@ export const WorkerProfile = () => {
   const [phone, setPhone] = useState(user?.phone || '');
   const [contractorUnit, setContractorUnit] = useState(user?.contractorUnit || user?.organizationName || '');
   const [zone, setZone] = useState(user?.zone || '');
+  const [avatar, setAvatar] = useState(user?.avatar || '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setPhone(user.phone || '');
+      setContractorUnit(user.contractorUnit || user.organizationName || '');
+      setZone(user.zone || '');
+      setAvatar(user.avatar || '');
+    }
+  }, [user]);
+
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      if (addToast) {
+        addToast('Please select a valid image file (JPG, PNG, WebP).', 'error');
+      }
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      if (addToast) {
+        addToast('Image size must be less than 5MB.', 'error');
+      }
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAvatar(reader.result);
+      if (addToast) {
+        addToast('Photo preview loaded! Click "Save Profile Updates" to save.', 'info');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = () => {
+    setAvatar('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (addToast) {
+      addToast('Profile photo removed. Save updates to confirm.', 'info');
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -187,12 +241,18 @@ export const WorkerProfile = () => {
     setSaved(false);
     try {
       if (updateProfile) {
-        await updateProfile({ name, phone, contractorUnit, zone });
+        await updateProfile({ name, phone, contractorUnit, zone, avatar });
       }
       setSaved(true);
+      if (addToast) {
+        addToast('Worker profile and photo updated successfully!', 'success');
+      }
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error(err);
+      if (addToast) {
+        addToast('Failed to update profile. Please try again.', 'error');
+      }
     } finally {
       setSaving(false);
     }
@@ -203,8 +263,18 @@ export const WorkerProfile = () => {
       {/* Profile Header Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-950/70 via-slate-900 to-slate-900 border border-amber-500/30 p-6 md:p-8 shadow-2xl">
         <div className="flex flex-col sm:flex-row items-center gap-6">
-          <div className="w-24 h-24 rounded-2xl bg-amber-500/20 border-2 border-amber-500/40 flex items-center justify-center text-amber-300 font-bold text-2xl shadow-xl">
-            {user?.name ? user.name.slice(0, 2).toUpperCase() : <HardHat className="w-10 h-10 text-amber-400" />}
+          <div className="w-24 h-24 rounded-2xl bg-amber-500/20 border-2 border-amber-500/40 overflow-hidden flex items-center justify-center text-amber-300 font-bold text-2xl shadow-xl shrink-0">
+            {avatar ? (
+              <img
+                src={avatar}
+                alt={user?.name || 'Worker'}
+                className="w-full h-full object-cover"
+              />
+            ) : user?.name ? (
+              user.name.slice(0, 2).toUpperCase()
+            ) : (
+              <HardHat className="w-10 h-10 text-amber-400" />
+            )}
           </div>
           <div className="space-y-1.5 text-center sm:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold font-mono">
@@ -250,6 +320,57 @@ export const WorkerProfile = () => {
             <span>Profile details updated successfully!</span>
           </div>
         )}
+
+        {/* Profile Photo Upload Field */}
+        <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+            Profile Photo
+          </label>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="w-16 h-16 rounded-xl bg-slate-900 border border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+              {avatar ? (
+                <img src={avatar} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <ImageIcon className="w-7 h-7 text-slate-500" />
+              )}
+            </div>
+
+            <div className="flex-1 space-y-1 text-center sm:text-left">
+              <p className="text-xs font-semibold text-slate-200">Worker Profile Picture</p>
+              <p className="text-[11px] text-slate-400">
+                Upload a JPG, PNG or WebP image from your device to personalize your Worker profile.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoSelect}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3.5 py-2 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>{avatar ? 'Change Photo' : 'Upload Photo'}</span>
+              </button>
+              {avatar && (
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 transition-all cursor-pointer"
+                  title="Remove Photo"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -322,7 +443,7 @@ export const WorkerProfile = () => {
           variant="primary"
           size="md"
           isLoading={saving}
-          className="w-full sm:w-auto bg-amber-600 hover:bg-amber-500 text-white font-bold"
+          className="w-full sm:w-auto bg-amber-600 hover:bg-amber-500 text-white font-bold cursor-pointer"
         >
           Save Profile Updates
         </Button>
