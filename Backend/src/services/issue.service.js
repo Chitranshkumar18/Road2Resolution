@@ -109,6 +109,9 @@ export const createIssue = async (issueData, currentUser = null) => {
     category = "pothole",
     imageUrl,
     image,
+    capturedAt,
+    photoCapturedAt,
+    photoValiditySeconds = 60,
     address,
     lat,
     lng,
@@ -127,6 +130,25 @@ export const createIssue = async (issueData, currentUser = null) => {
     reporter,
     userId,
   } = issueData;
+
+  // 60-Second Photo Validity Window Verification for Citizen Live Camera Capture
+  const rawCaptureTime = capturedAt || photoCapturedAt;
+  const captureTimestamp = rawCaptureTime ? new Date(rawCaptureTime).getTime() : null;
+  const now = Date.now();
+
+  if (captureTimestamp && !isNaN(captureTimestamp)) {
+    const ageSeconds = (now - captureTimestamp) / 1000;
+    // Enforce 60-second limit with 5-second grace for network transit / clock skew
+    if (ageSeconds > 65) {
+      throw new ApiError(
+        400,
+        `Photo evidence expired. The complaint photo was captured ${Math.round(ageSeconds)} seconds ago, exceeding the 60-second live submission limit. Please capture a new live photo.`
+      );
+    }
+    if (ageSeconds < -10) {
+      throw new ApiError(400, "Invalid capture timestamp detected. Please capture a fresh live photo.");
+    }
+  }
 
   // Process image
   const rawImage = imageUrl || image;
@@ -201,6 +223,8 @@ export const createIssue = async (issueData, currentUser = null) => {
       suggestedAction: "Dispatched to designated municipal field unit.",
     },
     imageUrl: finalImageUrl,
+    capturedAt: captureTimestamp ? new Date(captureTimestamp) : new Date(),
+    photoValiditySeconds: 60,
     location: {
       address: address || "Outer Ring Road, New Delhi",
       lat: Number(lat) || 28.6139,

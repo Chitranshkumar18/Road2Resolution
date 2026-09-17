@@ -197,6 +197,8 @@ export const formatIssueForFrontend = (doc) => {
           };
         })
       : [],
+    capturedAt: issue.capturedAt || issue.createdAt || new Date().toISOString(),
+    photoValiditySeconds: issue.photoValiditySeconds || 60,
     createdAt: issue.createdAt || new Date().toISOString(),
     updatedAt: issue.updatedAt || new Date().toISOString(),
   };

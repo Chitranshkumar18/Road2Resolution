@@ -53,7 +53,7 @@ export const ReportIssue = () => {
       addToast('🎉 Civic hazard reported! +10 Civic Points added to your account.', 'success');
     } catch (err) {
       console.error(err);
-      addToast('Failed to submit report. Please check details and try again.', 'error');
+      addToast(err?.message || 'Failed to submit report. Please check details and try again.', 'error');
     } finally {
       setSubmitting(false);
     }

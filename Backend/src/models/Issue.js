@@ -143,6 +143,14 @@ const issueSchema = new mongoose.Schema(
       type: String,
       required: [true, "Evidence image is required"],
     },
+    capturedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    photoValiditySeconds: {
+      type: Number,
+      default: 60,
+    },
     location: {
       address: {
         type: String,

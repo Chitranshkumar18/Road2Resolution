@@ -21,6 +21,8 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
     imageUrl: '',
   });
 
+  const [photoCapturedAt, setPhotoCapturedAt] = useState(null);
+  const [photoSecondsLeft, setPhotoSecondsLeft] = useState(null);
   const [analyzingAi, setAnalyzingAi] = useState(false);
   const [aiDetectedData, setAiDetectedData] = useState(null);
   const [showGpsRadar, setShowGpsRadar] = useState(true);
@@ -33,14 +35,53 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
     }));
   };
 
-  const handleLivePhotoCapture = (dataUrl) => {
+  const handleLivePhotoCapture = (dataUrl, timestamp) => {
+    const captureTime = timestamp || Date.now();
+    setPhotoCapturedAt(captureTime);
+    setPhotoSecondsLeft(60);
     setFormData((prev) => ({ ...prev, imageUrl: dataUrl }));
     setAiDetectedData(null);
   };
 
+  const handleRetakePhoto = () => {
+    setFormData((prev) => ({ ...prev, imageUrl: '' }));
+    setPhotoCapturedAt(null);
+    setPhotoSecondsLeft(null);
+    setAiDetectedData(null);
+  };
+
+  // 60-Second Real-Time Validity Countdown Timer for Citizen Live Camera Photo
+  useEffect(() => {
+    if (!formData.imageUrl || !photoCapturedAt) {
+      setPhotoSecondsLeft(null);
+      return;
+    }
+
+    const updateRemaining = () => {
+      const capTime = typeof photoCapturedAt === 'number' ? photoCapturedAt : new Date(photoCapturedAt).getTime();
+      if (isNaN(capTime)) {
+        setPhotoSecondsLeft(null);
+        return;
+      }
+      const elapsed = Math.floor((Date.now() - capTime) / 1000);
+      const remaining = Math.max(0, 60 - elapsed);
+      setPhotoSecondsLeft(remaining);
+    };
+
+    updateRemaining();
+    const timerInterval = setInterval(updateRemaining, 1000);
+    return () => clearInterval(timerInterval);
+  }, [formData.imageUrl, photoCapturedAt]);
+
+  const isPhotoExpired = Boolean(formData.imageUrl && photoSecondsLeft === 0);
+
   const runAiAnalysis = async () => {
     if (!formData.imageUrl) {
       alert('Please capture a live photo using your camera before executing the AI scan.');
+      return;
+    }
+    if (isPhotoExpired) {
+      alert('⚠️ The captured photo has expired (60-second limit reached). Please capture a fresh live photo.');
       return;
     }
     setAnalyzingAi(true);
@@ -83,8 +124,14 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
       alert('Please capture a live photo of the civic defect using your camera before submitting.');
       return;
     }
+    if (isPhotoExpired || (photoCapturedAt && (Date.now() - photoCapturedAt) > 60000)) {
+      alert('⚠️ Captured photo has expired (60-second limit exceeded). Please capture a new live photo with the camera to submit.');
+      return;
+    }
     const finalData = {
       ...formData,
+      capturedAt: photoCapturedAt || Date.now(),
+      photoValiditySeconds: 60,
       severity: aiDetectedData?.severity || 'HIGH',
       priorityScore: aiDetectedData?.priorityScore || 85,
       aiConfidence: aiDetectedData?.aiConfidence || 95.5,
@@ -112,7 +159,9 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
           <div>
             <LiveCameraCapture
               currentImageUrl={formData.imageUrl}
+              capturedAt={photoCapturedAt}
               onCapture={handleLivePhotoCapture}
+              onRetake={handleRetakePhoto}
               themeColor="indigo"
               label="Live Camera Evidence Capture"
               sublabel="Capture live road defect photograph directly with your camera"
@@ -321,15 +370,42 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
 
       {/* Submit Button */}
       <div className="pt-2">
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          isLoading={isSubmitting}
-          className="w-full"
-        >
-          Submit Civic Report for AI Triage
-        </Button>
+        {isPhotoExpired ? (
+          <button
+            type="button"
+            onClick={handleRetakePhoto}
+            className="w-full py-4 px-6 rounded-2xl bg-rose-600/90 hover:bg-rose-500 text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-xl shadow-rose-950/50 border border-rose-400/40 transition-all cursor-pointer animate-pulse"
+          >
+            <AlertTriangle className="w-5 h-5" />
+            <span>⚠️ Photo Proof Expired (60s Exceeded) &bull; Tap to Capture New Live Photo</span>
+          </button>
+        ) : (
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            isLoading={isSubmitting}
+            disabled={!formData.imageUrl || isPhotoExpired}
+            className="w-full"
+          >
+            {photoSecondsLeft !== null ? (
+              <span className="flex items-center justify-center gap-2">
+                <span>Submit Civic Report for AI Triage</span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+                  photoSecondsLeft <= 15
+                    ? 'bg-rose-900/80 text-rose-200 border border-rose-500/50 animate-pulse'
+                    : photoSecondsLeft <= 30
+                    ? 'bg-amber-900/80 text-amber-200 border border-amber-500/50'
+                    : 'bg-black/40 text-emerald-300 border border-emerald-500/30'
+                }`}>
+                  ⏱️ {photoSecondsLeft}s left
+                </span>
+              </span>
+            ) : (
+              'Submit Civic Report for AI Triage'
+            )}
+          </Button>
+        )}
       </div>
     </form>
   );
