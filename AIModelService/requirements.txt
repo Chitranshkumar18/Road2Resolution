@@ -1,5 +1,6 @@
-torch>=2.0.0
-torchvision>=0.15.0
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.14.0+cpu
+torchvision==0.29.0+cpu
 pillow>=9.0.0
 fastapi>=0.100.0
 uvicorn>=0.20.0
