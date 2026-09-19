@@ -69,30 +69,34 @@ export const processWorkerRepairSubmission = async (issue, repairData, workerUse
     }
   }
 
-  const workerUserId = workerUser?._id || workerUser?.id || repairData.workerId || workerInfo.id || workerInfo._id || null;
-  const actorName = repairData.workerName || workerInfo.name || workerUser?.name || (isVolunteer ? "Public Citizen" : "Field Worker");
-  const actorEmail = repairData.workerEmail || workerInfo.email || workerUser?.email || "";
-  const actorOrg = isVolunteer ? null : (organizationName || workerInfo.contractorUnit || issue.assignedOrgName || "Municipal Infrastructure Division");
+  // Derive identity strictly from authenticated server user (req.user)
+  const isCitizenVolunteer = Boolean(workerUser?.role === "citizen" || (isVolunteer && !workerUser));
+  const workerUserId = workerUser ? workerUser._id : null;
+  const actorName = workerUser ? workerUser.name : "Field Worker";
+  const actorEmail = workerUser ? workerUser.email : "";
+  const actorOrg = isCitizenVolunteer
+    ? null
+    : (workerUser?.contractorUnit || workerUser?.organizationName || issue.assignedOrgName || "Municipal Infrastructure Division");
 
   // Create Repair document
   const repair = await Repair.create({
     issue: issue._id,
     issueCustomId: issue.customId || issue.id,
     worker: workerUserId,
-    organization: null,
+    organization: workerUser?.organization || null,
     beforeImageUrl: issue.imageUrl,
     afterImageUrl: finalImageUrl,
     repairImageUrl: finalImageUrl,
     capturedAt: new Date(captureTimestamp),
     photoValiditySeconds: 300,
-    notes: notes || "Repairs completed by on-site field team.",
-    materialsUsed: materialsUsed || "Standard asphalt cold-mix & tamper compaction",
-    submittedBy: isVolunteer ? "PUBLIC_INDIVIDUAL" : "ORGANIZATION",
-    isVolunteer: Boolean(isVolunteer),
+    notes: (notes || "Repairs completed by on-site field team.").trim(),
+    materialsUsed: (materialsUsed || "Standard asphalt cold-mix & tamper compaction").trim(),
+    submittedBy: isCitizenVolunteer ? "PUBLIC_INDIVIDUAL" : "ORGANIZATION",
+    isVolunteer: isCitizenVolunteer,
     organizationName: actorOrg || "",
     workerName: actorName,
     workerEmail: actorEmail,
-    contractorUnit: isVolunteer ? "Individual Worker / Public Person" : (actorOrg || ""),
+    contractorUnit: isCitizenVolunteer ? "Individual Worker / Public Person" : (actorOrg || ""),
     gpsVerification: {
       verified: geoCheck.verified,
       distanceMeters: geoCheck.distanceMeters,
@@ -128,9 +132,13 @@ export const processWorkerRepairSubmission = async (issue, repairData, workerUse
     gpsVerification: repair.gpsVerification,
   };
 
-  if (isVolunteer) {
+  if (isCitizenVolunteer) {
     issue.responsibleType = "PUBLIC_INDIVIDUAL";
     issue.responsibleName = actorName;
+  } else {
+    issue.responsibleType = "ORGANIZATION";
+    issue.responsibleName = actorName;
+    issue.responsibleOrgName = actorOrg || issue.responsibleOrgName;
   }
 
   issue.timeline.push({

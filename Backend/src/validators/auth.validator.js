@@ -18,9 +18,14 @@ export const validateRegister = (data = {}) => {
     errors.push("Password must be at least 6 characters long.");
   }
 
-  // Strict rule: Admin accounts cannot be created via public registration
-  if (role === "admin") {
-    errors.push("Admin registration is strictly prohibited. Admin accounts are provisioned exclusively by system administrators.");
+  // Strict rule: Only citizen accounts may be created through public self-registration
+  if (role !== undefined && role !== null) {
+    const normalizedRole = String(role).trim().toLowerCase();
+    if (normalizedRole !== "citizen") {
+      errors.push(
+        "Self-registration is restricted exclusively to Citizens. Field Worker and Administrator accounts must be provisioned by Municipal Administration."
+      );
+    }
   }
 
   return {
@@ -57,10 +62,42 @@ export const validateLogin = (data = {}) => {
 
 export const validateUpdateProfile = (data = {}) => {
   const errors = [];
-  const { email } = data;
+  const { name, phone, email } = data;
 
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+  if (name !== undefined && (typeof name !== "string" || !name.trim())) {
+    errors.push("Name cannot be empty.");
+  }
+
+  if (phone !== undefined && typeof phone !== "string") {
+    errors.push("Phone must be a valid string.");
+  }
+
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
     errors.push("Please provide a valid email format.");
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+};
+
+export const validateProvisionWorker = (data = {}) => {
+  const errors = [];
+  const { name, email, password } = data;
+
+  if (!name || typeof name !== "string" || !name.trim()) {
+    errors.push("Worker full name is required.");
+  }
+
+  if (!email || typeof email !== "string" || !email.trim()) {
+    errors.push("Valid worker email address is required.");
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    errors.push("Please provide a valid email format.");
+  }
+
+  if (!password || typeof password !== "string" || password.length < 6) {
+    errors.push("Initial password must be at least 6 characters long.");
   }
 
   return {
@@ -73,4 +110,6 @@ export default {
   validateRegister,
   validateLogin,
   validateUpdateProfile,
+  validateProvisionWorker,
 };
+

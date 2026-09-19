@@ -1,11 +1,15 @@
 import { Router } from "express";
 import workerController from "../controllers/worker.controller.js";
-import { optionalAuth } from "../middleware/auth.middleware.js";
+import { authenticate } from "../middleware/auth.middleware.js";
+import { requireWorker } from "../middleware/role.middleware.js";
 
 const router = Router();
 
-router.get("/assigned-issues", optionalAuth, workerController.getAssignedIssues);
-router.get("/profile", optionalAuth, workerController.getProfile);
-router.post("/repair", optionalAuth, workerController.submitRepair);
+// Protect all worker field operations routes (accessible to workers and admins)
+router.use(authenticate, requireWorker);
+
+router.get("/assigned-issues", workerController.getAssignedIssues);
+router.get("/profile", workerController.getProfile);
+router.post("/repair", workerController.submitRepair);
 
 export default router;

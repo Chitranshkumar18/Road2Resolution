@@ -22,13 +22,17 @@ export const createReview = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Issue ID is required.");
   }
 
-  const updatedIssue = await issueService.addPublicReview(issueId, {
-    author,
-    rating,
-    comment,
-    tag,
-    role,
-  });
+  const updatedIssue = await issueService.addPublicReview(
+    issueId,
+    {
+      author,
+      rating,
+      comment,
+      tag,
+      role,
+    },
+    req.user
+  );
 
   return res.status(201).json({
     success: true,
@@ -41,3 +45,4 @@ export default {
   getReviews,
   createReview,
 };
+

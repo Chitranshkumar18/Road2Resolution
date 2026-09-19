@@ -59,14 +59,14 @@ export const Home = () => {
 
           {/* Clean Action CTA */}
           <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
-            <Link to={isAuthenticated ? (isAdmin ? '/admin/dashboard' : '/citizen/report') : '/register?role=citizen'}>
+            <Link to={isAuthenticated ? (isAdmin ? '/admin/dashboard' : '/citizen/report') : '/register'}>
               <Button size="lg" variant="primary" leftIcon={Camera} className="shadow-xl shadow-indigo-600/30 px-8 py-4 text-base font-bold cursor-pointer">
                 Report A Civic Hazard
               </Button>
             </Link>
-            <Link to="/register?role=worker">
+            <Link to="/login">
               <Button size="lg" variant="secondary" leftIcon={HardHat} className="px-7 py-4 text-base font-bold border-amber-500/40 text-amber-300 hover:bg-amber-950/40 cursor-pointer">
-                Join as Worker / Org
+                Worker Portal Sign In
               </Button>
             </Link>
           </div>
@@ -274,13 +274,13 @@ export const Home = () => {
 
               {/* Actions for Worker */}
               <div className="pt-4 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Link to="/register?role=worker" className="w-full">
+                <Link to="/login" className="w-full">
                   <button
                     type="button"
                     className="w-full py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-600/30 cursor-pointer"
                   >
                     <Wrench className="w-4 h-4" />
-                    <span>Register as Worker</span>
+                    <span>Worker Sign In</span>
                   </button>
                 </Link>
 

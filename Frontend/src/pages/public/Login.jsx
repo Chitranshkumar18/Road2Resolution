@@ -232,7 +232,7 @@ export const Login = () => {
         <p className="text-center text-xs text-slate-400">
           Don't have an account?{' '}
           <Link to="/register" className="text-indigo-400 font-bold hover:text-cyan-300 underline underline-offset-4">
-            Register as Citizen or Worker
+            Register as Citizen
           </Link>
         </p>
       </div>

@@ -21,23 +21,35 @@ import { errorHandler } from "./middleware/error.middleware.js";
 const app = express();
 
 // CORS Configuration
-const allowedOrigins = [
+const trustedOrigins = [
   ENV.CLIENT_URL,
   "http://localhost:5173",
   "http://localhost:3000",
   "http://localhost:5000",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:3000",
-];
+].filter(Boolean);
+
+export const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // Server-to-server, curl, Postman, health probes
+  const cleanOrigin = origin.replace(/\/+$/, "");
+  if (trustedOrigins.includes(cleanOrigin)) return true;
+  if (ENV.NODE_ENV === "development") {
+    return (
+      cleanOrigin.startsWith("http://localhost:") ||
+      cleanOrigin.startsWith("http://127.0.0.1:")
+    );
+  }
+  return false;
+};
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, Postman) or matched origins
-      if (!origin || allowedOrigins.includes(origin) || ENV.NODE_ENV === "development") {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
       } else {
-        callback(null, true); // Permissive in dev to guarantee frontend connectivity
+        callback(new Error(`CORS policy violation: Origin '${origin}' is not authorized.`), false);
       }
     },
     credentials: true,
@@ -46,9 +58,9 @@ app.use(
   })
 );
 
-// Body Parsing with generous limits for live camera data URLs
-app.use(express.json({ limit: "25mb" }));
-app.use(express.urlencoded({ extended: true, limit: "25mb" }));
+// Body Parsing with controlled limits for live camera data URLs
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
 // Base Health Check

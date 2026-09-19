@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   User,
   Mail,
@@ -8,27 +8,15 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
+  ShieldCheck,
   HardHat,
-  Truck,
   Phone,
-  CheckCircle2
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import Button from '../../components/common/Button';
-import { DEPARTMENTS } from '../../utils/constants';
 
 export const Register = () => {
-  const [searchParams] = useSearchParams();
-  const initialRole = searchParams.get('role');
-  const [role, setRole] = useState(initialRole === 'worker' ? 'worker' : 'citizen'); // 'citizen' | 'worker'
   const [showPassword, setShowPassword] = useState(false);
-
-  useEffect(() => {
-    const qRole = searchParams.get('role');
-    if (qRole === 'worker' || qRole === 'citizen') {
-      setRole(qRole);
-    }
-  }, [searchParams]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -36,8 +24,6 @@ export const Register = () => {
     password: '',
     phone: '',
     zone: 'North Zone, Delhi NCR',
-    department: 'Public Works Department (PWD)',
-    contractorUnit: ''
   });
 
   const [loading, setLoading] = useState(false);
@@ -51,30 +37,17 @@ export const Register = () => {
     setLoading(true);
 
     try {
-      if (role === 'admin') {
-        setError('Admin registration is not permitted.');
-        setLoading(false);
-        return;
-      }
-
       const payload = {
         name: formData.name,
         email: formData.email,
         password: formData.password,
         phone: formData.phone,
-        role: role,
+        role: 'citizen',
         zone: formData.zone,
-        department: role === 'worker' ? formData.department : undefined,
-        contractorUnit: role === 'worker' ? formData.contractorUnit : undefined
       };
 
       const res = await register(payload);
-
-      if (res?.user?.role === 'worker' || role === 'worker') {
-        navigate('/worker/dashboard');
-      } else {
-        navigate('/citizen/dashboard');
-      }
+      navigate('/citizen/dashboard');
     } catch (err) {
       console.error(err);
       setError(err.message || 'Unable to connect to the server. Please try again.');
@@ -95,103 +68,39 @@ export const Register = () => {
             Join CivicVision AI
           </h2>
           <p className="text-xs text-slate-400">
-            Select your account type to register as an active citizen or field contractor
+            Register as an active citizen to report road hazards, track repairs, and earn civic points
           </p>
         </div>
 
-        {/* 2 Role Selector Tabs: Citizen vs Worker (Admin Registration is Prohibited) */}
-        <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
-          {/* Citizen Tab */}
-          <button
-            type="button"
-            onClick={() => {
-              setRole('citizen');
-              setError('');
-            }}
-            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border cursor-pointer ${
-              role === 'citizen'
-                ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30'
-                : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
-            }`}
-          >
-            <div className={`p-1.5 rounded-lg ${role === 'citizen' ? 'bg-white/20' : 'bg-slate-800 text-indigo-400'}`}>
-              <User className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-xs font-bold block">Citizen</span>
-              <span className={`text-[9px] block leading-tight ${role === 'citizen' ? 'text-indigo-100' : 'text-slate-400'}`}>
-                Report & Track
-              </span>
-            </div>
-          </button>
-
-          {/* Worker Tab */}
-          <button
-            type="button"
-            onClick={() => {
-              setRole('worker');
-              setError('');
-            }}
-            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border cursor-pointer ${
-              role === 'worker'
-                ? 'bg-amber-600 text-white border-amber-500 shadow-lg shadow-amber-600/30'
-                : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
-            }`}
-          >
-            <div className={`p-1.5 rounded-lg ${role === 'worker' ? 'bg-white/20' : 'bg-slate-800 text-amber-400'}`}>
-              <HardHat className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-xs font-bold block">Worker</span>
-              <span className={`text-[9px] block leading-tight ${role === 'worker' ? 'text-amber-100' : 'text-slate-400'}`}>
-                Fix & Proof
-              </span>
-            </div>
-          </button>
+        {/* Citizen Role Banner */}
+        <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-2.5 text-xs text-slate-300">
+          <div className="space-y-1">
+            <p className="font-semibold text-indigo-300">
+              🇬🇧 Register as a <strong>Citizen</strong> to report road problems with live camera proof and monitor resolution progress in real time.
+            </p>
+          </div>
+          <div className="pt-2 border-t border-indigo-500/20 space-y-1">
+            <p className="font-semibold text-slate-200">
+              🇮🇳 सड़क से जुड़ी समस्याओं की शिकायत करने और उनकी प्रगति देखने के लिए <strong>Citizen</strong> के रूप में रजिस्टर करें।
+            </p>
+          </div>
         </div>
 
-        {/* Bilingual Role Guidance Banner */}
-        {role === 'citizen' && (
-          <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-2.5 text-xs text-slate-300">
-            <div className="space-y-1">
-              <p className="font-semibold text-indigo-300">
-                🇬🇧 If you want to <strong>report a road-related problem</strong>, you can register as a <strong>Citizen</strong> and submit your complaint with the necessary details and location.
-              </p>
-              <p className="text-[11px] text-indigo-200/90 font-medium">
-                • <strong>Citizen:</strong> Report road-related problems and track their progress.
-              </p>
-            </div>
-            <div className="pt-2 border-t border-indigo-500/20 space-y-1">
-              <p className="font-semibold text-slate-200">
-                🇮🇳 अगर आप <strong>सड़क से जुड़ी किसी समस्या की शिकायत करना चाहते हैं</strong>, तो आप <strong>Citizen</strong> के रूप में रजिस्टर करके अपनी शिकायत आवश्यक जानकारी और लोकेशन के साथ दर्ज कर सकते हैं।
-              </p>
-              <p className="text-[11px] text-slate-300 font-medium">
-                • <strong>Citizen:</strong> सड़क से जुड़ी समस्याओं की शिकायत करें और उनकी प्रगति देखें।
-              </p>
-            </div>
+        {/* Field Worker Notice Banner */}
+        <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-amber-500/30 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 text-amber-300">
+            <HardHat className="w-4 h-4 shrink-0" />
+            <span className="text-[11px] text-slate-300">
+              Field Worker / Contractor accounts are provisioned by Municipal Admin.
+            </span>
           </div>
-        )}
-
-        {role === 'worker' && (
-          <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/30 space-y-2.5 text-xs text-slate-300">
-            <div className="space-y-1">
-              <p className="font-semibold text-amber-300">
-                🇬🇧 If you want to help the <strong>government improve and maintain roads</strong>, you can register as a <strong>Worker</strong> and contribute by taking responsibility for road-related work.
-              </p>
-              <p className="text-[11px] text-amber-200/90 font-medium">
-                • <strong>Worker:</strong> Help the government by working on road-related issues.
-              </p>
-            </div>
-            <div className="pt-2 border-t border-amber-500/20 space-y-1">
-              <p className="font-semibold text-slate-200">
-                🇮🇳 अगर आप <strong>सरकार की मदद करके सड़कों को बेहतर और सुरक्षित बनाने</strong> में योगदान देना चाहते हैं, तो आप <strong>Worker</strong> के रूप में रजिस्टर कर सकते हैं और सड़क से जुड़े कार्यों की जिम्मेदारी लेकर मदद कर सकते हैं।
-              </p>
-              <p className="text-[11px] text-slate-300 font-medium">
-                • <strong>Worker:</strong> सड़क से जुड़ी समस्याओं को हल करने में सरकार की मदद करें।
-              </p>
-            </div>
-          </div>
-        )}
+          <Link
+            to="/login"
+            className="text-amber-400 hover:text-amber-300 font-bold text-xs shrink-0 underline underline-offset-2"
+          >
+            Worker Sign In &rarr;
+          </Link>
+        </div>
 
         {/* Form Card */}
         <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-4 backdrop-blur-md">
@@ -205,7 +114,7 @@ export const Register = () => {
             {/* Full Name */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                {role === 'worker' ? 'Field Technician / Contractor Name' : 'Full Name'}
+                Full Name
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -214,7 +123,7 @@ export const Register = () => {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
-                  placeholder={role === 'worker' ? 'Ramesh Verma (Field Lead)' : 'Aarav Mehta'}
+                  placeholder="Aarav Mehta"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:border-indigo-500 focus:outline-none transition-colors"
                 />
               </div>
@@ -223,7 +132,7 @@ export const Register = () => {
             {/* Email Address */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                {role === 'worker' ? 'Contractor / Unit Email' : 'Email Address'}
+                Email Address
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -232,50 +141,28 @@ export const Register = () => {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
-                  placeholder={role === 'worker' ? 'worker@example.com' : 'aarav@example.com'}
+                  placeholder="aarav@example.com"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:border-indigo-500 focus:outline-none transition-colors"
                 />
               </div>
             </div>
 
-            {/* Worker Specific Fields */}
-            {role === 'worker' && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Assigned Contractor / Rapid Repair Unit
-                  </label>
-                  <div className="relative">
-                    <Truck className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      required
-                      value={formData.contractorUnit}
-                      onChange={(e) => setFormData((p) => ({ ...p, contractorUnit: e.target.value }))}
-                      placeholder="PWD Rapid Road Repair Unit #4"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:border-amber-500 focus:outline-none transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Field Contact Phone
-                  </label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
-                      placeholder="+91 98123 45678"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:border-amber-500 focus:outline-none transition-colors"
-                    />
-                  </div>
-                </div>
+            {/* Contact Phone */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                Contact Phone (Optional)
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={formData.phone}
+                  onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
+                  placeholder="+91 98123 45678"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:border-indigo-500 focus:outline-none transition-colors"
+                />
               </div>
-            )}
+            </div>
 
             {/* Zone */}
             <div>
@@ -327,19 +214,13 @@ export const Register = () => {
             {/* Submit Button */}
             <Button
               type="submit"
-              variant={role === 'worker' ? 'primary' : 'primary'}
+              variant="primary"
               size="md"
               isLoading={loading}
               rightIcon={ArrowRight}
-              className={`w-full mt-3 py-3 font-bold ${
-                role === 'worker'
-                  ? 'bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-950/40 text-white'
-                  : 'bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-950/40 text-white'
-              }`}
+              className="w-full mt-3 py-3 font-bold bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-950/40 text-white"
             >
-              {role === 'worker'
-                ? 'Register & Enter Worker Hub'
-                : 'Register & Enter Citizen Hub'}
+              Register & Enter Citizen Hub
             </Button>
           </form>
         </div>
@@ -357,3 +238,4 @@ export const Register = () => {
 };
 
 export default Register;
+

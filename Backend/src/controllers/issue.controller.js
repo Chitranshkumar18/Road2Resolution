@@ -84,8 +84,8 @@ export const startWorkerTask = asyncHandler(async (req, res) => {
 
 export const upvoteIssue = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const userId = req.user?.id || req.user?._id || req.ip || "guest";
-  const updated = await issueService.upvoteIssue(id, String(userId));
+  const userKey = req.user?._id ? `user_${req.user._id}` : `ip_${req.ip || "guest"}`;
+  const updated = await issueService.upvoteIssue(id, userKey);
   return res.status(200).json({
     success: true,
     message: "Upvote registered successfully.",
@@ -100,13 +100,56 @@ export const submitWorkerRepair = asyncHandler(async (req, res) => {
     throw new ApiError(404, `Issue with ID '${id}' not found.`);
   }
 
+  // Verify issue status permits repair submission
+  if (issue.status === "RESOLVED" || issue.status === "CLOSED" || issue.status === "PENDING_VERIFICATION") {
+    throw new ApiError(
+      400,
+      `Issue '${id}' is currently in '${issue.status}' status and cannot accept new repair submissions.`
+    );
+  }
+
+  // Authorization check for workers
+  if (req.user?.role === "worker") {
+    const workerOrgId = req.user.organization ? String(req.user.organization) : "";
+    const workerUnit = (req.user.contractorUnit || "").trim().toLowerCase();
+    const workerOrgName = (req.user.organizationName || "").trim().toLowerCase();
+    const issueOrgId = issue.assignedOrgId ? String(issue.assignedOrgId) : "";
+    const issueOrgName = (issue.assignedOrgName || "").trim().toLowerCase();
+
+    const matchesOrgId = Boolean(issueOrgId && workerOrgId && issueOrgId === workerOrgId);
+    const matchesOrgName = Boolean(
+      issueOrgName &&
+        workerOrgName &&
+        (issueOrgName.includes(workerOrgName) || workerOrgName.includes(issueOrgName))
+    );
+    const matchesUnit = Boolean(
+      issueOrgName &&
+        workerUnit &&
+        (issueOrgName.includes(workerUnit) || workerUnit.includes(issueOrgName))
+    );
+
+    const hasOrgAssignment = Boolean(issueOrgId || issueOrgName);
+    const isAssignedToOtherOrg = hasOrgAssignment && !matchesOrgId && !matchesOrgName && !matchesUnit;
+
+    const isOwnTask =
+      (issue.responsibleName && issue.responsibleName.toLowerCase() === req.user.name?.toLowerCase()) ||
+      (issue.workerSubmission?.workerId && String(issue.workerSubmission.workerId) === String(req.user._id));
+
+    if (isAssignedToOtherOrg && !isOwnTask) {
+      throw new ApiError(
+        403,
+        `Access forbidden: You are not authorized to submit repairs for issues assigned to another contractor (${issue.assignedOrgName}).`
+      );
+    }
+  }
+
   const result = await repairVerificationService.processWorkerRepairSubmission(issue, req.body, req.user);
-  const formatted = issueService.findIssueByIdOrCustomId(id).then(i => issueService.getIssueById(id));
+  const formatted = await issueService.getIssueById(id);
 
   return res.status(200).json({
     success: true,
     message: "Repair proof submitted successfully for QA certification.",
-    issue: await formatted,
+    issue: formatted,
     repair: result.repair,
   });
 });
@@ -143,7 +186,7 @@ export const getEligibleOrganizationsForIssue = asyncHandler(async (req, res) =>
 
 export const addPublicReview = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const updated = await issueService.addPublicReview(id, req.body);
+  const updated = await issueService.addPublicReview(id, req.body, req.user);
   return res.status(200).json({
     success: true,
     message: "Public review submitted successfully.",

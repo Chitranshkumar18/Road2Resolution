@@ -3,6 +3,7 @@ import Department from "../models/Department.js";
 import { DEPARTMENTS } from "../utils/constants.js";
 import analyticsService from "../services/analytics.service.js";
 import issueService from "../services/issue.service.js";
+import authService from "../services/auth.service.js";
 
 export const getStats = asyncHandler(async (req, res) => {
   const stats = await analyticsService.getDashboardStats();
@@ -42,9 +43,20 @@ export const getRiskPredictions = asyncHandler(async (req, res) => {
   return res.status(200).json(riskData);
 });
 
+export const provisionWorker = asyncHandler(async (req, res) => {
+  const worker = await authService.provisionWorker(req.body);
+  return res.status(201).json({
+    success: true,
+    message: "Field worker provisioned successfully by administrator.",
+    worker,
+  });
+});
+
 export default {
   getStats,
   getDepartments,
   assignDepartment,
   getRiskPredictions,
+  provisionWorker,
 };
+

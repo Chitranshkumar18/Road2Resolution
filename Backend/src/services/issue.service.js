@@ -166,27 +166,24 @@ export const createIssue = async (issueData, currentUser = null) => {
 
   const dept = getDepartmentForCategory(category);
 
-  const reporterUserId = currentUser?._id || currentUser?.id || reporter?._id || reporter?.id || userId || "";
-  const currentReputation = currentUser?.reputationScore ?? reporter?.reputation ?? 0;
-  let updatedCivicPoints = currentUser?.civicPoints ?? 0;
+  // Authenticated vs Guest Reporter handling
+  let reporterUserId = "";
+  let currentReputation = 0;
+  let updatedCivicPoints = 0;
+  let reporterInfo = {};
 
-  // Add +10 Civic Points whenever a citizen successfully submits a complaint (reputation stays unchanged)
-  if (reporterUserId) {
+  if (currentUser && currentUser._id) {
+    // Authenticated Citizen: derive identity strictly from authenticated server user
+    reporterUserId = String(currentUser._id);
+    currentReputation = currentUser.reputationScore ?? 0;
+    updatedCivicPoints = currentUser.civicPoints ?? 0;
+
     try {
-      let userDoc = null;
-      if (mongoose.Types.ObjectId.isValid(reporterUserId)) {
-        userDoc = await User.findByIdAndUpdate(
-          reporterUserId,
-          { $inc: { civicPoints: 10 } },
-          { returnDocument: "after" }
-        );
-      } else if (currentUser?.email || reporter?.email) {
-        userDoc = await User.findOneAndUpdate(
-          { email: (currentUser?.email || reporter?.email).toLowerCase() },
-          { $inc: { civicPoints: 10 } },
-          { returnDocument: "after" }
-        );
-      }
+      const userDoc = await User.findByIdAndUpdate(
+        currentUser._id,
+        { $inc: { civicPoints: 10 } },
+        { returnDocument: "after" }
+      );
       if (userDoc) {
         updatedCivicPoints = userDoc.civicPoints ?? 0;
       } else {
@@ -196,17 +193,29 @@ export const createIssue = async (issueData, currentUser = null) => {
       console.warn("Failed to increment user civic points:", e.message);
       updatedCivicPoints += 10;
     }
-  }
 
-  const reporterInfo = {
-    id: reporterUserId,
-    _id: reporterUserId,
-    name: currentUser?.name || reporter?.name || "Citizen Reporter",
-    email: currentUser?.email || reporter?.email || "",
-    avatar: currentUser?.avatar || reporter?.avatar || "",
-    reputation: currentReputation,
-    civicPoints: updatedCivicPoints,
-  };
+    reporterInfo = {
+      id: reporterUserId,
+      _id: reporterUserId,
+      name: currentUser.name,
+      email: currentUser.email,
+      avatar: currentUser.avatar || "",
+      reputation: currentReputation,
+      civicPoints: updatedCivicPoints,
+    };
+  } else {
+    // Guest Citizen: never trust arbitrary client-supplied userId or reporter email
+    reporterUserId = "";
+    reporterInfo = {
+      id: "",
+      _id: "",
+      name: (reporter?.name && typeof reporter.name === "string" ? reporter.name.trim() : "") || "Guest Citizen",
+      email: "",
+      avatar: "",
+      reputation: 0,
+      civicPoints: 0,
+    };
+  }
 
   const newIssue = await Issue.create({
     title: title || `${category} reported at ${address ? address.split(",")[0] : "Site Location"}`,
@@ -239,7 +248,7 @@ export const createIssue = async (issueData, currentUser = null) => {
       zone,
     },
     reporter: reporterInfo,
-    userId: reporterInfo.id,
+    userId: reporterUserId,
     department: dept,
   });
 
@@ -335,8 +344,9 @@ export const acceptWorkAsOrganization = async (issueId, workerInfo = {}, current
     throw new ApiError(404, `Issue with ID '${issueId}' not found.`);
   }
 
-  const workerName = workerInfo.name || currentUser?.name || "Field Worker";
-  const orgName = workerInfo.organizationName || issue.assignedOrgName || currentUser?.contractorUnit || "Municipal Rapid Repair Unit";
+  // Derive worker identity strictly from authenticated server user
+  const workerName = currentUser?.name || "Field Worker";
+  const orgName = currentUser?.contractorUnit || currentUser?.organizationName || issue.assignedOrgName || "Municipal Rapid Repair Unit";
 
   issue.status = "IN_PROGRESS";
   issue.responsibleType = "ORGANIZATION";
@@ -368,7 +378,8 @@ export const acceptWorkAsVolunteer = async (issueId, volunteerInfo = {}, current
     throw new ApiError(404, `Issue with ID '${issueId}' not found.`);
   }
 
-  const volName = volunteerInfo.name || currentUser?.name || "Community Volunteer";
+  // Derive volunteer identity strictly from authenticated server user
+  const volName = currentUser?.name || "Community Volunteer";
 
   issue.status = "IN_PROGRESS";
   issue.responsibleType = "PUBLIC_INDIVIDUAL";
@@ -378,7 +389,7 @@ export const acceptWorkAsVolunteer = async (issueId, volunteerInfo = {}, current
   issue.timeline.push({
     status: "IN_PROGRESS",
     message: `Community Volunteer (${volName}) accepted task.`,
-    note: volunteerInfo.notes || "Assigned personal responsibility to resolve hazard.",
+    note: (volunteerInfo.notes && typeof volunteerInfo.notes === "string" ? volunteerInfo.notes.trim() : "") || "Assigned personal responsibility to resolve hazard.",
     officer: volName,
     timestamp: new Date(),
   });
@@ -433,23 +444,48 @@ export const upvoteIssue = async (issueId, userId = "") => {
 };
 
 /**
- * Adds public community review to a resolved issue
+ * Adds public community review to an issue
  */
-export const addPublicReview = async (issueId, reviewData) => {
+export const addPublicReview = async (issueId, reviewData, currentUser = null) => {
   const issue = await findIssueByIdOrCustomId(issueId);
   if (!issue) {
     throw new ApiError(404, `Issue with ID '${issueId}' not found.`);
   }
 
-  const { author = "Community Resident", rating = 5, comment, tag = "⚡ Fast Municipal Action", role = "Public Community Feedback" } = reviewData;
+  const { rating = 5, comment = "", tag = "⚡ Fast Municipal Action" } = reviewData;
+
+  let cleanAuthor = "Community Resident";
+  let cleanRole = "Public Community Feedback";
+
+  if (currentUser && currentUser._id) {
+    cleanAuthor = currentUser.name || "Verified Citizen";
+    cleanRole =
+      currentUser.role === "admin"
+        ? "Municipal Administrator"
+        : currentUser.role === "worker"
+        ? "Field Contractor"
+        : "Verified Citizen";
+  } else if (typeof reviewData.author === "string" && reviewData.author.trim()) {
+    // Sanitize guest author to prevent spoofing privileged identities
+    const sanitized = reviewData.author
+      .replace(/\b(admin|administrator|moderator|officer|inspector|engineer|government|pwd|official)\b/gi, "")
+      .trim();
+    cleanAuthor = sanitized || "Community Resident";
+    cleanRole = "Public Community Feedback";
+  }
+
+  const cleanComment = (typeof comment === "string" ? comment.trim() : "");
+  if (!cleanComment) {
+    throw new ApiError(400, "Feedback comment text is required.");
+  }
 
   const newReview = {
     id: `rev_${Date.now()}`,
-    author: author.trim() || "Community Resident",
-    rating: Number(rating) || 5,
-    comment: comment.trim(),
-    tag,
-    role,
+    author: cleanAuthor,
+    rating: Math.min(Math.max(Number(rating) || 5, 1), 5),
+    comment: cleanComment,
+    tag: typeof tag === "string" ? tag.trim() : "⚡ Fast Municipal Action",
+    role: cleanRole,
     published: true,
     createdAt: new Date(),
   };

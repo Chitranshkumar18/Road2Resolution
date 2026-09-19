@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import asyncHandler from "../utils/asyncHandler.js";
 import Organization from "../models/Organization.js";
 import ApiError from "../utils/ApiError.js";
