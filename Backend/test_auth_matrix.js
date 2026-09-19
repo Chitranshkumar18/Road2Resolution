@@ -270,6 +270,7 @@ async function runTests() {
     role: "citizen",
   });
   assert(regCitizen.status === 201, `Public Citizen registration allowed -> 201 (got ${regCitizen.status})`);
+  assert(regCitizen.body?.user?.role === "citizen", `Registered citizen user role is 'citizen'`);
 
   // Default without role -> Allowed as Citizen (201)
   const regDefault = await request("POST", "/api/auth/register", null, {
@@ -280,23 +281,44 @@ async function runTests() {
   assert(regDefault.status === 201, `Registration omitting role defaults to citizen -> 201 (got ${regDefault.status})`);
   assert(regDefault.body?.user?.role === "citizen", `Registered user role is 'citizen' (got ${regDefault.body?.user?.role})`);
 
-  // Public Worker registration -> Rejected (400)
-  const regWorker = await request("POST", "/api/auth/register", null, {
-    name: "Malicious Worker",
-    email: "badworker@example.com",
+  // Public Individual Worker registration -> Allowed (201)
+  const regWorkerInd = await request("POST", "/api/auth/register", null, {
+    name: "Individual Worker",
+    email: "indworker@example.com",
     password: "password123",
     role: "worker",
+    workerType: "individual",
+    zone: "North Zone, Delhi NCR",
   });
-  assert(regWorker.status === 400, `Public Worker registration rejected -> 400 (got ${regWorker.status})`);
+  assert(regWorkerInd.status === 201, `Public Individual Worker registration allowed -> 201 (got ${regWorkerInd.status})`);
+  assert(regWorkerInd.body?.user?.role === "worker", `Registered worker role is 'worker'`);
+  assert(regWorkerInd.body?.user?.workerType === "individual", `Registered worker workerType is 'individual'`);
 
-  // Worker role casing tricks -> Rejected (400)
-  const regWorkerCase = await request("POST", "/api/auth/register", null, {
-    name: "Casing Worker",
-    email: "caseworker@example.com",
+  // Public Organization Worker registration -> Allowed (201)
+  const regWorkerOrg = await request("POST", "/api/auth/register", null, {
+    name: "Contractor Rep",
+    email: "contractor@example.com",
     password: "password123",
-    role: "  WORKER  ",
+    role: "worker",
+    workerType: "organization",
+    organizationName: "Apex Road Infrastructure",
+    zone: "Central Zone, Delhi NCR",
   });
-  assert(regWorkerCase.status === 400, `Worker registration with whitespace/casing rejected -> 400 (got ${regWorkerCase.status})`);
+  assert(regWorkerOrg.status === 201, `Public Organization Worker registration allowed -> 201 (got ${regWorkerOrg.status})`);
+  assert(regWorkerOrg.body?.user?.role === "worker", `Registered contractor role is 'worker'`);
+  assert(regWorkerOrg.body?.user?.workerType === "organization", `Registered contractor workerType is 'organization'`);
+  assert(regWorkerOrg.body?.user?.organizationName === "Apex Road Infrastructure", `Registered contractor has organizationName`);
+
+  // Public Organization Worker registration without org name -> Rejected (400)
+  const regWorkerOrgInvalid = await request("POST", "/api/auth/register", null, {
+    name: "Invalid Contractor",
+    email: "invalidcontractor@example.com",
+    password: "password123",
+    role: "worker",
+    workerType: "organization",
+    organizationName: "",
+  });
+  assert(regWorkerOrgInvalid.status === 400, `Organization registration without org name rejected -> 400 (got ${regWorkerOrgInvalid.status})`);
 
   // Public Admin registration -> Rejected (400)
   const regAdmin = await request("POST", "/api/auth/register", null, {

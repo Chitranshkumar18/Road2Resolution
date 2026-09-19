@@ -65,6 +65,15 @@ export const sanitizeUser = (userDoc) => {
   }
   user.civicPoints = user.civicPoints ?? 0;
   user.reputationScore = user.reputationScore ?? 0;
+  if (user.role === "worker" && !user.workerType) {
+    user.workerType =
+      user.organization ||
+      (user.organizationName &&
+        user.organizationName !== "Independent Field Worker" &&
+        user.organizationName !== "Individual Worker / Public Person")
+        ? "organization"
+        : "individual";
+  }
   return user;
 };
 

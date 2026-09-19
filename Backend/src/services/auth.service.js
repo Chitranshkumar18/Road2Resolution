@@ -1,4 +1,6 @@
+import crypto from "crypto";
 import User from "../models/User.js";
+import Organization from "../models/Organization.js";
 import Issue from "../models/Issue.js";
 import ApiError from "../utils/ApiError.js";
 import { generateToken } from "../utils/generateToken.js";
@@ -7,23 +9,21 @@ import { uploadImage } from "./cloudinary.service.js";
 import { ENV } from "../config/env.js";
 
 /**
- * Registers a new citizen account (Public Self-Registration)
- * Restricts public registration strictly to Citizens.
+ * Registers a new citizen or worker account (Public Self-Registration)
+ * Restricts public registration strictly to Citizens and Workers (Never Admin).
  */
 export const register = async (userData) => {
-  const { name, email, password, role, phone, zone, state, city, address } = userData;
+  const { name, email, password, role, phone, zone, state, city, address, workerType, organizationName } = userData;
 
   const cleanEmail = (email || "").trim().toLowerCase();
 
-  // Strict role check: Do not allow worker or admin self-registration
-  if (role !== undefined && role !== null) {
-    const normalizedRole = String(role).trim().toLowerCase();
-    if (normalizedRole !== "citizen") {
-      throw new ApiError(
-        400,
-        "Self-registration is restricted exclusively to Citizens. Field Worker and Administrator accounts must be provisioned by Municipal Administration."
-      );
-    }
+  // Strict role check: Public registration is restricted to Citizens and Workers
+  const normalizedRole = role !== undefined && role !== null ? String(role).trim().toLowerCase() : "citizen";
+  if (normalizedRole !== "citizen" && normalizedRole !== "worker") {
+    throw new ApiError(
+      400,
+      "Self-registration is restricted exclusively to Citizens and Workers. Administrator accounts cannot be registered."
+    );
   }
 
   // Check if user already exists
@@ -32,23 +32,104 @@ export const register = async (userData) => {
     throw new ApiError(409, "An account with this email address already exists.");
   }
 
-  // Strict allowlist for public citizen registration
-  const user = await User.create({
-    name: (name || "").trim(),
-    email: cleanEmail,
-    password,
-    role: "citizen",
-    phone: phone ? String(phone).trim() : "",
-    zone: zone ? String(zone).trim() : "Municipal Zone",
-    state: state ? String(state).trim() : "Delhi",
-    city: city ? String(city).trim() : "New Delhi",
-    address: address || "",
-    civicPoints: 0,
-    reputationScore: 0,
-    isActive: true,
-  });
+  let user;
+
+  if (normalizedRole === "citizen") {
+    // Strict allowlist for public citizen registration
+    user = await User.create({
+      name: (name || "").trim(),
+      email: cleanEmail,
+      password,
+      role: "citizen",
+      phone: phone ? String(phone).trim() : "",
+      zone: zone ? String(zone).trim() : "Municipal Zone",
+      state: state ? String(state).trim() : "Delhi",
+      city: city ? String(city).trim() : "New Delhi",
+      address: address || "",
+      civicPoints: 0,
+      reputationScore: 0,
+      isActive: true,
+    });
+  } else {
+    // Worker registration (Individual or Organization/Contractor)
+    const normalizedWorkerType = workerType ? String(workerType).trim().toLowerCase() : "individual";
+    if (normalizedWorkerType !== "individual" && normalizedWorkerType !== "organization") {
+      throw new ApiError(400, "Worker type must be either 'individual' or 'organization'.");
+    }
+
+    if (normalizedWorkerType === "organization") {
+      const orgName = (organizationName || "").trim();
+      if (!orgName) {
+        throw new ApiError(400, "Organization or Contractor company name is required.");
+      }
+
+      // Create new organization in database
+      const orgCustomId = `org_contractor_${Date.now()}_${crypto.randomBytes(2).toString("hex")}`;
+      const newOrg = await Organization.create({
+        id: orgCustomId,
+        name: orgName,
+        categoryIds: ["pothole", "other"],
+        categoryLabels: ["Road Damage & Pothole"],
+        state: state ? String(state).trim() : "Delhi",
+        city: city ? String(city).trim() : "New Delhi",
+        serviceArea: zone ? String(zone).trim() : "Metropolitan Region",
+        type: "PRIVATE_CONTRACTOR",
+        headOfOrg: (name || "Chief Contractor").trim(),
+        phone: phone ? String(phone).trim() : "",
+        email: cleanEmail,
+        activeWorkers: 1,
+        slaRating: "95%",
+        isActive: true,
+      });
+
+      // Create primary worker user linked to this organization
+      user = await User.create({
+        name: (name || "").trim(),
+        email: cleanEmail,
+        password,
+        role: "worker",
+        workerType: "organization",
+        phone: phone ? String(phone).trim() : "",
+        zone: zone ? String(zone).trim() : "Municipal Zone",
+        state: state ? String(state).trim() : "Delhi",
+        city: city ? String(city).trim() : "New Delhi",
+        contractorUnit: orgName,
+        organizationName: orgName,
+        organization: newOrg._id,
+        skills: [],
+        civicPoints: 0,
+        reputationScore: 100,
+        isActive: true,
+      });
+    } else {
+      // Individual worker registration
+      user = await User.create({
+        name: (name || "").trim(),
+        email: cleanEmail,
+        password,
+        role: "worker",
+        workerType: "individual",
+        phone: phone ? String(phone).trim() : "",
+        zone: zone ? String(zone).trim() : "Municipal Zone",
+        state: state ? String(state).trim() : "Delhi",
+        city: city ? String(city).trim() : "New Delhi",
+        contractorUnit: "Independent Field Worker",
+        organizationName: "",
+        organization: null,
+        skills: [],
+        civicPoints: 0,
+        reputationScore: 100,
+        isActive: true,
+      });
+    }
+  }
 
   const sanitized = sanitizeUser(user);
+  if (user.role === "worker") {
+    const issues = await Issue.find({}).populate("repairs").lean();
+    const stats = calculateWorkerStats(issues, user);
+    Object.assign(sanitized, stats);
+  }
   const token = generateToken(user._id, user.role);
 
   return {

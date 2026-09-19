@@ -18,13 +18,23 @@ export const validateRegister = (data = {}) => {
     errors.push("Password must be at least 6 characters long.");
   }
 
-  // Strict rule: Only citizen accounts may be created through public self-registration
-  if (role !== undefined && role !== null) {
-    const normalizedRole = String(role).trim().toLowerCase();
-    if (normalizedRole !== "citizen") {
-      errors.push(
-        "Self-registration is restricted exclusively to Citizens. Field Worker and Administrator accounts must be provisioned by Municipal Administration."
-      );
+  // Strict role check: Public registration is allowed for Citizens and Workers (Never Admin)
+  const normalizedRole = role !== undefined && role !== null ? String(role).trim().toLowerCase() : "citizen";
+  if (normalizedRole !== "citizen" && normalizedRole !== "worker") {
+    errors.push(
+      "Self-registration is restricted exclusively to Citizens and Workers. Administrator accounts cannot be registered."
+    );
+  }
+
+  if (normalizedRole === "worker") {
+    const workerType = data.workerType ? String(data.workerType).trim().toLowerCase() : "individual";
+    if (workerType !== "individual" && workerType !== "organization") {
+      errors.push("Worker type must be either 'individual' or 'organization'.");
+    }
+    if (workerType === "organization") {
+      if (!data.organizationName || typeof data.organizationName !== "string" || !data.organizationName.trim()) {
+        errors.push("Organization or Contractor company name is required for organization worker registration.");
+      }
     }
   }
 

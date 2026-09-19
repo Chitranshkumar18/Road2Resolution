@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema(
       default: USER_ROLES.CITIZEN,
       index: true,
     },
+    workerType: {
+      type: String,
+      enum: ["individual", "organization", null],
+      default: null,
+    },
     phone: {
       type: String,
       default: "",
