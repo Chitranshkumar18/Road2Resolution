@@ -11,6 +11,7 @@ import analyticsService from "./src/services/analytics.service.js";
 import issueService from "./src/services/issue.service.js";
 import authService from "./src/services/auth.service.js";
 import repairVerificationService from "./src/services/repairVerification.service.js";
+import ApiError from "./src/utils/ApiError.js";
 import { generateToken } from "./src/utils/generateToken.js";
 import { ENV } from "./src/config/env.js";
 
@@ -37,6 +38,36 @@ const mockUsers = {
     organization: new mongoose.Types.ObjectId("65f1a1b2c3d4e5f6a7b8c9e1"),
     zone: "North Zone, Delhi NCR",
     skills: ["Asphalt Paving", "Crack Sealing"],
+    civicPoints: 0,
+    reputationScore: 100,
+  },
+  indWorkerUser: {
+    _id: new mongoose.Types.ObjectId("65f1a1b2c3d4e5f6a7b8c9d7"),
+    id: "65f1a1b2c3d4e5f6a7b8c9d7",
+    name: "Individual Worker User",
+    email: "indworker@civicvision.gov.in",
+    role: "worker",
+    workerType: "individual",
+    isActive: true,
+    contractorUnit: "Independent Field Worker",
+    organizationName: "",
+    organization: null,
+    zone: "North Zone, Delhi NCR",
+    civicPoints: 0,
+    reputationScore: 100,
+  },
+  orgYWorkerUser: {
+    _id: new mongoose.Types.ObjectId("65f1a1b2c3d4e5f6a7b8c9d8"),
+    id: "65f1a1b2c3d4e5f6a7b8c9d8",
+    name: "Org Y Worker User",
+    email: "orgyworker@civicvision.gov.in",
+    role: "worker",
+    workerType: "organization",
+    isActive: true,
+    contractorUnit: "Delhi Jal Board",
+    organizationName: "Delhi Jal Board",
+    organization: new mongoose.Types.ObjectId("65f1a1b2c3d4e5f6a7b8c9e2"),
+    zone: "North Zone, Delhi NCR",
     civicPoints: 0,
     reputationScore: 100,
   },
@@ -133,6 +164,45 @@ Review.find = () => createChainableQuery([]);
 Review.create = async (data) => data;
 Issue.find = () => createChainableQuery([]);
 
+const testComplaints = [
+  {
+    _id: new mongoose.Types.ObjectId("65f1a1b2c3d4e5f6a7b8c9d9"),
+    id: "ISS-UNASSIGNED",
+    customId: "ISS-UNASSIGNED",
+    title: "Unassigned Pothole",
+    status: "VERIFIED",
+    assignedOrgId: "",
+    assignedOrgName: "",
+    location: { lat: 28.6139, lng: 77.2090, zone: "North Zone, Delhi NCR" },
+    timeline: [],
+    save: async () => {},
+  },
+  {
+    _id: new mongoose.Types.ObjectId("65f1a1b2c3d4e5f6a7b8c9da"),
+    id: "ISS-ORG-X",
+    customId: "ISS-ORG-X",
+    title: "Org X Streetlight",
+    status: "ASSIGNED",
+    assignedOrgId: "65f1a1b2c3d4e5f6a7b8c9e1",
+    assignedOrgName: "Delhi PWD",
+    location: { lat: 28.6139, lng: 77.2090, zone: "North Zone, Delhi NCR" },
+    timeline: [],
+    save: async () => {},
+  },
+  {
+    _id: new mongoose.Types.ObjectId("65f1a1b2c3d4e5f6a7b8c9db"),
+    id: "ISS-ORG-Y",
+    customId: "ISS-ORG-Y",
+    title: "Org Y Pipeline",
+    status: "ASSIGNED",
+    assignedOrgId: "65f1a1b2c3d4e5f6a7b8c9e2",
+    assignedOrgName: "Delhi Jal Board",
+    location: { lat: 28.6139, lng: 77.2090, zone: "North Zone, Delhi NCR" },
+    timeline: [],
+    save: async () => {},
+  },
+];
+
 // Stub analytical & issue service methods for base routing tests
 analyticsService.getDashboardStats = async () => ({ totalIssues: 10, resolvedCount: 8 });
 analyticsService.getRiskPredictionData = async () => ({ highRiskZones: [] });
@@ -141,8 +211,11 @@ analyticsService.getSeverityBreakdown = async () => [];
 analyticsService.getCategoryBreakdown = async () => [];
 analyticsService.getDepartmentWorkload = async () => [];
 
-const originalFindIssue = issueService.findIssueByIdOrCustomId;
+issueService.getAllIssues = async () => testComplaints;
+
 issueService.findIssueByIdOrCustomId = async (id) => {
+  const found = testComplaints.find((c) => c.id === id || c.customId === id);
+  if (found) return { ...found };
   if (id === "ISS-RESOLVED") {
     return {
       _id: new mongoose.Types.ObjectId("65f1a1b2c3d4e5f6a7b8c9d5"),
@@ -184,9 +257,19 @@ issueService.findIssueByIdOrCustomId = async (id) => {
 issueService.getIssueById = async (id) => ({ id, title: "Test Issue", status: "VERIFIED" });
 issueService.updateIssueStatus = async (id, status) => ({ id, status });
 issueService.assignIssueToOrganization = async (id, orgId) => ({ id, assignedOrgId: orgId });
-issueService.acceptWorkAsOrganization = async (id) => ({ id, status: "IN_PROGRESS" });
-issueService.acceptWorkAsVolunteer = async (id) => ({ id, status: "IN_PROGRESS" });
-issueService.startWorkerTask = async (id) => ({ id, status: "IN_PROGRESS" });
+issueService.acceptWorkAsOrganization = async (id, workerInfo, currentUser) => {
+  if (id === "ISS-OTHER-ORG" || id === "ISS-ORG-Y") {
+    throw new ApiError(403, "Access forbidden: You are only authorized to accept complaints assigned to your organization.");
+  }
+  return { id, status: "IN_PROGRESS" };
+};
+issueService.acceptWorkAsVolunteer = async (id, volunteerInfo, currentUser) => {
+  if (id === "ISS-ORG-X" || id === "ISS-OTHER-ORG") {
+    throw new ApiError(403, "Access forbidden: Individual workers cannot accept complaints assigned to an organization.");
+  }
+  return { id, status: "IN_PROGRESS" };
+};
+issueService.startWorkerTask = async (id, workerInfo, currentUser) => ({ id, status: "IN_PROGRESS" });
 issueService.deleteIssue = async (id) => ({ success: true, message: `Issue ${id} deleted successfully.` });
 issueService.upvoteIssue = async (id, userKey) => ({ id, upvotes: 1 });
 issueService.addPublicReview = async (id, data, user) => ({ id, reviews: [data] });
@@ -199,6 +282,8 @@ repairVerificationService.certifyAdminRepair = async (issue) => issue;
 
 const adminToken = generateToken(mockUsers.adminUser._id, "admin");
 const workerToken = generateToken(mockUsers.workerUser._id, "worker");
+const indWorkerToken = generateToken(mockUsers.indWorkerUser._id, "worker");
+const orgYWorkerToken = generateToken(mockUsers.orgYWorkerUser._id, "worker");
 const citizenToken = generateToken(mockUsers.citizenUser._id, "citizen");
 const suspendedToken = generateToken(mockUsers.suspendedUser._id, "citizen");
 
@@ -528,6 +613,64 @@ async function runTests() {
     const resAdmin = await request(ep.method, ep.path, adminToken, ep.body);
     assert(resAdmin.status === 200, `${ep.method} ${ep.path} -> Admin returns 200 (got ${resAdmin.status})`);
   }
+
+  // ==========================================
+  // 9B. WORKER COMPLAINT VISIBILITY & TASK ACCEPTANCE RULES
+  // ==========================================
+  console.log("\n--- 9B. WORKER COMPLAINT VISIBILITY & TASK ACCEPTANCE RULES ---");
+
+  // 1. Individual worker sees unassigned complaint
+  const indIssues = await request("GET", "/api/worker/assigned-issues", indWorkerToken);
+  assert(indIssues.status === 200, `Individual worker gets 200 (got ${indIssues.status})`);
+  assert(Array.isArray(indIssues.body), `Individual worker response is an array`);
+  const indIds = (Array.isArray(indIssues.body) ? indIssues.body : []).map((i) => i.id || i.customId);
+  assert(indIds.includes("ISS-UNASSIGNED"), `Individual worker SEES unassigned complaint (ISS-UNASSIGNED)`);
+
+  // 2. Individual worker does NOT see organization-assigned complaints
+  assert(!indIds.includes("ISS-ORG-X"), `Individual worker DOES NOT see Org X complaint (ISS-ORG-X)`);
+  assert(!indIds.includes("ISS-ORG-Y"), `Individual worker DOES NOT see Org Y complaint (ISS-ORG-Y)`);
+
+  // 3. Org X worker sees Organization X complaint AND Organization Y complaint (all org-assigned complaints)
+  const orgXIssues = await request("GET", "/api/worker/assigned-issues", workerToken);
+  assert(orgXIssues.status === 200, `Org X worker gets 200 (got ${orgXIssues.status})`);
+  const orgXIds = (Array.isArray(orgXIssues.body) ? orgXIssues.body : []).map((i) => i.id || i.customId);
+  assert(orgXIds.includes("ISS-ORG-X"), `Org X worker SEES Org X complaint (ISS-ORG-X)`);
+  assert(orgXIds.includes("ISS-ORG-Y"), `Org X worker SEES Org Y complaint (ISS-ORG-Y) - all org-assigned complaints visible to all org workers`);
+
+  // 4. Org X worker does NOT see unassigned complaint
+  assert(!orgXIds.includes("ISS-UNASSIGNED"), `Org X worker DOES NOT see unassigned complaint (ISS-UNASSIGNED)`);
+
+  // 5. Org Y worker sees Org Y complaint AND Org X complaint (all org-assigned complaints)
+  const orgYIssues = await request("GET", "/api/worker/assigned-issues", orgYWorkerToken);
+  assert(orgYIssues.status === 200, `Org Y worker gets 200 (got ${orgYIssues.status})`);
+  const orgYIds = (Array.isArray(orgYIssues.body) ? orgYIssues.body : []).map((i) => i.id || i.customId);
+  assert(orgYIds.includes("ISS-ORG-Y"), `Org Y worker SEES Org Y complaint (ISS-ORG-Y)`);
+  assert(orgYIds.includes("ISS-ORG-X"), `Org Y worker SEES Org X complaint (ISS-ORG-X) - all org-assigned complaints visible to all org workers`);
+  assert(!orgYIds.includes("ISS-UNASSIGNED"), `Org Y worker DOES NOT see unassigned complaint (ISS-UNASSIGNED)`);
+
+  // 6. Admin sees all complaints
+  const adminIssues = await request("GET", "/api/worker/assigned-issues", adminToken);
+  assert(adminIssues.status === 200, `Admin gets 200 (got ${adminIssues.status})`);
+  const adminIds = (Array.isArray(adminIssues.body) ? adminIssues.body : []).map((i) => i.id || i.customId);
+  assert(adminIds.includes("ISS-UNASSIGNED") && adminIds.includes("ISS-ORG-X") && adminIds.includes("ISS-ORG-Y"), `Admin SEES all complaints`);
+
+  // 7. Tampered query parameters cannot bypass individual worker restriction
+  const tamperedInd = await request("GET", "/api/worker/assigned-issues?status=assigned&search=Delhi%20PWD", indWorkerToken);
+  const tamperedIndIds = (Array.isArray(tamperedInd.body) ? tamperedInd.body : []).map((i) => i.id || i.customId);
+  assert(!tamperedIndIds.includes("ISS-ORG-X") && !tamperedIndIds.includes("ISS-ORG-Y"), `Individual worker cannot bypass org filtering via query params`);
+
+  // 8. Tampered query parameters cannot bypass org worker restriction
+  const tamperedOrgX = await request("GET", "/api/worker/assigned-issues?status=unassigned", workerToken);
+  const tamperedOrgXIds = (Array.isArray(tamperedOrgX.body) ? tamperedOrgX.body : []).map((i) => i.id || i.customId);
+  assert(!tamperedOrgXIds.includes("ISS-UNASSIGNED"), `Org X worker cannot bypass unassigned filtering via query params`);
+
+  // 10. Individual Worker cannot accept Org X complaint as volunteer/individual
+  const indAcceptOrgX = await request("POST", "/api/issues/ISS-ORG-X/accept-volunteer", indWorkerToken, { volunteerInfo: {} });
+  assert(indAcceptOrgX.status === 403, `Individual worker cannot accept Org X complaint -> 403 (got ${indAcceptOrgX.status})`);
+
+  // 11. Org X Worker cannot accept Org Y complaint
+  const orgXAcceptOrgY = await request("POST", "/api/issues/ISS-ORG-Y/accept-org", workerToken, { workerInfo: {} });
+  assert(orgXAcceptOrgY.status === 403, `Org X worker cannot accept Org Y complaint -> 403 (got ${orgXAcceptOrgY.status})`);
 
   // PRIVILEGED ISSUE MUTATIONS
   console.log("\n--- 10. PRIVILEGED ISSUE MUTATIONS ---");

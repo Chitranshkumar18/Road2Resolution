@@ -348,6 +348,53 @@ export const acceptWorkAsOrganization = async (issueId, workerInfo = {}, current
     throw new ApiError(404, `Issue with ID '${issueId}' not found.`);
   }
 
+  // Authorization check for workers
+  if (currentUser?.role === "worker") {
+    const effectiveWorkerType = currentUser?.workerType || (
+      currentUser?.organization ||
+      (currentUser?.organizationName &&
+        currentUser?.organizationName !== "Independent Field Worker" &&
+        currentUser?.organizationName !== "Individual Worker / Public Person")
+        ? "organization"
+        : "individual"
+    );
+
+    const workerOrgId = currentUser.organization ? String(currentUser.organization) : "";
+    const workerUnit = (currentUser.contractorUnit || "").trim().toLowerCase();
+    const workerOrgName = (currentUser.organizationName || "").trim().toLowerCase();
+    const issueOrgId = issue.assignedOrgId ? String(issue.assignedOrgId).trim() : "";
+    const issueOrgName = (issue.assignedOrgName || "").trim().toLowerCase();
+
+    const matchesOrgId = Boolean(issueOrgId && workerOrgId && issueOrgId === workerOrgId);
+    const matchesOrgName = Boolean(
+      issueOrgName && workerOrgName && (issueOrgName.includes(workerOrgName) || workerOrgName.includes(issueOrgName))
+    );
+    const matchesUnit = Boolean(
+      issueOrgName && workerUnit && (issueOrgName.includes(workerUnit) || workerUnit.includes(issueOrgName))
+    );
+
+    const hasOrgAssignment = Boolean(issueOrgId || issueOrgName);
+
+    if (effectiveWorkerType === "individual") {
+      if (hasOrgAssignment) {
+        throw new ApiError(
+          403,
+          `Access forbidden: Individual workers cannot accept complaints assigned to an organization (${issue.assignedOrgName}).`
+        );
+      }
+      return await acceptWorkAsVolunteer(issueId, workerInfo, currentUser);
+    }
+
+    if (effectiveWorkerType === "organization") {
+      if (!hasOrgAssignment || (!matchesOrgId && !matchesOrgName && !matchesUnit)) {
+        throw new ApiError(
+          403,
+          `Access forbidden: You are only authorized to accept complaints assigned to your organization (${currentUser.organizationName || currentUser.contractorUnit}).`
+        );
+      }
+    }
+  }
+
   // Derive worker identity strictly from authenticated server user
   const workerName = currentUser?.name || "Field Worker";
   const orgName = currentUser?.contractorUnit || currentUser?.organizationName || issue.assignedOrgName || "Municipal Rapid Repair Unit";
@@ -382,6 +429,17 @@ export const acceptWorkAsVolunteer = async (issueId, volunteerInfo = {}, current
     throw new ApiError(404, `Issue with ID '${issueId}' not found.`);
   }
 
+  const issueOrgId = issue.assignedOrgId ? String(issue.assignedOrgId).trim() : "";
+  const issueOrgName = (issue.assignedOrgName || "").trim();
+  if (issueOrgId || issueOrgName) {
+    if (currentUser?.role === "worker") {
+      throw new ApiError(
+        403,
+        `Access forbidden: Individual workers cannot accept complaints assigned to an organization (${issueOrgName}).`
+      );
+    }
+  }
+
   // Derive volunteer identity strictly from authenticated server user
   const volName = currentUser?.name || "Community Volunteer";
 
@@ -409,6 +467,19 @@ export const acceptWorkAsVolunteer = async (issueId, volunteerInfo = {}, current
  * Starts worker task
  */
 export const startWorkerTask = async (issueId, workerInfo = {}, currentUser = null) => {
+  const effectiveWorkerType = currentUser?.workerType || (
+    currentUser?.organization ||
+    (currentUser?.organizationName &&
+      currentUser?.organizationName !== "Independent Field Worker" &&
+      currentUser?.organizationName !== "Individual Worker / Public Person")
+      ? "organization"
+      : "individual"
+  );
+
+  if (currentUser?.role === "worker" && effectiveWorkerType === "individual") {
+    return await acceptWorkAsVolunteer(issueId, workerInfo, currentUser);
+  }
+
   return await acceptWorkAsOrganization(issueId, workerInfo, currentUser);
 };
 

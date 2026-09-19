@@ -1,10 +1,14 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import issueService from "../services/issue.service.js";
+import workerController from "./worker.controller.js";
 import routingService from "../services/routing.service.js";
 import repairVerificationService from "../services/repairVerification.service.js";
 import ApiError from "../utils/ApiError.js";
 
 export const getAllIssues = asyncHandler(async (req, res) => {
+  if (req.user?.role === "worker") {
+    return workerController.getAssignedIssues(req, res);
+  }
   const issues = await issueService.getAllIssues(req.query);
   return res.status(200).json(issues);
 });

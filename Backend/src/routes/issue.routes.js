@@ -15,7 +15,7 @@ import { publicUpvoteRateLimiter, publicReviewRateLimiter } from "../middleware/
 const router = Router();
 
 // Public issue listing & guest/citizen reporting
-router.get("/", issueController.getAllIssues);
+router.get("/", optionalAuth, issueController.getAllIssues);
 router.post("/", optionalAuth, validate(validateCreateIssue), issueController.createIssue);
 
 // Public issue details

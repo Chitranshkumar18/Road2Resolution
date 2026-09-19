@@ -26,22 +26,29 @@ export const getAssignedIssues = asyncHandler(async (req, res) => {
   const workerOrgId = req.user?.organization ? String(req.user.organization) : "";
   const workerZone = (req.user?.zone || "").trim().toLowerCase();
 
+  // Backward-compatible workerType resolution
+  const effectiveWorkerType = req.user?.workerType || (
+    req.user?.organization ||
+    (req.user?.organizationName &&
+      req.user?.organizationName !== "Independent Field Worker" &&
+      req.user?.organizationName !== "Individual Worker / Public Person")
+      ? "organization"
+      : "individual"
+  );
+
   // Reference coordinates for worker's operational region
   const workerLat = Number(req.query.lat) || Number(req.user?.lat) || 28.6139;
   const workerLng = Number(req.query.lng) || Number(req.user?.lng) || 77.2090;
 
   // Server-side authorization & data filtering boundary
   const authorizedIssues = issues.filter((issue) => {
-    // 1. Issue explicitly assigned to worker's contractor unit or organization
-    const issueOrgId = issue.assignedOrgId ? String(issue.assignedOrgId) : "";
-    const issueOrgName = (issue.assignedOrgName || "").trim().toLowerCase();
-
-    if (workerOrgId && issueOrgId && workerOrgId === issueOrgId) return true;
-    if (workerUnit && issueOrgName && (workerUnit === issueOrgName || issueOrgName.includes(workerUnit))) return true;
-    if (workerOrgName && issueOrgName && (workerOrgName === issueOrgName || issueOrgName.includes(workerOrgName))) return true;
-
-    // 2. Issue actively worked on / submitted by this specific worker
-    const submissionWorkerId = String(issue.workerSubmission?.worker?._id || issue.workerSubmission?.worker || issue.workerSubmission?.workerId || "").trim();
+    // 1. Issue actively worked on / submitted by this specific worker
+    const submissionWorkerId = String(
+      issue.workerSubmission?.worker?._id ||
+      issue.workerSubmission?.worker ||
+      issue.workerSubmission?.workerId ||
+      ""
+    ).trim();
     if (workerId && submissionWorkerId && workerId === submissionWorkerId) return true;
 
     const submissionEmail = (issue.workerSubmission?.workerEmail || "").toLowerCase().trim();
@@ -50,18 +57,18 @@ export const getAssignedIssues = asyncHandler(async (req, res) => {
     const respName = (issue.responsibleName || "").trim().toLowerCase();
     if (workerName && respName && workerName === respName) return true;
 
-    // 3. Open / Verified issues in worker's operational jurisdiction / 50 km radius available for work
-    const isOpenOrVerified = issue.status === "VERIFIED" || issue.status === "ASSIGNED" || issue.status === "OPEN" || issue.status === "IN_PROGRESS";
-    if (isOpenOrVerified) {
-      const issueZone = (issue.location?.zone || "").trim().toLowerCase();
-      if (workerZone && issueZone && workerZone === issueZone) return true;
+    const issueOrgId = issue.assignedOrgId ? String(issue.assignedOrgId).trim() : "";
+    const issueOrgName = (issue.assignedOrgName || "").trim().toLowerCase();
+    const hasOrgAssignment = Boolean(issueOrgId || issueOrgName);
 
-      const issueLat = Number(issue.location?.lat);
-      const issueLng = Number(issue.location?.lng);
-      if (!isNaN(issueLat) && !isNaN(issueLng)) {
-        const distKm = calculateDistanceKm(workerLat, workerLng, issueLat, issueLng);
-        if (distKm <= MAX_WORKER_RADIUS_KM) return true;
-      }
+    // 2. Organization Worker: Sees ALL organization-assigned complaints (and NEVER unassigned complaints)
+    if (effectiveWorkerType === "organization") {
+      return hasOrgAssignment;
+    }
+
+    // 3. Individual Worker: Sees ALL unassigned complaints (and NEVER organization-assigned complaints)
+    if (effectiveWorkerType === "individual") {
+      return !hasOrgAssignment;
     }
 
     return false;
@@ -105,6 +112,15 @@ export const submitRepair = asyncHandler(async (req, res) => {
 
   // Authorization check for workers
   if (req.user?.role === "worker") {
+    const effectiveWorkerType = req.user?.workerType || (
+      req.user?.organization ||
+      (req.user?.organizationName &&
+        req.user?.organizationName !== "Independent Field Worker" &&
+        req.user?.organizationName !== "Individual Worker / Public Person")
+        ? "organization"
+        : "individual"
+    );
+
     const workerOrgId = req.user.organization ? String(req.user.organization) : "";
     const workerUnit = (req.user.contractorUnit || "").trim().toLowerCase();
     const workerOrgName = (req.user.organizationName || "").trim().toLowerCase();
@@ -130,7 +146,14 @@ export const submitRepair = asyncHandler(async (req, res) => {
       (issue.responsibleName && issue.responsibleName.toLowerCase() === req.user.name?.toLowerCase()) ||
       (issue.workerSubmission?.workerId && String(issue.workerSubmission.workerId) === String(req.user._id));
 
-    if (isAssignedToOtherOrg && !isOwnTask) {
+    if (effectiveWorkerType === "individual" && hasOrgAssignment && !isOwnTask) {
+      throw new ApiError(
+        403,
+        `Access forbidden: Individual workers cannot submit repairs for issues assigned to an organization (${issue.assignedOrgName}).`
+      );
+    }
+
+    if (effectiveWorkerType === "organization" && isAssignedToOtherOrg && !isOwnTask) {
       throw new ApiError(
         403,
         `Access forbidden: You are not authorized to submit repairs for issues assigned to another contractor (${issue.assignedOrgName}).`
