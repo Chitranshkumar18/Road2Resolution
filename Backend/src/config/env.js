@@ -26,6 +26,7 @@ export const ENV = {
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || "",
   ADMIN_EMAIL: (process.env.ADMIN_EMAIL || "chitranshkumar730@gmail.com").trim().toLowerCase(),
   ADMIN_INITIAL_PASSWORD: process.env.ADMIN_INITIAL_PASSWORD || process.env.ADMIN_DEFAULT_PASSWORD || "",
+  AI_MODEL_SERVICE_URL: (process.env.AI_MODEL_SERVICE_URL || process.env.AI_SERVICE_URL || "http://127.0.0.1:8000").replace(/\/+$/, ""),
 };
 
 export default ENV;

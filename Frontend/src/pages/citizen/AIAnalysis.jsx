@@ -11,6 +11,8 @@ export const AIAnalysis = () => {
   const [loading, setLoading] = useState(false);
   const [analysisData, setAnalysisData] = useState(null);
 
+  const [analysisError, setAnalysisError] = useState(null);
+
   const samplePresets = [
     { label: 'Deep Crater Pothole', img: PLACEHOLDER_IMAGES.pothole, cat: 'pothole' },
     { label: 'Water Main Leak', img: PLACEHOLDER_IMAGES.waterLeak, cat: 'water_leak' },
@@ -20,6 +22,7 @@ export const AIAnalysis = () => {
 
   const handleRunScan = async (imgUrl = selectedImage, cat = categoryHint) => {
     setLoading(true);
+    setAnalysisError(null);
     try {
       const res = await aiApi.analyzeImage(imgUrl, cat);
       setAnalysisData({
@@ -28,6 +31,9 @@ export const AIAnalysis = () => {
       });
     } catch (err) {
       console.error(err);
+      const msg = err.response?.data?.message || err.message || 'AI Vision service unreachable. Please ensure the model service is running.';
+      setAnalysisError(msg);
+      setAnalysisData(null);
     } finally {
       setLoading(false);
     }
@@ -40,6 +46,7 @@ export const AIAnalysis = () => {
       reader.onload = () => {
         setSelectedImage(reader.result);
         setAnalysisData(null);
+        setAnalysisError(null);
       };
       reader.readAsDataURL(file);
     }
@@ -52,7 +59,7 @@ export const AIAnalysis = () => {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-              YOLO-v10-Civic Edge
+              ResNet18 Two-Stage Engine
             </span>
             <span className="text-xs text-slate-400">Autonomous Vision Diagnostics</span>
           </div>
@@ -60,7 +67,7 @@ export const AIAnalysis = () => {
             Interactive AI Vision & Severity Engine
           </h2>
           <p className="text-xs text-slate-400">
-            Simulate or upload real-world municipal imagery to inspect automated object bounding, confidence scores, and formula calculations.
+            Simulate or upload real-world municipal imagery to inspect two-stage non-civic filtering, category predictions, and severity scores.
           </p>
         </div>
 
@@ -115,6 +122,20 @@ export const AIAnalysis = () => {
           {analysisData ? 'Re-Analyze Current Imagery' : 'Run Full Neural Vision Scan'}
         </Button>
       </div>
+
+      {/* Error Render */}
+      {analysisError && (
+        <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs flex items-center justify-between gap-3 animate-in fade-in">
+          <span>⚠️ {analysisError}</span>
+          <button
+            type="button"
+            onClick={() => handleRunScan(selectedImage, categoryHint)}
+            className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Results Render */}
       {analysisData && (

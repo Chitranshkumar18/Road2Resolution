@@ -88,16 +88,25 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
     try {
       const result = await aiApi.analyzeImage(formData.imageUrl, formData.category);
       setAiDetectedData(result);
-      if (!formData.title) {
+
+      if (result.isCivic === false) {
+        alert(`⚠️ AI Scan Notice: ${result.message || 'Image classified as non-civic. Please capture a clear photograph of a civic defect.'}`);
+        return;
+      }
+
+      if (result.category) {
         const catObj = ISSUE_CATEGORIES.find((c) => c.id === result.category);
+        const categoryLabel = catObj?.label || 'Civic Defect';
         setFormData((prev) => ({
           ...prev,
           category: result.category,
-          title: `${catObj?.label || 'Civic Anomaly'} detected at ${formData.address.split(',')[0]}`,
+          title: categoryLabel,
         }));
       }
     } catch (err) {
       console.error('AI scan failed', err);
+      const errMsg = err.response?.data?.message || err.message || 'AI Vision service is currently unavailable. Please verify manually.';
+      alert(`⚠️ AI Service Notice: ${errMsg}`);
     } finally {
       setAnalyzingAi(false);
     }
@@ -128,6 +137,10 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
       alert('⚠️ Captured photo has expired (60-second limit exceeded). Please capture a new live photo with the camera to submit.');
       return;
     }
+    if (aiDetectedData && aiDetectedData.isCivic === false) {
+      alert('⚠️ The captured photo was classified as non-civic by AI vision scan. Please capture a valid civic issue photo.');
+      return;
+    }
     const finalData = {
       ...formData,
       capturedAt: photoCapturedAt || Date.now(),
@@ -135,11 +148,10 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
       severity: aiDetectedData?.severity || 'HIGH',
       priorityScore: aiDetectedData?.priorityScore || 85,
       aiConfidence: aiDetectedData?.aiConfidence || 95.5,
-      aiDetection: aiDetectedData?.aiDetection || {
-        detectedObjects: ['Civil Infrastructure Defect'],
-        safetyHazardIndex: 8.0,
-        trafficImpactFactor: 'Moderate',
-        suggestedAction: 'Forwarded to designated municipal field officer.',
+      aiDetection: {
+        safetyHazardIndex: aiDetectedData?.aiDetection?.safetyHazardIndex || 8.0,
+        trafficImpactFactor: aiDetectedData?.aiDetection?.trafficImpactFactor || 'Moderate',
+        suggestedAction: aiDetectedData?.aiDetection?.suggestedAction || 'Forwarded to designated municipal field officer.',
       },
       status: 'VERIFIED',
     };
@@ -174,37 +186,60 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
               <div className="flex items-center justify-between mb-3">
                 <span className="flex items-center gap-2 text-xs font-bold text-indigo-300">
                   <Sparkles className="w-4 h-4 text-cyan-400" />
-                  <span>AI Neural Diagnostic Model</span>
+                  <span>Two-Stage AI Classification Model</span>
                 </span>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  Model: YOLO-v10-Civic
+                  ResNet18 Two-Stage
                 </span>
               </div>
 
               {aiDetectedData ? (
-                <div className="space-y-3 animate-in fade-in duration-200">
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/80 border border-slate-700">
-                    <span className="text-xs text-slate-300">Detected Severity</span>
-                    <span className="text-xs font-bold text-rose-400 uppercase">
-                      {aiDetectedData.severity}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/80 border border-slate-700">
-                    <span className="text-xs text-slate-300">AI Priority Score</span>
-                    <span className="text-xs font-mono font-bold text-amber-400">
-                      {aiDetectedData.priorityScore} / 100
-                    </span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
-                    <span className="text-[11px] text-slate-400 block mb-1">Detected Objects:</span>
-                    <p className="font-mono text-cyan-300">
-                      {aiDetectedData.aiDetection.detectedObjects.join(', ')}
+                aiDetectedData.isCivic === false ? (
+                  <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs space-y-2 animate-in fade-in">
+                    <div className="flex items-center justify-between font-bold">
+                      <span>⚠️ Non-Civic Image Detected</span>
+                      <span className="font-mono">{aiDetectedData.aiConfidence}%</span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      {aiDetectedData.message || 'Image classified as non-civic. Please capture a clear photograph of a civic infrastructure defect.'}
                     </p>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-2.5 animate-in fade-in duration-200">
+                    <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                        Model Output (ResNet-18)
+                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-200 font-semibold">Predicted Category:</span>
+                        <span className="text-xs font-bold text-indigo-300 uppercase font-mono">
+                          {aiDetectedData.category} ({aiDetectedData.aiConfidence}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-1.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                        Application Metrics
+                      </span>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-300">Severity:</span>
+                        <span className="font-bold text-rose-400 uppercase">
+                          {aiDetectedData.severity}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-300">Priority Score:</span>
+                        <span className="font-mono font-bold text-amber-400">
+                          {aiDetectedData.priorityScore} / 100
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )
               ) : (
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Run our high-precision computer vision pipeline on the evidence photo to auto-estimate defect dimensions, safety risk, and priority score.
+                  Execute the two-stage PyTorch classification pipeline to filter non-civic imagery and predict defect category with real model confidence.
                 </p>
               )}
             </div>

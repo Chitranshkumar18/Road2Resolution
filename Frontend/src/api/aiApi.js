@@ -4,34 +4,20 @@ import { issueApi } from './issueApi';
 
 export const aiApi = {
   analyzeImage: async (imageFileOrUrl, categoryHint = '') => {
-    try {
-      const formData = new FormData();
-      if (imageFileOrUrl instanceof File) {
-        formData.append('image', imageFileOrUrl);
-      } else {
-        formData.append('imageUrl', imageFileOrUrl);
-      }
-      formData.append('categoryHint', categoryHint);
-
-      const response = await api.post('/ai/analyze', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      return response.data;
-    } catch {
-      // Default initial analysis payload when awaiting full backend AI processing
-      return {
-        category: categoryHint || 'pothole',
-        severity: 'MEDIUM',
-        priorityScore: 75,
-        aiConfidence: 94.0,
-        aiDetection: {
-          detectedObjects: ['Civic Infrastructure Anomaly'],
-          safetyHazardIndex: 7.0,
-          trafficImpactFactor: 'Moderate',
-          suggestedAction: 'Forwarded to municipal inspection queue.'
-        }
-      };
+    const formData = new FormData();
+    if (imageFileOrUrl instanceof File) {
+      formData.append('image', imageFileOrUrl);
+    } else {
+      formData.append('imageUrl', imageFileOrUrl);
     }
+    if (categoryHint) {
+      formData.append('categoryHint', categoryHint);
+    }
+
+    const response = await api.post('/ai/analyze', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
   },
 
   checkDuplicates: async (lat, lng, category, radiusKm = 1.5) => {

@@ -23,6 +23,7 @@ const app = express();
 // CORS Configuration
 const trustedOrigins = [
   ENV.CLIENT_URL,
+  "https://road2-solution.vercel.app",
   "http://localhost:5173",
   "http://localhost:3000",
   "http://localhost:5000",

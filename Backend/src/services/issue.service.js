@@ -10,6 +10,7 @@ import { getDepartmentForCategory } from "./routing.service.js";
 import { uploadImage } from "./cloudinary.service.js";
 import { createNotification } from "./notification.service.js";
 import { emitIssueUpdated } from "../sockets/socket.js";
+import { ISSUE_CATEGORIES } from "../utils/constants.js";
 
 /**
  * Finds an issue either by customId (ISS-XXXXXX) or MongoDB ObjectId
@@ -217,8 +218,11 @@ export const createIssue = async (issueData, currentUser = null) => {
     };
   }
 
+  const catObj = ISSUE_CATEGORIES.find((c) => c.id === category);
+  const resolvedTitle = (title && typeof title === "string" && title.trim()) ? title.trim() : (catObj?.label || category);
+
   const newIssue = await Issue.create({
-    title: title || `${category} reported at ${address ? address.split(",")[0] : "Site Location"}`,
+    title: resolvedTitle,
     description,
     category,
     status: "VERIFIED",

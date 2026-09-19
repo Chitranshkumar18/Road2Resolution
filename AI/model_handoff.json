@@ -1,0 +1,83 @@
+{
+    "project": "Road2Solution",
+    "purpose": "Two-stage civic issue image classification",
+    "pipeline": {
+        "stage_1": {
+            "purpose": "Civic vs Non-Civic filtering",
+            "architecture": "ResNet18",
+            "checkpoint": "Stage1/stage1_clutter_lr1e-6_epoch1.pth",
+            "classes": {
+                "0": "civic",
+                "1": "non_civic"
+            },
+            "civic_threshold": 0.625,
+            "training": {
+                "base_model": "ResNet18",
+                "hard_negative_training_images": 79,
+                "fine_tuning_epochs": 1,
+                "learning_rate": 1e-06,
+                "weight_decay": 0.0001,
+                "optimizer": "AdamW"
+            }
+        },
+        "stage_2": {
+            "purpose": "Four-class civic issue classification",
+            "architecture": "ResNet18",
+            "checkpoint": "Stage2/road2solution_stage2_resnet18_best_epoch4.pth",
+            "classes": {
+                "0": "garbage",
+                "1": "illegal_dumping",
+                "2": "pothole",
+                "3": "water_drainage"
+            },
+            "best_epoch": 4,
+            "training": {
+                "learning_rate": 0.0001,
+                "weight_decay": 0.0001,
+                "optimizer": "AdamW",
+                "loss": "CrossEntropyLoss with inverse-frequency class weights"
+            }
+        }
+    },
+    "preprocessing": {
+        "resize": [
+            256,
+            256
+        ],
+        "to_tensor": true,
+        "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+        ],
+        "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+        ]
+    },
+    "inference_flow": [
+        "Load image",
+        "Apply Stage-1 preprocessing",
+        "Run Stage-1",
+        "If civic probability < 0.625, classify as non_civic",
+        "If civic probability >= 0.625, pass image to Stage-2",
+        "Apply Stage-2 preprocessing",
+        "Run Stage-2",
+        "Return one of garbage, illegal_dumping, pothole, water_drainage"
+    ],
+    "stage_3_test_results": {
+        "test_images": 408,
+        "accuracy": 0.9559,
+        "macro_precision": 0.9738,
+        "macro_recall": 0.952,
+        "macro_f1": 0.9624
+    },
+    "notes": [
+        "The selected final Stage-1 model is the 79-hard-negative model.",
+        "The 103-hard-negative model was evaluated experimentally but was not selected as final.",
+        "Use the Stage-1 civic threshold of 0.625.",
+        "Both models use ImageNet normalization.",
+        "Stage-2 checkpoint is the best validation checkpoint from epoch 4."
+    ]
+}
