@@ -1,3 +1,4 @@
+import gc
 import io
 from PIL import Image
 import torch
@@ -36,19 +37,19 @@ def validate_and_load_image(image_bytes: bytes) -> Image.Image:
 
 def run_two_stage_inference(image: Image.Image) -> dict:
     """
-    Executes the two-stage PyTorch inference pipeline:
+    Executes the memory-optimized two-stage PyTorch inference pipeline:
     Stage 1: Civic vs Non-Civic filter (threshold >= 0.625)
     Stage 2: 4-class civic issue classifier (garbage, illegal_dumping, pothole, water_drainage)
+             Only loaded and executed if Stage 1 passes.
     """
     manager = ModelManager.get_instance()
-    stage1_model = manager.get_stage1_model()
-    stage2_model = manager.get_stage2_model()
-
-    # Preprocess image
+    
+    # 1. Preprocess image
     tensor = PREPROCESS_TRANSFORM(image).unsqueeze(0).to(manager.device)
 
-    # 1. Stage 1 Inference
-    with torch.no_grad():
+    # 2. Stage 1 Inference (only loads Stage 1 model)
+    stage1_model = manager.get_stage1_model()
+    with torch.inference_mode():
         stage1_output = stage1_model(tensor)
         stage1_probs = F.softmax(stage1_output, dim=1)[0]
         civic_prob = float(stage1_probs[0].item())
@@ -59,7 +60,11 @@ def run_two_stage_inference(image: Image.Image) -> dict:
     stage1_passed = bool(civic_prob >= civic_threshold)
 
     if not stage1_passed:
-        # Non-civic rejection
+        # Clean up temporary tensors immediately
+        del tensor, stage1_output, stage1_probs
+        gc.collect()
+
+        # Non-civic rejection - Stage 2 is NEVER loaded or executed
         return {
             "is_civic": False,
             "category": "non_civic",
@@ -75,8 +80,9 @@ def run_two_stage_inference(image: Image.Image) -> dict:
             "message": "Image classified as non-civic. Please capture a clear photograph of a civic infrastructure defect."
         }
 
-    # 2. Stage 2 Inference (Civic Category Classification)
-    with torch.no_grad():
+    # 3. Stage 2 Inference (Civic Category Classification - loaded on demand)
+    stage2_model = manager.get_stage2_model()
+    with torch.inference_mode():
         stage2_output = stage2_model(tensor)
         stage2_probs = F.softmax(stage2_output, dim=1)[0]
 
@@ -89,6 +95,10 @@ def run_two_stage_inference(image: Image.Image) -> dict:
     pred_idx = int(torch.argmax(stage2_probs).item())
     predicted_class = manager.stage2_classes.get(pred_idx, manager.stage2_classes.get(str(pred_idx), f"class_{pred_idx}"))
     confidence = probabilities[predicted_class]
+
+    # Clean up intermediate tensors
+    del tensor, stage1_output, stage1_probs, stage2_output, stage2_probs
+    gc.collect()
 
     return {
         "is_civic": True,

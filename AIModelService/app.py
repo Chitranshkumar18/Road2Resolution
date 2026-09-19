@@ -1,4 +1,5 @@
 import os
+import gc
 import base64
 import binascii
 from contextlib import asynccontextmanager
@@ -12,18 +13,22 @@ from inference import validate_and_load_image, run_two_stage_inference
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Load models once into memory
-    print("[AIModelService] Initializing and preloading AI models...")
+    # Startup: Lightweight initialization (models are lazy-loaded on first request to fit within 512MB RAM)
+    print("[AIModelService] Initializing Road2Solution AI Service (Memory-Optimized Lazy Loading Mode)...")
     manager = ModelManager.get_instance()
-    manager.load_models()
+    try:
+        s1_path, s2_path = manager._find_checkpoint_paths()
+        print(f"[AIModelService] Verified model checkpoints on filesystem:\n  Stage 1: {s1_path}\n  Stage 2: {s2_path}")
+    except Exception as e:
+        print(f"[AIModelService] Checkpoint discovery notice: {e}")
     print("[AIModelService] AI Service is ready to accept requests.")
     yield
-    # Shutdown: Clean up if needed
+    # Shutdown
     print("[AIModelService] Shutting down AI Service.")
 
 app = FastAPI(
     title="Road2Solution AI Inference Service",
-    description="Dedicated PyTorch inference microservice for Two-Stage Civic Issue Classification",
+    description="Dedicated PyTorch inference microservice for Two-Stage Civic Issue Classification (512MB RAM Optimized)",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -100,12 +105,17 @@ async def predict(
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Image parsing error: {str(e)}")
+    finally:
+        del raw_bytes
 
     try:
         result = run_two_stage_inference(pil_image)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference execution failed: {str(e)}")
+    finally:
+        del pil_image
+        gc.collect()
 
 @app.post("/predict-json")
 async def predict_json(payload: PredictJsonRequest):
@@ -118,13 +128,19 @@ async def predict_json(payload: PredictJsonRequest):
 
     try:
         raw_bytes = decode_image_bytes(raw_str)
+        del raw_str
         pil_image = validate_and_load_image(raw_bytes)
+        del raw_bytes
         result = run_two_stage_inference(pil_image)
         return result
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference execution failed: {str(e)}")
+    finally:
+        if 'pil_image' in locals():
+            del pil_image
+        gc.collect()
 
 if __name__ == "__main__":
     import uvicorn
