@@ -7,7 +7,7 @@ import authService from "../services/auth.service.js";
 
 export const getStats = asyncHandler(async (req, res) => {
   const stats = await analyticsService.getDashboardStats();
-  return res.status(200).json(stats);
+  return res.status(200).json(stats); //
 });
 
 export const getDepartments = asyncHandler(async (req, res) => {
