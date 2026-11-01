@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export const ThemeContext = createContext(null);
 
-export const ThemeProvider = ({ children }) => {
+export const ThemeProvider = ({ children }) => { //
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('civicvision_theme') || 'dark';
   });
