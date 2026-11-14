@@ -282,7 +282,7 @@ export const WorkerProfile = () => {
               <span>{user?.badge || 'Registered Field Worker'}</span>
             </div>
             <h1 className="text-2xl font-black text-white font-display">{user?.name || 'Field Worker'}</h1>
-            <p className="text-xs text-slate-300 font-medium">{user?.contractorUnit || user?.organizationName || 'Assigned Field Operations'}</p>
+            <p className="text-xs text-white text-white-force font-medium">{user?.contractorUnit || user?.organizationName || 'Assigned Field Operations'}</p>
           </div>
         </div>
       </div>
@@ -353,10 +353,10 @@ export const WorkerProfile = () => {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-3.5 py-2 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                className="px-3.5 py-2 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/30 text-black !text-black text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
               >
-                <Upload className="w-3.5 h-3.5" />
-                <span>{avatar ? 'Change Photo' : 'Upload Photo'}</span>
+                <Upload className="w-3.5 h-3.5 text-black !text-black" />
+                <span className="text-black !text-black">{avatar ? 'Change Photo' : 'Upload Photo'}</span>
               </button>
               {avatar && (
                 <button
