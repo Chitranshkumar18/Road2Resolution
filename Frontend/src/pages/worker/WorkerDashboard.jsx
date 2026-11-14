@@ -219,7 +219,7 @@ export const WorkerDashboard = () => {
             <h1 className="text-2xl md:text-3xl font-black text-white font-display">
               Welcome Back, {user?.name || 'Field Engineer'}
             </h1>
-            <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
+             <p className="text-xs md:text-sm text-white text-white-force max-w-2xl leading-relaxed">
               Live synchronized monitoring of citizen complaints. Inspect assigned organizations, commence repairs, and submit 250m GPS verified completion photos.
             </p>
           </div>
