@@ -1,0 +1,37 @@
+import axios from 'axios';
+
+const rawBaseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:5000/api';
+const cleanBaseUrl = rawBaseUrl.replace(/\/+$/, '');
+const baseURL = cleanBaseUrl.endsWith('/api') ? cleanBaseUrl : `${cleanBaseUrl}/api`;
+
+const api = axios.create({
+  baseURL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to attach JWT auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('civicvision_auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // If backend isn't reachable or returns 404/500, log error
+    console.warn('API request notice:', error.message);
+    return Promise.reject(error);
+  }
+);
+
+export default api;

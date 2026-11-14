@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" fill="none">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="60%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+  </defs>
+  <!-- Icon -->
+  <g transform="translate(10, 10)">
+    <rect width="60" height="60" rx="16" fill="#111827" stroke="url(#logoGrad)" stroke-width="2"/>
+    <path d="M30 14C19 14 10 24 6 30C10 36 19 46 30 46C41 46 50 36 54 30C50 24 41 14 30 14Z" stroke="url(#logoGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="30" cy="30" r="9" fill="url(#logoGrad)"/>
+    <circle cx="30" cy="30" r="4" fill="#FFFFFF"/>
+    <path d="M30 8V13M30 47V52M8 30H13M47 30H52" stroke="#06B6D4" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <!-- Text -->
+  <text x="85" y="44" font-family="'Outfit', sans-serif" font-size="28" font-weight="800" fill="url(#textGrad)" letter-spacing="-0.5">Civic<tspan fill="#6366F1">Vision</tspan></text>
+  <rect x="238" y="24" width="34" height="20" rx="6" fill="#6366F1" fill-opacity="0.2" stroke="#6366F1" stroke-width="1"/>
+  <text x="246" y="38" font-family="'Inter', sans-serif" font-size="11" font-weight="700" fill="#818CF8">AI</text>
+  <text x="86" y="60" font-family="'Inter', sans-serif" font-size="11" font-weight="500" fill="#94A3B8" letter-spacing="1.5">INTELLIGENT URBAN RADAR</text>
+</svg>
