@@ -499,7 +499,7 @@ export const UploadRepairProof = () => {
                 <h1 className="text-xl md:text-2xl font-black text-white font-display">
                   Upload Resolution Proof for Admin Verification
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-black !text-black border border-amber-500/30">
                   AUTOMATIC 250m GEOFENCE
                 </span>
               </div>
@@ -548,8 +548,8 @@ export const UploadRepairProof = () => {
                   Automatic GPS Location Verification
                 </h2>
                 {!selectedIssue ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    <ClipboardList className="w-3 h-3" />
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-black !text-black border border-amber-500/30">
+                    <ClipboardList className="w-3 h-3 text-black !text-black" />
                     SELECT COMPLAINT TO RESOLVE
                   </span>
                 ) : gpsStatus === 'acquiring' && !userCoords ? (
