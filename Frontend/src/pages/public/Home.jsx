@@ -91,12 +91,12 @@ export const Home = () => {
                   Contribution & Role Guide • भूमिका एवं योगदान निर्देश
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white font-display">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white text-white-force font-display">
                 Choose Your Role to Contribute • अपनी भूमिका चुनें
               </h2>
-              <p className="text-xs sm:text-sm text-slate-300">
+              <p className="text-xs sm:text-sm text-white text-white-force">
                 This website is designed for both <strong>Citizens</strong> and <strong>Organizations / Workers</strong>.
-                <span className="text-slate-400 ml-1.5 block sm:inline">
+                <span className="text-white text-white-force ml-1.5 block sm:inline">
                   (यह वेबसाइट नागरिकों और संगठनों/वर्कर्स दोनों के लिए बनाई गई है।)
                 </span>
               </p>

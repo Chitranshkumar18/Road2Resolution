@@ -139,7 +139,9 @@ html.light [class*="text-slate-500"] {
 
 /* Explicit white override across all themes */
 .text-white-force,
-html.light .text-white-force {
+.text-white-force *,
+html.light .text-white-force,
+html.light .text-white-force * {
   color: #FFFFFF !important;
 }
 
