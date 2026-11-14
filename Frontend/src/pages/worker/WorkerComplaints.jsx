@@ -268,7 +268,7 @@ export const WorkerComplaints = () => {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold text-slate-200">Worker Live GPS Location:</span>
-                <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/30">
+                <span className="text-xs font-mono font-bold text-black !text-black bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/30">
                   {workerLocation.lat.toFixed(4)}° N, {workerLocation.lng.toFixed(4)}° E ({workerLocation.label})
                 </span>
               </div>
