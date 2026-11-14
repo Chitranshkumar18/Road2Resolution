@@ -183,11 +183,11 @@ export const WorkerSubmittedRepairs = () => {
           <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Filter By Attribution:</span>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs">
+        <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs flex-wrap sm:flex-nowrap">
           <button
             type="button"
             onClick={() => setFilterEntity('all')}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-colors cursor-pointer ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors cursor-pointer ${
               filterEntity === 'all'
                 ? 'bg-amber-500 text-slate-950 shadow'
                 : 'text-slate-400 hover:text-white'
@@ -198,7 +198,7 @@ export const WorkerSubmittedRepairs = () => {
           <button
             type="button"
             onClick={() => setFilterEntity('org')}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
               filterEntity === 'org'
                 ? 'bg-indigo-600 text-white shadow'
                 : 'text-slate-400 hover:text-white'
@@ -210,7 +210,7 @@ export const WorkerSubmittedRepairs = () => {
           <button
             type="button"
             onClick={() => setFilterEntity('individual')}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
               filterEntity === 'individual'
                 ? 'bg-emerald-600 text-white shadow'
                 : 'text-slate-400 hover:text-white'

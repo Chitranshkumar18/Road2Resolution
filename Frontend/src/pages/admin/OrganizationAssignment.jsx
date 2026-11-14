@@ -486,7 +486,7 @@ export const OrganizationAssignment = () => {
                           : 'bg-slate-950/80 border-slate-800 hover:border-indigo-500/40'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
                         <div className="flex items-start gap-2.5 min-w-0">
                           <input
                             type="radio"
@@ -507,7 +507,7 @@ export const OrganizationAssignment = () => {
                         </div>
 
                         {/* Distance Badge */}
-                        <div className="text-right flex-shrink-0">
+                        <div className="sm:text-right flex-shrink-0">
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 block">
                             ~{org.distanceKm} km away
                           </span>

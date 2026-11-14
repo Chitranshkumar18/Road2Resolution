@@ -174,9 +174,9 @@ export const LocationPicker = ({
         </MapContainer>
 
         {/* Floating helper pill */}
-        <div className="absolute bottom-3 left-3 z-[400] bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700 text-[11px] text-slate-200 flex items-center gap-1.5 shadow-lg">
-          <Crosshair className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Tap anywhere on GPS radar to recalibrate target coordinates</span>
+        <div className="absolute bottom-3 left-3 right-3 sm:right-auto max-w-[calc(100%-1.5rem)] z-[400] bg-slate-900/90 backdrop-blur-md px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-700 text-[10px] sm:text-[11px] text-slate-200 flex items-center gap-1.5 shadow-lg">
+          <Crosshair className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+          <span className="truncate sm:whitespace-normal">Tap anywhere on GPS radar to recalibrate target coordinates</span>
         </div>
       </div>
     </div>

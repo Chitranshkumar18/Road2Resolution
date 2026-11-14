@@ -307,22 +307,22 @@ export const LiveCameraCapture = ({
             />
 
             {/* Top Left Verified Badge */}
-            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-bold backdrop-blur-md shadow">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>LIVE CAMERA CAPTURED</span>
+            <div className="absolute top-2.5 sm:top-3 left-2.5 sm:left-3 flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-black/80 border border-emerald-500/40 text-emerald-300 text-[9px] sm:text-[10px] font-mono font-bold backdrop-blur-md shadow max-w-[48%]">
+              <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400 flex-shrink-0" />
+              <span className="truncate">LIVE CAMERA CAPTURED</span>
             </div>
 
             {/* Top Right Live Countdown HUD Badge */}
             {secondsLeft !== null && !isPhotoExpired && (
-              <div className={`absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1 rounded-full font-mono text-xs font-bold backdrop-blur-md shadow-lg border transition-all ${
+              <div className={`absolute top-2.5 sm:top-3 right-2.5 sm:right-3 flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-mono text-[9px] sm:text-xs font-bold backdrop-blur-md shadow-lg border transition-all max-w-[48%] ${
                 isUrgent
                   ? 'bg-rose-950/90 text-rose-300 border-rose-500/60 animate-pulse ring-2 ring-rose-500/30'
                   : isWarning
                   ? 'bg-amber-950/90 text-amber-300 border-amber-500/60'
                   : 'bg-black/80 text-emerald-300 border-emerald-500/40'
               }`}>
-                <Clock className={`w-3.5 h-3.5 ${isUrgent ? 'text-rose-400 animate-spin' : isWarning ? 'text-amber-400' : 'text-emerald-400'}`} />
-                <span>⏱️ {formatTimeRemaining(secondsLeft)} LEFT TO SUBMIT</span>
+                <Clock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0 ${isUrgent ? 'text-rose-400 animate-spin' : isWarning ? 'text-amber-400' : 'text-emerald-400'}`} />
+                <span className="truncate">⏱️ {formatTimeRemaining(secondsLeft)} LEFT</span>
               </div>
             )}
 

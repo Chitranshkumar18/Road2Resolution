@@ -224,13 +224,13 @@ export const WorkerDashboard = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
             <Button
               variant="primary"
               size="md"
               leftIcon={Camera}
               onClick={() => navigate('/worker/upload-proof')}
-              className="bg-amber-600 hover:bg-amber-500 text-white font-bold shadow-lg shadow-amber-900/40 cursor-pointer"
+              className="w-full sm:w-auto bg-amber-600 hover:bg-amber-500 text-white font-bold shadow-lg shadow-amber-900/40 cursor-pointer"
             >
               Upload Repair Photo
             </Button>
@@ -239,7 +239,7 @@ export const WorkerDashboard = () => {
               size="md"
               leftIcon={ClipboardList}
               onClick={() => navigate('/worker/complaints')}
-              className="border-slate-700 text-slate-200 hover:bg-slate-800 cursor-pointer"
+              className="w-full sm:w-auto border-slate-700 text-slate-200 hover:bg-slate-800 cursor-pointer"
             >
               View All Complaints ({visibleIssues.length})
             </Button>
@@ -248,25 +248,25 @@ export const WorkerDashboard = () => {
 
         {/* Dynamic Location Bar in Dashboard */}
         <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="flex items-center gap-1.5 text-slate-300 font-semibold">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <span className="flex items-center gap-1.5 text-slate-300 font-semibold flex-shrink-0">
               <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
               <span>Active Worker GPS Fix:</span>
             </span>
-            <span className="font-mono text-amber-300 bg-amber-500/15 px-2.5 py-0.5 rounded-lg border border-amber-500/30 font-bold">
+            <span className="font-mono text-amber-300 bg-amber-500/15 px-2.5 py-0.5 rounded-lg border border-amber-500/30 font-bold truncate max-w-full">
               {workerLocation.lat.toFixed(4)}° N, {workerLocation.lng.toFixed(4)}° E ({workerLocation.label})
             </span>
-            <span className="text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+            <span className="text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex-shrink-0">
               Live Synced
             </span>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             <span className="text-slate-400 font-medium">Radius:</span>
             <select
               value={selectedRadius}
               onChange={(e) => setSelectedRadius(e.target.value)}
-              className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-500"
+              className="flex-1 sm:flex-initial px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-500"
             >
               <option value="all">All Complaints (Live Synced)</option>
               <option value="50">&le; 50 km Radius</option>
@@ -279,7 +279,7 @@ export const WorkerDashboard = () => {
                 const preset = LOCATION_PRESETS.find(p => p.label === e.target.value);
                 if (preset) handleLocationPresetChange(preset);
               }}
-              className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-xs text-slate-200 font-medium focus:outline-none focus:border-amber-500"
+              className="flex-1 sm:flex-initial px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-xs text-slate-200 font-medium focus:outline-none focus:border-amber-500"
             >
               {LOCATION_PRESETS.map((p) => (
                 <option key={p.label} value={p.label}>
@@ -292,7 +292,7 @@ export const WorkerDashboard = () => {
               type="button"
               onClick={() => getCurrentPosition()}
               disabled={gpsLoading}
-              className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-cyan-300 border border-slate-700 text-xs flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-cyan-300 border border-slate-700 text-xs flex items-center gap-1 cursor-pointer flex-shrink-0"
             >
               <LocateFixed className={`w-3.5 h-3.5 text-cyan-400 ${gpsLoading ? 'animate-spin' : ''}`} />
               <span>GPS Fix</span>
@@ -302,7 +302,7 @@ export const WorkerDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Citizen Complaints */}
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg space-y-2">
           <div className="flex items-center justify-between">

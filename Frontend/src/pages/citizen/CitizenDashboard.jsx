@@ -32,7 +32,7 @@ export const CitizenDashboard = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Banner */}
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-indigo-900/60 via-slate-900 to-cyan-900/40 border border-indigo-500/20 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-indigo-900/60 via-slate-900 to-cyan-900/40 border border-indigo-500/20 p-5 sm:p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
         <div className="space-y-2 max-w-xl">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
@@ -40,7 +40,7 @@ export const CitizenDashboard = () => {
             </span>
             <span className="text-xs font-mono text-slate-400">ID: {user?._id || user?.id || 'usr_citizen_001'}</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-display">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white font-display">
             Welcome back, {user?.name || 'Citizen'}!
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -48,19 +48,19 @@ export const CitizenDashboard = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          <Link to="/citizen/report">
-            <Button variant="primary" size="md" leftIcon={PlusCircle}>
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap w-full md:w-auto">
+          <Link to="/citizen/report" className="w-full sm:w-auto">
+            <Button variant="primary" size="md" leftIcon={PlusCircle} className="w-full sm:w-auto">
               Report An Issue (GPS)
             </Button>
           </Link>
-          <Link to="/citizen/my-reports">
-            <Button variant="secondary" size="md" leftIcon={FileText}>
+          <Link to="/citizen/my-reports" className="w-full sm:w-auto">
+            <Button variant="secondary" size="md" leftIcon={FileText} className="w-full sm:w-auto">
               My Submissions ({myComplaints.length})
             </Button>
           </Link>
-          <Link to="/citizen/explore">
-            <Button variant="ghost" size="md" leftIcon={Navigation}>
+          <Link to="/citizen/explore" className="w-full sm:w-auto">
+            <Button variant="ghost" size="md" leftIcon={Navigation} className="w-full sm:w-auto">
               My GPS Radar
             </Button>
           </Link>
@@ -68,7 +68,7 @@ export const CitizenDashboard = () => {
       </div>
 
       {/* Metrics Row (Strictly Scoped to Logged-in Citizen) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div
           onClick={() => navigate('/citizen/my-reports')}
           className="cursor-pointer transition-transform hover:scale-[1.02]"

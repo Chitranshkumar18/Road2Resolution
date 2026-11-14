@@ -75,23 +75,23 @@ export const Login = () => {
         </div>
 
         {/* 3 Role Options Toggle: Citizen vs Worker vs Admin */}
-        <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
           {/* Citizen Option */}
           <button
             type="button"
             onClick={() => handleRoleChange('citizen')}
-            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border ${
+            className={`p-2 sm:p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1 sm:gap-1.5 border min-w-0 cursor-pointer ${
               role === 'citizen'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30'
                 : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
             }`}
           >
-            <div className={`p-1.5 rounded-lg ${role === 'citizen' ? 'bg-white/20' : 'bg-slate-800 text-indigo-400'}`}>
-              <User className="w-4 h-4" />
+            <div className={`p-1 sm:p-1.5 rounded-lg ${role === 'citizen' ? 'bg-white/20' : 'bg-slate-800 text-indigo-400'}`}>
+              <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <span className="text-xs font-bold block">Citizen</span>
-              <span className={`text-[9px] block leading-tight ${role === 'citizen' ? 'text-indigo-100' : 'text-slate-400'}`}>
+            <div className="w-full min-w-0">
+              <span className="text-[11px] sm:text-xs font-bold block truncate">Citizen</span>
+              <span className={`text-[8px] sm:text-[9px] block leading-tight truncate ${role === 'citizen' ? 'text-indigo-100' : 'text-slate-400'}`}>
                 Report & Track
               </span>
             </div>
@@ -101,18 +101,18 @@ export const Login = () => {
           <button
             type="button"
             onClick={() => handleRoleChange('worker')}
-            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border ${
+            className={`p-2 sm:p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1 sm:gap-1.5 border min-w-0 cursor-pointer ${
               role === 'worker'
                 ? 'bg-amber-600 text-white border-amber-500 shadow-lg shadow-amber-600/30'
                 : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
             }`}
           >
-            <div className={`p-1.5 rounded-lg ${role === 'worker' ? 'bg-white/20' : 'bg-slate-800 text-amber-400'}`}>
-              <HardHat className="w-4 h-4" />
+            <div className={`p-1 sm:p-1.5 rounded-lg ${role === 'worker' ? 'bg-white/20' : 'bg-slate-800 text-amber-400'}`}>
+              <HardHat className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <span className="text-xs font-bold block">Worker</span>
-              <span className={`text-[9px] block leading-tight ${role === 'worker' ? 'text-amber-100' : 'text-slate-400'}`}>
+            <div className="w-full min-w-0">
+              <span className="text-[11px] sm:text-xs font-bold block truncate">Worker</span>
+              <span className={`text-[8px] sm:text-[9px] block leading-tight truncate ${role === 'worker' ? 'text-amber-100' : 'text-slate-400'}`}>
                 Fix & Proof
               </span>
             </div>
@@ -122,18 +122,18 @@ export const Login = () => {
           <button
             type="button"
             onClick={() => handleRoleChange('admin')}
-            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border ${
+            className={`p-2 sm:p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1 sm:gap-1.5 border min-w-0 cursor-pointer ${
               role === 'admin'
                 ? 'bg-rose-600 text-white border-rose-500 shadow-lg shadow-rose-600/30'
                 : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
             }`}
           >
-            <div className={`p-1.5 rounded-lg ${role === 'admin' ? 'bg-white/20' : 'bg-slate-800 text-rose-400'}`}>
-              <Shield className="w-4 h-4" />
+            <div className={`p-1 sm:p-1.5 rounded-lg ${role === 'admin' ? 'bg-white/20' : 'bg-slate-800 text-rose-400'}`}>
+              <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <span className="text-xs font-bold block">Admin</span>
-              <span className={`text-[9px] block leading-tight ${role === 'admin' ? 'text-rose-100' : 'text-slate-400'}`}>
+            <div className="w-full min-w-0">
+              <span className="text-[11px] sm:text-xs font-bold block truncate">Admin</span>
+              <span className={`text-[8px] sm:text-[9px] block leading-tight truncate ${role === 'admin' ? 'text-rose-100' : 'text-slate-400'}`}>
                 Triage & QA
               </span>
             </div>
@@ -141,7 +141,7 @@ export const Login = () => {
         </div>
 
         {/* Login Form Card */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-5 backdrop-blur-md">
+        <div className="p-5 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-5 backdrop-blur-md">
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
               {error}

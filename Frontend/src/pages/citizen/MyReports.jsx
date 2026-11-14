@@ -56,7 +56,7 @@ export const MyReports = () => {
       {/* Filter Bar */}
       <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Status Tabs */}
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex items-center gap-1.5 sm:gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0 touch-scroll">
           {[
             { id: 'all', label: `All Reports (${userIssues.length})` },
             { id: 'active', label: `Active Work (${activeCount})` },
@@ -65,7 +65,7 @@ export const MyReports = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap flex-shrink-0 cursor-pointer ${
                 activeTab === tab.id
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-slate-800 text-slate-400 hover:text-white'

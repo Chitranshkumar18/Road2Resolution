@@ -295,11 +295,11 @@ export const PublicReviews = () => {
               return (
                 <div
                   key={issue.id}
-                  className="rounded-3xl bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition-all p-6 md:p-8 space-y-6 shadow-xl"
+                  className="rounded-3xl bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition-all p-5 sm:p-6 md:p-8 space-y-6 shadow-xl"
                 >
                   {/* Top Bar: IDs, Status & Rating */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
-                    <div className="flex items-center gap-2.5 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-mono text-sm font-bold text-amber-400">{issue.id}</span>
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-bold capitalize bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
                         {issue.category?.replace('_', ' ')}
@@ -310,8 +310,8 @@ export const PublicReviews = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800">
                         <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                         <span className="font-mono font-bold text-white text-xs">{avgScore}</span>
                         <span className="text-[11px] text-slate-400">({reviews.length} reviews)</span>
@@ -324,19 +324,19 @@ export const PublicReviews = () => {
 
                   {/* Responsible Organization Attribution Badge */}
                   <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-3 py-1 rounded-xl text-xs font-bold border flex items-center gap-1.5 shadow-sm ${entity.badgeClass}`}>
-                        {entity.isVolunteer ? <HeartHandshake className="w-3.5 h-3.5 text-emerald-400" /> : <Building2 className="w-3.5 h-3.5 text-indigo-400" />}
-                        <span>Completed by: {entity.label}</span>
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <span className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold border flex items-center gap-1.5 shadow-sm max-w-full ${entity.badgeClass}`}>
+                        {entity.isVolunteer ? <HeartHandshake className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" /> : <Building2 className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />}
+                        <span className="truncate">Completed by: {entity.label}</span>
                       </span>
                       {issue.assignedOrgName && !entity.isVolunteer && (
-                        <span className="text-[11px] text-slate-400 font-mono hidden md:inline">
+                        <span className="text-[11px] text-slate-400 font-mono hidden md:inline truncate">
                           • {issue.location?.city || 'Jurisdiction Area'}, {issue.location?.state || 'Delhi'}
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-mono font-semibold">
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-mono font-semibold flex-shrink-0">
                       <ShieldCheck className="w-4 h-4 text-emerald-400" />
                       <span>{issue.workerSubmission?.gpsVerification?.distanceMeters ? `${issue.workerSubmission.gpsVerification.distanceMeters}m GPS Verified` : '250m On-Site Verified'}</span>
                     </div>

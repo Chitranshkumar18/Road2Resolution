@@ -424,9 +424,9 @@ export const IssueForm = ({ onSubmit, isSubmitting = false }) => {
             className="w-full"
           >
             {photoSecondsLeft !== null ? (
-              <span className="flex items-center justify-center gap-2">
+              <span className="flex items-center justify-center gap-2 flex-wrap text-xs sm:text-sm">
                 <span>Submit Civic Report for AI Triage</span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+                <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold flex-shrink-0 ${
                   photoSecondsLeft <= 15
                     ? 'bg-rose-900/80 text-rose-200 border border-rose-500/50 animate-pulse'
                     : photoSecondsLeft <= 30

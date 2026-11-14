@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, User, LogOut, Menu } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
@@ -12,7 +12,27 @@ export const Header = ({ onToggleSidebar, title, subtitle }) => {
   const { unreadCount } = React.useContext(NotificationContext);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
+  const notifRef = useRef(null);
   const navigate = useNavigate();
+
+  // Handle outside clicks to close user profile dropdown & notification panel
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setShowUserMenu(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -49,39 +69,49 @@ export const Header = ({ onToggleSidebar, title, subtitle }) => {
     : user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80';
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800">
+    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-3 sm:px-4 md:px-6 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800">
       {/* Left section */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2">
         <button
           onClick={onToggleSidebar}
-          className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 lg:hidden"
+          className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 lg:hidden flex-shrink-0"
+          aria-label="Toggle navigation menu"
         >
           <Menu className="w-5 h-5" />
         </button>
 
-        <div>
-          {title && <h1 className="text-base md:text-lg font-bold text-slate-100 font-display">{title}</h1>}
-          {subtitle && <p className="text-xs text-slate-400 hidden sm:block">{subtitle}</p>}
+        <div className="min-w-0 flex-1">
+          {title && (
+            <h1 className="text-sm sm:text-base md:text-lg font-bold text-slate-100 font-display truncate">
+              {title}
+            </h1>
+          )}
+          {subtitle && (
+            <p className="text-xs text-slate-400 hidden sm:block truncate">
+              {subtitle}
+            </p>
+          )}
         </div>
       </div>
 
       {/* Right section */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
         {/* User Role Badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-950/70 border border-slate-800 text-slate-300 shadow-sm">
+        <div className="hidden xs:flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold bg-slate-950/70 border border-slate-800 text-slate-300 shadow-sm">
           <span className="hidden sm:inline text-[11px] text-slate-400">Role:</span>
-          <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${getRoleBadgeClasses()}`}>
+          <span className={`px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold ${getRoleBadgeClasses()}`}>
             {getRoleLabel()}
           </span>
         </div>
 
         {/* Notifications */}
-        <div className="relative">
+        <div className="relative" ref={notifRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative p-2 text-slate-400 hover:text-slate-100 rounded-xl hover:bg-slate-800 transition-colors"
+            aria-label="Civic alerts"
           >
-            <Bell className="w-5 h-5" />
+            <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
             {unreadCount > 0 && (
               <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-slate-900" />
             )}
@@ -97,28 +127,29 @@ export const Header = ({ onToggleSidebar, title, subtitle }) => {
         <ThemeChanger />
 
         {/* User profile dropdown */}
-        <div className="relative">
+        <div className="relative" ref={userMenuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-800 transition-colors"
+            className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-800 transition-colors"
+            aria-label="User profile menu"
           >
             <img
               src={userAvatar}
               alt={user?.name || 'User'}
-              className={`w-8 h-8 rounded-lg object-cover ring-2 ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-cover ring-2 ${
                 isAdmin ? 'ring-rose-500/30' : isWorker ? 'ring-amber-500/40' : 'ring-indigo-500/30'
               }`}
             />
             <div className="hidden md:block text-left">
-              <p className="text-xs font-semibold text-slate-200 leading-tight">{user?.name || 'User'}</p>
-              <p className="text-[10px] text-slate-400 leading-tight">{getUserSubtitle()}</p>
+              <p className="text-xs font-semibold text-slate-200 leading-tight truncate max-w-[120px]">{user?.name || 'User'}</p>
+              <p className="text-[10px] text-slate-400 leading-tight truncate max-w-[120px]">{getUserSubtitle()}</p>
             </div>
           </button>
 
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="p-3 border-b border-slate-800 bg-slate-850">
-                <p className="text-xs font-semibold text-slate-200">{user?.name}</p>
+                <p className="text-xs font-semibold text-slate-200 truncate">{user?.name}</p>
                 <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
                 <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${getRoleBadgeClasses()}`}>
                   {user?.role?.toUpperCase()}
@@ -130,14 +161,17 @@ export const Header = ({ onToggleSidebar, title, subtitle }) => {
                     setShowUserMenu(false);
                     navigate(getProfilePath());
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                 >
                   <User className="w-4 h-4 text-indigo-400" />
                   <span>My Profile</span>
                 </button>
                 <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 text-rose-400" />
                   <span>Sign Out</span>

@@ -70,7 +70,7 @@ export const IssueManagement = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <Link
               to="/admin/organization-assignment"
               className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 transition-all shadow-md"
@@ -139,8 +139,8 @@ export const IssueManagement = () => {
       </div>
 
       {/* Table */}
-      <div className="rounded-3xl bg-slate-900 border border-slate-800 shadow-xl overflow-x-auto">
-        <table className="w-full text-left text-xs text-slate-300">
+      <div className="rounded-3xl bg-slate-900 border border-slate-800 shadow-xl overflow-x-auto touch-scroll">
+        <table className="w-full text-left text-xs text-slate-300 min-w-[760px]">
           <thead className="bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
             <tr>
               <th className="px-5 py-4">Incident & Location</th>
@@ -152,7 +152,14 @@ export const IssueManagement = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
-            {filtered.map((issue) => {
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="px-5 py-12 text-center text-slate-400">
+                  No active complaints found matching your filters.
+                </td>
+              </tr>
+            ) : (
+              filtered.map((issue) => {
               const entity = formatResponsibleEntity(issue);
               const issueLocation = `${issue.location?.city || 'Delhi'}, ${issue.location?.state || 'Delhi'}`;
               const verified = isVerifiedIssue(issue);
@@ -244,7 +251,7 @@ export const IssueManagement = () => {
                   </td>
                 </tr>
               );
-            })}
+            }))}
           </tbody>
         </table>
       </div>

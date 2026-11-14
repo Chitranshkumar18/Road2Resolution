@@ -31,21 +31,21 @@ export const Home = () => {
   const featuredIssues = (issues || []).slice(0, 3);
 
   return (
-    <div className="space-y-24 pb-20">
+    <div className="space-y-16 sm:space-y-20 md:space-y-24 pb-20">
       {/* Hero Section */}
-      <section className="relative pt-12 md:pt-20 overflow-hidden">
+      <section className="relative pt-8 sm:pt-12 md:pt-20 overflow-hidden">
         {/* Glow backdrop */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-indigo-600/20 via-cyan-500/20 to-purple-600/20 rounded-full blur-3xl -z-10 pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[250px] sm:h-[350px] bg-gradient-to-tr from-indigo-600/20 via-cyan-500/20 to-purple-600/20 rounded-full blur-3xl -z-10 pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 sm:space-y-8">
           {/* Eyebrow Pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold shadow-sm animate-bounce-short">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            <span>Next-Gen Autonomous Civic Infrastructure Platform</span>
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-[11px] sm:text-xs font-semibold shadow-sm animate-bounce-short max-w-full">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 flex-shrink-0" />
+            <span className="truncate">Next-Gen Autonomous Civic Infrastructure Platform</span>
           </div>
 
           {/* Heading */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white font-display max-w-4xl mx-auto leading-[1.1]">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-white font-display max-w-4xl mx-auto leading-[1.15]">
             Empowering Citizens. <br />
             <span className="bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
               Resolving Cities with AI.
@@ -53,19 +53,19 @@ export const Home = () => {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base md:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed px-2">
             Report road craters, water bursts, and civic hazards in seconds. Our neural vision pipeline classifies defects, calculates safety priority, and coordinates rapid municipal dispatch.
           </p>
 
           {/* Clean Action CTA */}
-          <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
-            <Link to={isAuthenticated ? (isAdmin ? '/admin/dashboard' : '/citizen/report') : '/register'}>
-              <Button size="lg" variant="primary" leftIcon={Camera} className="shadow-xl shadow-indigo-600/30 px-8 py-4 text-base font-bold cursor-pointer">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 max-w-md sm:max-w-none mx-auto">
+            <Link to={isAuthenticated ? (isAdmin ? '/admin/dashboard' : '/citizen/report') : '/register'} className="w-full sm:w-auto">
+              <Button size="lg" variant="primary" leftIcon={Camera} className="w-full sm:w-auto shadow-xl shadow-indigo-600/30 px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold cursor-pointer">
                 Report A Civic Hazard
               </Button>
             </Link>
-            <Link to="/login">
-              <Button size="lg" variant="secondary" leftIcon={HardHat} className="px-7 py-4 text-base font-bold border-amber-500/40 text-amber-300 hover:bg-amber-950/40 cursor-pointer">
+            <Link to="/login" className="w-full sm:w-auto">
+              <Button size="lg" variant="secondary" leftIcon={HardHat} className="w-full sm:w-auto px-6 sm:px-7 py-3.5 sm:py-4 text-sm sm:text-base font-bold border-amber-500/40 text-amber-300 hover:bg-amber-950/40 cursor-pointer">
                 Worker Portal Sign In
               </Button>
             </Link>
@@ -75,7 +75,7 @@ export const Home = () => {
 
       {/* Role Selection & Contribution Guide Section (English & हिंदी) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 p-6 md:p-10 shadow-2xl space-y-8 relative overflow-hidden">
+        <div className="rounded-3xl bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 p-5 sm:p-6 md:p-10 shadow-2xl space-y-6 sm:space-y-8 relative overflow-hidden">
           {/* Subtle Ambient Glow */}
           <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -91,23 +91,23 @@ export const Home = () => {
                   Contribution & Role Guide • भूमिका एवं योगदान निर्देश
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-white font-display">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white font-display">
                 Choose Your Role to Contribute • अपनी भूमिका चुनें
               </h2>
               <p className="text-xs sm:text-sm text-slate-300">
                 This website is designed for both <strong>Citizens</strong> and <strong>Organizations / Workers</strong>.
-                <span className="text-slate-400 ml-1.5">
+                <span className="text-slate-400 ml-1.5 block sm:inline">
                   (यह वेबसाइट नागरिकों और संगठनों/वर्कर्स दोनों के लिए बनाई गई है।)
                 </span>
               </p>
             </div>
 
             {/* Language Selector Controls */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-950 border border-slate-800 self-start md:self-center">
+            <div className="flex items-center gap-1 sm:gap-1.5 p-1 rounded-xl bg-slate-950 border border-slate-800 self-start md:self-center flex-wrap sm:flex-nowrap">
               <button
                 type="button"
                 onClick={() => setLang('both')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
                   lang === 'both'
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                     : 'text-slate-400 hover:text-white'
@@ -118,7 +118,7 @@ export const Home = () => {
               <button
                 type="button"
                 onClick={() => setLang('en')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
                   lang === 'en'
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                     : 'text-slate-400 hover:text-white'
@@ -129,7 +129,7 @@ export const Home = () => {
               <button
                 type="button"
                 onClick={() => setLang('hi')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
                   lang === 'hi'
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                     : 'text-slate-400 hover:text-white'
@@ -301,22 +301,22 @@ export const Home = () => {
 
       {/* Live Impact Stats */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
-            <p className="text-3xl sm:text-4xl font-black text-indigo-400 font-display">12,480+</p>
-            <p className="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Hazards Reported</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="p-4 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-black text-indigo-400 font-display">12,480+</p>
+            <p className="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Hazards Reported</p>
           </div>
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
-            <p className="text-3xl sm:text-4xl font-black text-emerald-400 font-display">94.8%</p>
-            <p className="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Resolution Rate</p>
+          <div className="p-4 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-400 font-display">94.8%</p>
+            <p className="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Resolution Rate</p>
           </div>
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
-            <p className="text-3xl sm:text-4xl font-black text-cyan-400 font-display">&lt; 14 hrs</p>
-            <p className="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Avg Triage Speed</p>
+          <div className="p-4 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-black text-cyan-400 font-display">&lt; 14 hrs</p>
+            <p className="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Avg Triage Speed</p>
           </div>
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
-            <p className="text-3xl sm:text-4xl font-black text-amber-400 font-display">98.2%</p>
-            <p className="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">AI Vision Accuracy</p>
+          <div className="p-4 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-black text-amber-400 font-display">98.2%</p>
+            <p className="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">AI Vision Accuracy</p>
           </div>
         </div>
       </section>
@@ -412,19 +412,19 @@ export const Home = () => {
 
       {/* CTA Bottom Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-indigo-900/60 via-slate-900 to-cyan-900/60 border border-indigo-500/30 p-8 sm:p-12 text-center space-y-6">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center mx-auto text-indigo-300 shadow-lg">
-            <Eye className="w-6 h-6" />
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-indigo-900/60 via-slate-900 to-cyan-900/60 border border-indigo-500/30 p-6 sm:p-12 text-center space-y-5 sm:space-y-6">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center mx-auto text-indigo-300 shadow-lg">
+            <Eye className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-white font-display">
+          <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white font-display">
             Ready to transform your city’s infrastructure?
           </h2>
-          <p className="text-sm text-slate-300 max-w-xl mx-auto">
+          <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto leading-relaxed">
             Join thousands of active citizens reporting potholes, water bursts, and electrical faults to create safer communities.
           </p>
           <div className="pt-2">
-            <Link to="/register">
-              <Button size="lg" variant="primary" rightIcon={ArrowRight}>
+            <Link to="/register" className="inline-block w-full sm:w-auto">
+              <Button size="lg" variant="primary" rightIcon={ArrowRight} className="w-full sm:w-auto">
                 Create Citizen Account Now
               </Button>
             </Link>

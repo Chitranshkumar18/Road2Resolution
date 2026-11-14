@@ -17,7 +17,7 @@ export const NotificationPanel = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="absolute right-0 mt-3 w-84 sm:w-96 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl shadow-indigo-950/70 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+    <div className="absolute right-[-3rem] xs:right-[-1rem] sm:right-0 mt-3 w-[calc(100vw-2rem)] max-w-sm sm:w-96 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl shadow-indigo-950/70 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-slate-850 border-b border-slate-800">
         <div className="flex items-center gap-2">

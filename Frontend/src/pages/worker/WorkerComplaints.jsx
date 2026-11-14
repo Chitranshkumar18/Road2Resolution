@@ -590,7 +590,7 @@ export const WorkerComplaints = () => {
       {/* INDIVIDUAL WORKER RESPONSIBILITY CONFIRMATION MODAL */}
       {individualModalOpen && selectedIssueForIndividual && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-5 shadow-2xl relative">
+          <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl max-w-lg w-full p-5 sm:p-6 md:p-8 space-y-4 sm:space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => {

@@ -140,7 +140,7 @@ export const ExploreMap = () => {
       <IssueMap
         issues={filteredIssues}
         center={mapCenter}
-        className="h-[620px] shadow-2xl"
+        className="h-[420px] sm:h-[520px] md:h-[620px] shadow-2xl"
         linkPrefix="/citizen/issue"
       />
     </div>

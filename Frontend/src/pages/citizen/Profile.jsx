@@ -120,16 +120,16 @@ export const Profile = () => {
           <p className="text-xs text-slate-400">{user?.email}</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-800/80 border border-slate-700 text-center min-w-[120px]">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 w-full sm:w-auto">
+          <div className="p-3 sm:p-4 rounded-2xl bg-slate-800/80 border border-slate-700 text-center sm:min-w-[120px]">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Civic Points</span>
-            <span className="text-2xl font-black font-display text-cyan-400">{civicPoints}</span>
-            <span className="text-[11px] text-slate-400 block">Civic Points</span>
+            <span className="text-xl sm:text-2xl font-black font-display text-cyan-400">{civicPoints}</span>
+            <span className="text-[10px] sm:text-[11px] text-slate-400 block">Civic Points</span>
           </div>
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-800/80 border border-slate-700 text-center min-w-[120px]">
+          <div className="p-3 sm:p-4 rounded-2xl bg-slate-800/80 border border-slate-700 text-center sm:min-w-[120px]">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Reputation</span>
-            <span className="text-2xl font-black font-display text-indigo-400">{reputation}</span>
-            <span className="text-[11px] text-slate-400 block">Reputation</span>
+            <span className="text-xl sm:text-2xl font-black font-display text-indigo-400">{reputation}</span>
+            <span className="text-[10px] sm:text-[11px] text-slate-400 block">Reputation</span>
           </div>
         </div>
       </div>

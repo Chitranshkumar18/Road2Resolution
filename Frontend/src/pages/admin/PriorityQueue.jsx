@@ -208,7 +208,7 @@ export const PriorityQueue = () => {
               </div>
 
               {/* Action Bar */}
-              <div className="flex items-center gap-3 self-end lg:self-center flex-shrink-0">
+              <div className="flex items-center justify-between sm:justify-end gap-3 self-stretch sm:self-end lg:self-center flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
                 <PriorityScore score={issue.priorityScore} />
 
                 <Link

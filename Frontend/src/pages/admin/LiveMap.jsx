@@ -59,7 +59,7 @@ export const LiveMap = () => {
       {/* Map View */}
       <IssueMap
         issues={filteredIssues}
-        className="h-[650px] shadow-2xl"
+        className="h-[420px] sm:h-[520px] md:h-[650px] shadow-2xl"
         linkPrefix="/citizen/issue"
       />
     </div>

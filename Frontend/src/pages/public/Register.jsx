@@ -108,28 +108,28 @@ export const Register = () => {
         </div>
 
         {/* 2 Registration Choices: Citizen vs Worker */}
-        <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
           {/* Citizen Option */}
           <button
             type="button"
             onClick={() => handleAccountTypeChange('citizen')}
-            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border cursor-pointer ${
+            className={`p-2.5 sm:p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1 sm:gap-1.5 border cursor-pointer ${
               accountType === 'citizen'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30'
                 : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
             }`}
           >
             <div
-              className={`p-1.5 rounded-lg ${
+              className={`p-1 sm:p-1.5 rounded-lg ${
                 accountType === 'citizen' ? 'bg-white/20' : 'bg-slate-800 text-indigo-400'
               }`}
             >
-              <User className="w-4 h-4" />
+              <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <span className="text-xs font-bold block">Citizen</span>
+            <div className="w-full min-w-0">
+              <span className="text-[11px] sm:text-xs font-bold block truncate">Citizen</span>
               <span
-                className={`text-[9px] block leading-tight ${
+                className={`text-[8px] sm:text-[9px] block leading-tight truncate ${
                   accountType === 'citizen' ? 'text-indigo-100' : 'text-slate-400'
                 }`}
               >
@@ -142,23 +142,23 @@ export const Register = () => {
           <button
             type="button"
             onClick={() => handleAccountTypeChange('worker')}
-            className={`p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1.5 border cursor-pointer ${
+            className={`p-2.5 sm:p-3 rounded-xl text-left transition-all flex flex-col items-start gap-1 sm:gap-1.5 border cursor-pointer ${
               accountType === 'worker'
                 ? 'bg-amber-600 text-white border-amber-500 shadow-lg shadow-amber-600/30'
                 : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
             }`}
           >
             <div
-              className={`p-1.5 rounded-lg ${
+              className={`p-1 sm:p-1.5 rounded-lg ${
                 accountType === 'worker' ? 'bg-white/20' : 'bg-slate-800 text-amber-400'
               }`}
             >
-              <HardHat className="w-4 h-4" />
+              <HardHat className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <span className="text-xs font-bold block">Worker</span>
+            <div className="w-full min-w-0">
+              <span className="text-[11px] sm:text-xs font-bold block truncate">Worker</span>
               <span
-                className={`text-[9px] block leading-tight ${
+                className={`text-[8px] sm:text-[9px] block leading-tight truncate ${
                   accountType === 'worker' ? 'text-amber-100' : 'text-slate-400'
                 }`}
               >
@@ -170,7 +170,7 @@ export const Register = () => {
 
         {/* Informational Banner */}
         {accountType === 'citizen' ? (
-          <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-2.5 text-xs text-slate-300">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-2.5 text-xs text-slate-300">
             <div className="space-y-1">
               <p className="font-semibold text-indigo-300">
                 🇬🇧 Register as a <strong>Citizen</strong> to report road problems with live camera proof and monitor resolution progress in real time.
@@ -183,7 +183,7 @@ export const Register = () => {
             </div>
           </div>
         ) : (
-          <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-2 text-xs text-slate-300">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-2 text-xs text-slate-300">
             <p className="font-semibold text-amber-300">
               👷 Register as an authorized <strong>Field Worker</strong> or <strong>Contractor Organization</strong> to receive work orders, upload GPS-verified repair proofs, and maintain roads.
             </p>
@@ -191,7 +191,7 @@ export const Register = () => {
         )}
 
         {/* Form Card */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-4 backdrop-blur-md">
+        <div className="p-5 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-4 backdrop-blur-md">
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
               {error}
