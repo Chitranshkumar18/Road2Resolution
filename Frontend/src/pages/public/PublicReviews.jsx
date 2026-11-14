@@ -171,7 +171,7 @@ export const PublicReviews = () => {
                 Verified Civic Resolutions & Community Reviews
               </h1>
 
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              <p className="text-xs sm:text-sm text-white text-white-force leading-relaxed">
                 Browse official municipal repairs certified by City Engineers. Inspect before-and-after photographic evidence, worker GPS verification logs, and leave public feedback on completed road and infrastructure work.
               </p>
             </div>
