@@ -172,20 +172,20 @@ export const Register = () => {
         {accountType === 'citizen' ? (
           <div className="p-3.5 sm:p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-2.5 text-xs text-slate-300">
             <div className="space-y-1">
-              <p className="font-semibold text-indigo-300">
-                🇬🇧 Register as a <strong>Citizen</strong> to report road problems with live camera proof and monitor resolution progress in real time.
+              <p className="font-semibold text-black !text-black">
+                🇬🇧 Register as a <strong className="text-black !text-black">Citizen</strong> to report road problems with live camera proof and monitor resolution progress in real time.
               </p>
             </div>
             <div className="pt-2 border-t border-indigo-500/20 space-y-1">
-              <p className="font-semibold text-slate-200">
-                🇮🇳 सड़क से जुड़ी समस्याओं की शिकायत करने और उनकी प्रगति देखने के लिए <strong>Citizen</strong> के रूप में रजिस्टर करें।
+              <p className="font-semibold text-black !text-black">
+                🇮🇳 सड़क से जुड़ी समस्याओं की शिकायत करने और उनकी प्रगति देखने के लिए <strong className="text-black !text-black">Citizen</strong> के रूप में रजिस्टर करें।
               </p>
             </div>
           </div>
         ) : (
           <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-2 text-xs text-slate-300">
-            <p className="font-semibold text-amber-300">
-              👷 Register as an authorized <strong>Field Worker</strong> or <strong>Contractor Organization</strong> to receive work orders, upload GPS-verified repair proofs, and maintain roads.
+            <p className="font-semibold text-black !text-black">
+              👷 Register as an authorized <strong className="text-black !text-black">Field Worker</strong> or <strong className="text-black !text-black">Contractor Organization</strong> to receive work orders, upload GPS-verified repair proofs, and maintain roads.
             </p>
           </div>
         )}
@@ -211,13 +211,13 @@ export const Register = () => {
                     onClick={() => handleWorkerTypeChange('individual')}
                     className={`p-2.5 rounded-xl text-left transition-all flex items-center gap-2 border cursor-pointer ${
                       workerType === 'individual'
-                        ? 'bg-amber-600/20 border-amber-500/60 text-amber-200'
+                        ? 'bg-amber-600/20 border-amber-500/60 text-black !text-black'
                         : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
                     }`}
                   >
-                    <UserCheck className="w-4 h-4 shrink-0 text-amber-400" />
+                    <UserCheck className={`w-4 h-4 shrink-0 ${workerType === 'individual' ? 'text-black !text-black' : 'text-amber-400'}`} />
                     <div>
-                      <span className="text-xs font-bold block">Individual</span>
+                      <span className="text-xs font-bold block text-black !text-black">Individual</span>
                       <span className="text-[9px] block text-slate-400">Independent Worker</span>
                     </div>
                   </button>
@@ -227,13 +227,13 @@ export const Register = () => {
                     onClick={() => handleWorkerTypeChange('organization')}
                     className={`p-2.5 rounded-xl text-left transition-all flex items-center gap-2 border cursor-pointer ${
                       workerType === 'organization'
-                        ? 'bg-amber-600/20 border-amber-500/60 text-amber-200'
+                        ? 'bg-amber-600/20 border-amber-500/60 text-black !text-black'
                         : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
                     }`}
                   >
-                    <Building2 className="w-4 h-4 shrink-0 text-amber-400" />
+                    <Building2 className={`w-4 h-4 shrink-0 ${workerType === 'organization' ? 'text-black !text-black' : 'text-amber-400'}`} />
                     <div>
-                      <span className="text-xs font-bold block">Organization</span>
+                      <span className="text-xs font-bold block text-black !text-black">Organization</span>
                       <span className="text-[9px] block text-slate-400">Contractor / Agency</span>
                     </div>
                   </button>
