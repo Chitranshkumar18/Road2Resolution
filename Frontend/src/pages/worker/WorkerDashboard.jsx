@@ -249,9 +249,9 @@ export const WorkerDashboard = () => {
         {/* Dynamic Location Bar in Dashboard */}
         <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 flex-wrap min-w-0">
-            <span className="flex items-center gap-1.5 text-slate-300 font-semibold flex-shrink-0">
+            <span className="flex items-center gap-1.5 text-white text-white-force font-semibold flex-shrink-0">
               <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
-              <span>Active Worker GPS Fix:</span>
+              <span className="text-white text-white-force">Active Worker GPS Fix:</span>
             </span>
             <span className="font-mono text-amber-300 bg-amber-500/15 px-2.5 py-0.5 rounded-lg border border-amber-500/30 font-bold truncate max-w-full">
               {workerLocation.lat.toFixed(4)}° N, {workerLocation.lng.toFixed(4)}° E ({workerLocation.label})
