@@ -47,8 +47,10 @@ export const SeverityDistribution = ({
                   borderColor: '#334155',
                   borderRadius: '0.75rem',
                   fontSize: '12px',
-                  color: '#F8FAFC',
+                  color: '#FFFFFF',
                 }}
+                itemStyle={{ color: '#FFFFFF' }}
+                labelStyle={{ color: '#FFFFFF' }}
               />
               <Legend
                 wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}

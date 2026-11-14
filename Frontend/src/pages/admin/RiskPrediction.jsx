@@ -109,8 +109,10 @@ export const RiskPrediction = () => {
                     borderColor: '#334155',
                     borderRadius: '0.75rem',
                     fontSize: '12px',
-                    color: '#F8FAFC',
+                    color: '#FFFFFF',
                   }}
+                  itemStyle={{ color: '#FFFFFF' }}
+                  labelStyle={{ color: '#FFFFFF' }}
                 />
                 <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
                 <Bar dataKey="roadDecayRisk" name="Road Decay Risk" fill="#F43F5E" radius={[6, 6, 0, 0]} />

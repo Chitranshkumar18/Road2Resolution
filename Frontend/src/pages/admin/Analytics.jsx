@@ -91,8 +91,10 @@ export const Analytics = () => {
                     borderColor: '#334155',
                     borderRadius: '0.75rem',
                     fontSize: '12px',
-                    color: '#F8FAFC',
+                    color: '#FFFFFF',
                   }}
+                  itemStyle={{ color: '#FFFFFF' }}
+                  labelStyle={{ color: '#FFFFFF' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 <Area type="monotone" dataKey="reported" name="Reported Incidents" stroke="#6366F1" fill="url(#repG)" strokeWidth={2.5} />
@@ -135,8 +137,10 @@ export const Analytics = () => {
                     borderColor: '#334155',
                     borderRadius: '0.75rem',
                     fontSize: '12px',
-                    color: '#F8FAFC',
+                    color: '#FFFFFF',
                   }}
+                  itemStyle={{ color: '#FFFFFF' }}
+                  labelStyle={{ color: '#FFFFFF' }}
                 />
                 <Legend
                   wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
@@ -171,8 +175,10 @@ export const Analytics = () => {
                     borderColor: '#334155',
                     borderRadius: '0.75rem',
                     fontSize: '12px',
-                    color: '#F8FAFC',
+                    color: '#FFFFFF',
                   }}
+                  itemStyle={{ color: '#FFFFFF' }}
+                  labelStyle={{ color: '#FFFFFF' }}
                 />
                 <Bar dataKey="count" name="Incidents" fill="#6366F1" radius={[0, 6, 6, 0]} />
               </BarChart>
@@ -197,8 +203,10 @@ export const Analytics = () => {
                     borderColor: '#334155',
                     borderRadius: '0.75rem',
                     fontSize: '12px',
-                    color: '#F8FAFC',
+                    color: '#FFFFFF',
                   }}
+                  itemStyle={{ color: '#FFFFFF' }}
+                  labelStyle={{ color: '#FFFFFF' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 <Bar dataKey="targetSlaHours" name="Target SLA (Hours)" fill="#64748B" radius={[6, 6, 0, 0]} />

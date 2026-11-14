@@ -245,6 +245,16 @@ html.theme-cyber nav {
   border-color: rgba(6, 182, 212, 0.25) !important;
 }
 
+/* Recharts Tooltip Text Override (always white text inside dark tooltip box) */
+.recharts-default-tooltip,
+.recharts-default-tooltip *,
+html.light .recharts-default-tooltip,
+html.light .recharts-default-tooltip *,
+html.theme-cyber .recharts-default-tooltip,
+html.theme-cyber .recharts-default-tooltip * {
+  color: #FFFFFF !important;
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
