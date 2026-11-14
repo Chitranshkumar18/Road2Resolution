@@ -203,11 +203,11 @@ export const RepairVerification = ({
               className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold border flex items-center gap-1.5 ${
                 isCompleted
                   ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-                  : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                  : 'bg-amber-500/10 text-black !text-black border-amber-500/20'
               }`}
             >
-              {isCompleted ? <Check className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
-              <span>{isCompleted ? 'Repair Verified & Published' : 'Work in Progress'}</span>
+              {isCompleted ? <Check className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5 text-black !text-black" />}
+              <span className={!isCompleted ? "text-black !text-black" : ""}>{isCompleted ? 'Repair Verified & Published' : 'Work in Progress'}</span>
             </span>
           )}
         </div>
@@ -243,8 +243,8 @@ export const RepairVerification = ({
                 </>
               ) : (
                 <>
-                  <HardHat className="w-4 h-4 text-amber-400" />
-                  <span className="text-amber-300">Registered Organization Proof-of-Work Attached</span>
+                  <HardHat className="w-4 h-4 text-black !text-black" />
+                  <span className="text-black !text-black">Registered Organization Proof-of-Work Attached</span>
                 </>
               )}
             </div>
@@ -333,8 +333,8 @@ export const RepairVerification = ({
                   <CheckCircle2 className="w-3.5 h-3.5" /> PROOF ATTACHED
                 </span>
               ) : (
-                <span className="text-amber-400 flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> AWAITING PROOF
+                <span className="text-black !text-black flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-black !text-black" /> AWAITING PROOF
                 </span>
               )}
             </span>
