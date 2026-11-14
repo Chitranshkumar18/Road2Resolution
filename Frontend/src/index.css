@@ -137,6 +137,11 @@ html.light [class*="text-slate-500"] {
   color: #94A3B8 !important;
 }
 
+.text-white-force,
+html.light .text-white-force {
+  color: #FFFFFF !important;
+}
+
 /* Borders and Dividers */
 html.light [class*="border-slate-800"],
 html.light [class*="border-slate-700"],
