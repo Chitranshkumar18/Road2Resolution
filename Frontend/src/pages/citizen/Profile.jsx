@@ -195,10 +195,10 @@ export const Profile = () => {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3.5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-xs font-bold flex items-center gap-1.5 transition-all"
+                  className="px-3.5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-black !text-black text-xs font-bold flex items-center gap-1.5 transition-all"
                 >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>{avatar ? 'Change Photo' : 'Upload Photo'}</span>
+                  <Upload className="w-3.5 h-3.5 text-black !text-black" />
+                  <span className="text-black !text-black">{avatar ? 'Change Photo' : 'Upload Photo'}</span>
                 </button>
                 {avatar && (
                   <button
