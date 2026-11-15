@@ -429,7 +429,7 @@ export const RepairVerification = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Send className="w-4 h-4 text-emerald-400" />
-                  <span className="text-sm font-bold text-white">Save & Publish to Citizen & Public Portals</span>
+                  <span className="text-sm font-bold text-white text-white-force" style={{ color: '#FFFFFF' }}>Save & Publish to Citizen & Public Portals</span>
                 </div>
                 <span
                   className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${
@@ -442,8 +442,8 @@ export const RepairVerification = ({
                 </span>
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Saving will officially certify this incident as <strong className="text-emerald-400">RESOLVED</strong>, credit <strong>{isVolunteer ? `Public Volunteer (${responsibleName || workerSubmission?.workerName})` : `${assignedOrgName || workerSubmission?.organizationName || 'Municipal Organization'}`}</strong>, attach the certified repair photo, and publish live to both the Citizen Portal and Public Review Section.
+              <p className="text-xs text-emerald-400 !text-emerald-400 leading-relaxed" style={{ color: '#34d399' }}>
+                Saving will officially certify this incident as <strong className="text-emerald-400 !text-emerald-400" style={{ color: '#34d399' }}>RESOLVED</strong>, credit <strong className="text-emerald-400 !text-emerald-400" style={{ color: '#34d399' }}>{isVolunteer ? `Public Volunteer (${responsibleName || workerSubmission?.workerName})` : `${assignedOrgName || workerSubmission?.organizationName || 'Municipal Organization'}`}</strong>, attach the certified repair photo, and publish live to both the Citizen Portal and Public Review Section.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
