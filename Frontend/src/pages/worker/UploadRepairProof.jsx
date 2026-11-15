@@ -1012,8 +1012,12 @@ export const UploadRepairProof = () => {
                       </div>
                       {completingEntityType === 'ORGANIZATION' && <Check className="w-4 h-4 text-indigo-400" />}
                     </div>
-                    <p className="text-[11px] text-slate-400">
-                      Work completed by organization field crew. Attributed officially to <strong>{selectedIssue?.assignedOrgName || completingOrgName || 'Assigned Org'}</strong>.
+                    <p className={`text-[11px] ${
+                      completingEntityType === 'ORGANIZATION'
+                        ? 'text-white text-white-force'
+                        : 'text-slate-600 dark:text-slate-400'
+                    }`}>
+                      Work completed by organization field crew. Attributed officially to <strong className={completingEntityType === 'ORGANIZATION' ? 'text-white text-white-force' : ''}>{selectedIssue?.assignedOrgName || completingOrgName || 'Assigned Org'}</strong>.
                     </p>
                   </div>
 
@@ -1033,8 +1037,12 @@ export const UploadRepairProof = () => {
                       </div>
                       {completingEntityType === 'PUBLIC_INDIVIDUAL' && <Check className="w-4 h-4 text-emerald-400" />}
                     </div>
-                    <p className="text-[11px] text-slate-400">
-                      Work completed by an individual worker / citizen. Attributed directly to <strong>this person</strong>, NOT the organization.
+                    <p className={`text-[11px] ${
+                      completingEntityType === 'PUBLIC_INDIVIDUAL'
+                        ? 'text-white text-white-force'
+                        : 'text-slate-600 dark:text-slate-400'
+                    }`}>
+                      Work completed by an individual worker / citizen. Attributed directly to <strong className={completingEntityType === 'PUBLIC_INDIVIDUAL' ? 'text-white text-white-force' : ''}>this person</strong>, NOT the organization.
                     </p>
                   </div>
                 </div>
