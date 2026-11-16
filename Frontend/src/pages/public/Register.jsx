@@ -251,7 +251,7 @@ export const Register = () => {
                     required
                     value={formData.organizationName}
                     onChange={(e) => setFormData((p) => ({ ...p, organizationName: e.target.value }))}
-                    placeholder="Apex Road Infrastructure Ltd."
+                    placeholder="Enter Organization / Company Name"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:border-amber-500 focus:outline-none transition-colors"
                   />
                 </div>
@@ -275,9 +275,9 @@ export const Register = () => {
                   placeholder={
                     accountType === 'worker'
                       ? workerType === 'organization'
-                        ? 'Er. Rajesh Kumar'
-                        : 'Aarav Mehta'
-                      : 'Aarav Mehta'
+                        ? 'Enter the Name'
+                        : 'Enter the Name'
+                      : 'Enter the Name'
                   }
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none transition-colors ${
                     accountType === 'worker' ? 'focus:border-amber-500' : 'focus:border-indigo-500'
@@ -303,9 +303,9 @@ export const Register = () => {
                   placeholder={
                     accountType === 'worker'
                       ? workerType === 'organization'
-                        ? 'contractor@apexroad.in'
-                        : 'worker@example.com'
-                      : 'aarav@example.com'
+                        ? 'Enter the Email'
+                        : 'Enter the Email'
+                      : 'Enter the Email'
                   }
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none transition-colors ${
                     accountType === 'worker' ? 'focus:border-amber-500' : 'focus:border-indigo-500'
@@ -326,7 +326,7 @@ export const Register = () => {
                   required={accountType === 'worker'}
                   value={formData.phone}
                   onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
-                  placeholder="+91 98123 45678"
+                  placeholder="Enter Mobile Number"
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none transition-colors ${
                     accountType === 'worker' ? 'focus:border-amber-500' : 'focus:border-indigo-500'
                   }`}

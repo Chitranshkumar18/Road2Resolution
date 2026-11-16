@@ -47,9 +47,9 @@ export const Login = () => {
   };
 
   const getEmailPlaceholder = () => {
-    if (role === 'admin') return 'chitranshkumar730@gmail.com';
-    if (role === 'worker') return 'worker@example.com';
-    return 'citizen@example.com';
+    if (role === 'admin') return 'Enter Email';
+    if (role === 'worker') return 'Enter Email';
+    return 'Enter Email';
   };
 
   const getEmailLabel = () => {
