@@ -78,8 +78,8 @@ export const validateUpdateProfile = (data = {}) => {
     errors.push("Name cannot be empty.");
   }
 
-  if (phone !== undefined && typeof phone !== "string") {
-    errors.push("Phone must be a valid string.");
+  if (phone !== undefined && (typeof phone !== "string" || !phone.trim() || phone.length !== 10)) {
+    errors.push("Phone must be a valid number of length 10.");
   }
 
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
