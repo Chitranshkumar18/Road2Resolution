@@ -5,7 +5,6 @@ import {
   Shield,
   Phone,
   Mail,
-  MapPin,
   Award,
   CheckCircle2,
   Clock,
@@ -405,7 +404,7 @@ export const WorkerProfile = () => {
             </div>
           </div>
 
-          <div>
+          <div className="sm:col-span-2">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
               Contractor Rapid Repair Unit
             </label>
@@ -416,22 +415,6 @@ export const WorkerProfile = () => {
                 required
                 value={contractorUnit}
                 onChange={(e) => setContractorUnit(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:border-amber-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-              Assigned Operational Zone
-            </label>
-            <div className="relative">
-              <MapPin className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                required
-                value={zone}
-                onChange={(e) => setZone(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:border-amber-500"
               />
             </div>
