@@ -4,7 +4,6 @@ import {
   User,
   Mail,
   Lock,
-  MapPin,
   Eye,
   EyeOff,
   ArrowRight,
@@ -26,7 +25,6 @@ export const Register = () => {
     email: '',
     password: '',
     phone: '',
-    zone: 'North Zone, Delhi NCR',
     organizationName: '',
   });
 
@@ -61,7 +59,6 @@ export const Register = () => {
         password: formData.password,
         phone: formData.phone.trim(),
         role: accountType,
-        zone: formData.zone,
         ...(accountType === 'worker' && {
           workerType: workerType,
           organizationName: workerType === 'organization' ? formData.organizationName.trim() : '',
@@ -334,28 +331,6 @@ export const Register = () => {
                     accountType === 'worker' ? 'focus:border-amber-500' : 'focus:border-indigo-500'
                   }`}
                 />
-              </div>
-            </div>
-
-            {/* Zone */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                {accountType === 'worker' ? 'Operating Zone / Location' : 'Neighborhood / Operational Zone'}
-              </label>
-              <div className="relative">
-                <MapPin className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <select
-                  value={formData.zone}
-                  onChange={(e) => setFormData((p) => ({ ...p, zone: e.target.value }))}
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none transition-colors ${
-                    accountType === 'worker' ? 'focus:border-amber-500' : 'focus:border-indigo-500'
-                  }`}
-                >
-                  <option value="North Zone, Delhi NCR">North Zone (Sector 1-15)</option>
-                  <option value="Central Zone, Delhi NCR">Central Commercial Zone</option>
-                  <option value="South Zone, Delhi NCR">South Residential Zone</option>
-                  <option value="East Zone, Delhi NCR">East Industrial Sector</option>
-                </select>
               </div>
             </div>
 
