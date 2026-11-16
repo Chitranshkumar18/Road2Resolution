@@ -225,4 +225,17 @@ export function formatResponsibleEntity(issue) {
   };
 }
 
+/**
+ * Validates whether the given string is a valid 10-digit mobile number.
+ * Accepts formats: 9812345678, +91 98123 45678, +919812345678, 09812345678, 98123-45678.
+ */
+export function isValidMobileNumber(phone) {
+  if (!phone || typeof phone !== 'string') return false;
+  const trimmed = phone.trim();
+  if (!trimmed) return false;
+  const stripped = trimmed.replace(/[\s\-\(\)\.]/g, '');
+  return /^(\+91|91|0)?[6-9]\d{9}$/.test(stripped) || /^[1-9]\d{9}$/.test(stripped);
+}
+
+
 

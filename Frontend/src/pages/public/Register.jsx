@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import Button from '../../components/common/Button';
+import { isValidMobileNumber } from '../../utils/helpers';
 
 export const Register = () => {
   const [accountType, setAccountType] = useState('citizen'); // 'citizen' | 'worker'
@@ -53,11 +54,21 @@ export const Register = () => {
         throw new Error('Please provide the Organization / Contractor company name.');
       }
 
+      // Mobile number validation
+      const rawPhone = (formData.phone || '').trim();
+      if (accountType === 'worker' && !rawPhone) {
+        throw new Error('Contact phone number is required for worker registration.');
+      }
+
+      if (rawPhone && !isValidMobileNumber(rawPhone)) {
+        throw new Error('Please enter a valid 10-digit mobile number (e.g. 9812345678 or +91 98123 45678).');
+      }
+
       const payload = {
         name: formData.name.trim(),
         email: formData.email.trim(),
         password: formData.password,
-        phone: formData.phone.trim(),
+        phone: rawPhone,
         role: accountType,
         ...(accountType === 'worker' && {
           workerType: workerType,
@@ -322,7 +333,7 @@ export const Register = () => {
               <div className="relative">
                 <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
-                  type="text"
+                  type="tel"
                   required={accountType === 'worker'}
                   value={formData.phone}
                   onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}

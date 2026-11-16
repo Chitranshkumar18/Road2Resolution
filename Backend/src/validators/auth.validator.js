@@ -1,8 +1,20 @@
 import { ENV } from "../config/env.js";
 
+/**
+ * Validates whether the given string is a valid 10-digit mobile number.
+ * Accepts formats: 9812345678, +91 98123 45678, +919812345678, 09812345678, 98123-45678.
+ */
+export const isValidMobileNumber = (phone) => {
+  if (!phone || typeof phone !== "string") return false;
+  const trimmed = phone.trim();
+  if (!trimmed) return false;
+  const stripped = trimmed.replace(/[\s\-\(\)\.]/g, "");
+  return /^(\+91|91|0)?[6-9]\d{9}$/.test(stripped) || /^[1-9]\d{9}$/.test(stripped);
+};
+
 export const validateRegister = (data = {}) => {
   const errors = [];
-  const { name, email, password, role } = data;
+  const { name, email, password, role, phone } = data;
 
   if (!name || typeof name !== "string" || !name.trim()) {
     errors.push("Full name is required.");
@@ -35,6 +47,13 @@ export const validateRegister = (data = {}) => {
       if (!data.organizationName || typeof data.organizationName !== "string" || !data.organizationName.trim()) {
         errors.push("Organization or Contractor company name is required for organization worker registration.");
       }
+    }
+  }
+
+  // Mobile number validation (when phone is provided)
+  if (phone !== undefined && phone !== null && String(phone).trim() !== "") {
+    if (!isValidMobileNumber(String(phone))) {
+      errors.push("Please provide a valid 10-digit mobile number.");
     }
   }
 
@@ -78,8 +97,10 @@ export const validateUpdateProfile = (data = {}) => {
     errors.push("Name cannot be empty.");
   }
 
-  if (phone !== undefined && (typeof phone !== "string" || !phone.trim() || phone.length !== 10)) {
-    errors.push("Phone must be a valid number of length 10.");
+  if (phone !== undefined && phone !== null && String(phone).trim() !== "") {
+    if (!isValidMobileNumber(String(phone))) {
+      errors.push("Phone must be a valid 10-digit mobile number.");
+    }
   }
 
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
@@ -117,6 +138,7 @@ export const validateProvisionWorker = (data = {}) => {
 };
 
 export default {
+  isValidMobileNumber,
   validateRegister,
   validateLogin,
   validateUpdateProfile,
