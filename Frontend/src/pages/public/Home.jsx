@@ -338,7 +338,7 @@ export const Home = () => {
             <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20 group-hover:scale-110 transition-transform">
               <Cpu className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-slate-100 font-display">YOLO Vision Detection</h3>
+            <h3 className="text-lg font-bold text-slate-100 font-display">Two-Stage AI Classification </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
               Instant edge inference computes exact crater dimensions, crack severities, unlit streetlight clusters, and sewage overflows with high certainty.
             </p>
