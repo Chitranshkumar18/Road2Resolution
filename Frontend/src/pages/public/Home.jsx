@@ -149,7 +149,7 @@ export const Home = () => {
                   <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 group-hover:scale-110 transition-transform">
                     <User className="w-7 h-7" />
                   </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-indigo-500/20 text-blue-900 !text-blue-900 border border-indigo-500/30">
+                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-indigo-500/20 border border-indigo-500/30 home-citizen-role-text">
                     CITIZEN • नागरिक
                   </span>
                 </div>
@@ -158,7 +158,7 @@ export const Home = () => {
                   <h3 className="text-xl sm:text-2xl font-black text-white font-display">
                     Citizen: Report & Track Problems
                   </h3>
-                  <p className="text-xs font-medium text-blue-900 !text-blue-900">
+                  <p className="text-xs font-medium home-citizen-role-text">
                     सड़क से जुड़ी समस्याओं की शिकायत करें और उनकी प्रगति देखें
                   </p>
                 </div>
@@ -226,7 +226,7 @@ export const Home = () => {
                   <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition-transform">
                     <HardHat className="w-7 h-7" />
                   </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-black !text-black border border-amber-500/30">
+                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/20 border border-amber-500/30 home-worker-role-text">
                     WORKER & ORG • वर्कर एवं संगठन
                   </span>
                 </div>
@@ -235,7 +235,7 @@ export const Home = () => {
                   <h3 className="text-xl sm:text-2xl font-black text-white font-display">
                     Worker: Improve & Maintain Roads
                   </h3>
-                  <p className="text-xs font-medium text-black !text-black">
+                  <p className="text-xs font-medium home-worker-role-text">
                     सड़क से जुड़ी समस्याओं को हल करने में सरकार की मदद करें
                   </p>
                 </div>

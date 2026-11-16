@@ -167,7 +167,7 @@ export const PublicReviews = () => {
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-4xl font-black text-white font-display tracking-tight leading-tight">
+              <h1 className="text-2xl sm:text-4xl font-black text-white font-display tracking-tight leading-tight public-reviews-hero-title">
                 Verified Civic Resolutions & Community Reviews
               </h1>
 

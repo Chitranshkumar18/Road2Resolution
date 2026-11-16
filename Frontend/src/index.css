@@ -145,6 +145,40 @@ html.light .text-white-force * {
   color: #FFFFFF !important;
 }
 
+/* Home Role Cards theme-dependent text color */
+.home-citizen-role-text,
+.home-citizen-role-text * {
+  color: #1e3a8a !important; /* Dark blue for light theme */
+}
+
+.home-worker-role-text,
+.home-worker-role-text * {
+  color: #000000 !important; /* Black for light theme */
+}
+
+html.dark .home-citizen-role-text,
+html.dark .home-citizen-role-text *,
+html.theme-cyber .home-citizen-role-text,
+html.theme-cyber .home-citizen-role-text *,
+html:not(.light) .home-citizen-role-text,
+html:not(.light) .home-citizen-role-text * {
+  color: #FFFFFF !important; /* White for dark / black theme */
+}
+
+html.dark .home-worker-role-text,
+html.dark .home-worker-role-text *,
+html.theme-cyber .home-worker-role-text,
+html.theme-cyber .home-worker-role-text *,
+html:not(.light) .home-worker-role-text,
+html:not(.light) .home-worker-role-text * {
+  color: #FFFFFF !important; /* White for dark / black theme */
+}
+
+/* Public Reviews Hero Heading - light blue when theme is light */
+html.light .public-reviews-hero-title {
+  color: #38BDF8 !important;
+}
+
 /* Borders and Dividers */
 html.light [class*="border-slate-800"],
 html.light [class*="border-slate-700"],
