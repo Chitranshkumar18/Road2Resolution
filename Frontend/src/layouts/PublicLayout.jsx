@@ -42,7 +42,7 @@ export const PublicLayout = () => {
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3">AI Systems</h4>
               <ul className="space-y-2 text-xs text-slate-400">
-                <li className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-cyan-400" /> YOLO Infrastructure Vision</li>
+                <li className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Two-Stage AI Classification</li>
                 <li className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-emerald-400" /> Before/After Repair QA</li>
                 <li className="flex items-center gap-1.5"><Heart className="w-3.5 h-3.5 text-rose-400" /> Citizen Priority Rating</li>
               </ul>
@@ -50,8 +50,22 @@ export const PublicLayout = () => {
           </div>
 
           <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-            <p>© 2026 CivicVision AI Platform. All rights reserved.</p>
-            <p className="flex items-center gap-1">Built with React, Vite & Tailwind CSS</p>
+      <p className="text-black dark:text-white">
+        © 2026 CivicVision AI Platform. All rights reserved.
+      </p>
+
+      <a
+        href="https://github.com/Chitranshkumar18"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline underline-offset-4 transition-colors"
+      >
+         GitHub Profile
+      </a>
+
+      <p className="flex items-center gap-1 text-black dark:text-white">
+        Built with React, Vite & Tailwind CSS
+      </p>
           </div>
         </div>
       </footer>
