@@ -1,4 +1,5 @@
 # Road2Resolution 🚧
+
 ### AI-Powered Smart Civic Issue Reporting & Resolution Platform
 
 **Road2Resolution** is an AI-powered civic technology platform designed to improve urban infrastructure management by connecting citizens, municipal administrations, repair organizations, and field workers.
@@ -38,12 +39,12 @@ The AI system follows a two-stage classification architecture.
 
 Images that pass Stage 1 are classified into four categories:
 
-| Class | Detected Issue |
-|---|---|
-| 0 | Garbage |
-| 1 | Illegal Dumping |
-| 2 | Pothole |
-| 3 | Water Drainage |
+| Class | Detected Issue  |
+| ----- | --------------- |
+| 0     | Garbage         |
+| 1     | Illegal Dumping |
+| 2     | Pothole         |
+| 3     | Water Drainage  |
 
 **AI Pipeline:**
 
@@ -81,21 +82,22 @@ Images that pass Stage 1 are classified into four categories:
 
 The model handoff documentation reports the following Stage 2 evaluation results:
 
-| Metric | Reported Result |
-|---|---:|
-| Test Images | 408 |
-| Accuracy | 95.59% |
-| Macro Precision | 97.38% |
-| Macro Recall | 95.20% |
-| Macro F1-Score | 96.24% |
+| Metric          | Reported Result |
+| --------------- | --------------: |
+| Test Images     |             408 |
+| Accuracy        |          95.59% |
+| Macro Precision |          97.38% |
+| Macro Recall    |          95.20% |
+| Macro F1-Score  |          96.24% |
 
-*Note: These are reported model evaluation metrics from the supplied model documentation, not a guarantee of performance on every real-world image.*
+_Note: These are reported model evaluation metrics from the supplied model documentation, not a guarantee of performance on every real-world image._
 
 ### 🛠️ 3. Worker & Organization Portal
 
 Road2Resolution supports two types of worker registration:
 
 **Individual Worker**
+
 - Register as an individual worker.
 - Access eligible civic repair complaints.
 - Accept available repair tasks.
@@ -105,6 +107,7 @@ Road2Resolution supports two types of worker registration:
 - Manage worker profile and SLA turnaround information.
 
 **Organization / Contractor**
+
 - Register as an organization or contractor.
 - Manage organization-related repair operations.
 - Access organization-assigned complaints.
@@ -171,12 +174,12 @@ Features include:
 
 The platform supports role-based authentication and protected access.
 
-| User Role | Access |
-|---|---|
-| Citizen | Report and track civic complaints |
-| Individual Worker | Access and manage eligible repair tasks |
-| Organization Worker | Handle organization-related repair tasks |
-| Admin | Manage complaints, organizations, departments, workers, and analytics |
+| User Role           | Access                                                                |
+| ------------------- | --------------------------------------------------------------------- |
+| Citizen             | Report and track civic complaints                                     |
+| Individual Worker   | Access and manage eligible repair tasks                               |
+| Organization Worker | Handle organization-related repair tasks                              |
+| Admin               | Manage complaints, organizations, departments, workers, and analytics |
 
 **Authentication Features:**
 
@@ -197,47 +200,47 @@ Public registration is available for citizens and workers. Administrative regist
 
 ### Frontend
 
-| Technology | Purpose |
-|---|---|
-| React 18 | User interface development |
-| Vite | Frontend build tool |
-| Tailwind CSS | Responsive UI styling |
-| React Router DOM | Application routing |
-| Axios | API communication |
-| Leaflet | Interactive maps |
-| React Leaflet | React map integration |
-| Recharts | Data visualization |
-| Lucide React | Icons |
-| JavaScript | Application logic |
+| Technology       | Purpose                    |
+| ---------------- | -------------------------- |
+| React 18         | User interface development |
+| Vite             | Frontend build tool        |
+| Tailwind CSS     | Responsive UI styling      |
+| React Router DOM | Application routing        |
+| Axios            | API communication          |
+| Leaflet          | Interactive maps           |
+| React Leaflet    | React map integration      |
+| Recharts         | Data visualization         |
+| Lucide React     | Icons                      |
+| JavaScript       | Application logic          |
 
 ### Backend
 
-| Technology | Purpose |
-|---|---|
-| Node.js | JavaScript runtime |
-| Express.js 5 | REST API development |
-| MongoDB | Database |
-| Mongoose | Database modelling |
-| JWT | Authentication |
-| bcryptjs | Password hashing |
-| Cloudinary | Image storage |
-| Multer | File upload handling |
-| Socket.IO | Real-time communication |
-| Nodemailer | Email functionality |
-| Cookie Parser | Cookie management |
-| CORS | Cross-origin resource sharing |
+| Technology    | Purpose                       |
+| ------------- | ----------------------------- |
+| Node.js       | JavaScript runtime            |
+| Express.js 5  | REST API development          |
+| MongoDB       | Database                      |
+| Mongoose      | Database modelling            |
+| JWT           | Authentication                |
+| bcryptjs      | Password hashing              |
+| Cloudinary    | Image storage                 |
+| Multer        | File upload handling          |
+| Socket.IO     | Real-time communication       |
+| Nodemailer    | Email functionality           |
+| Cookie Parser | Cookie management             |
+| CORS          | Cross-origin resource sharing |
 
 ### AI / Machine Learning
 
-| Technology | Purpose |
-|---|---|
-| Python | AI service development |
-| PyTorch | Deep learning framework |
-| Torchvision | ResNet18 architecture |
-| ResNet18 | Image classification |
-| FastAPI | AI inference API |
-| Uvicorn | ASGI server |
-| Pillow | Image processing |
+| Technology  | Purpose                 |
+| ----------- | ----------------------- |
+| Python      | AI service development  |
+| PyTorch     | Deep learning framework |
+| Torchvision | ResNet18 architecture   |
+| ResNet18    | Image classification    |
+| FastAPI     | AI inference API        |
+| Uvicorn     | ASGI server             |
+| Pillow      | Image processing        |
 
 ---
 
@@ -562,17 +565,17 @@ Base API URL:
 /api
 ```
 
-| Module | Base Endpoint | Description |
-|---|---|---|
-| Authentication | `/api/auth` | Registration, login, profile and logout |
-| Issues | `/api/issues` | Complaint creation and management |
-| AI | `/api/ai` | AI image analysis |
-| Organizations | `/api/organizations` | Organization management |
-| Admin | `/api/admin` | Administrative operations |
-| Worker | `/api/worker` | Worker operations |
-| Analytics | `/api/analytics` | Platform analytics |
-| Reports | `/api/reports` | Report submission and export |
-| Reviews | `/api/reviews` | Public reviews and feedback |
+| Module         | Base Endpoint        | Description                             |
+| -------------- | -------------------- | --------------------------------------- |
+| Authentication | `/api/auth`          | Registration, login, profile and logout |
+| Issues         | `/api/issues`        | Complaint creation and management       |
+| AI             | `/api/ai`            | AI image analysis                       |
+| Organizations  | `/api/organizations` | Organization management                 |
+| Admin          | `/api/admin`         | Administrative operations               |
+| Worker         | `/api/worker`        | Worker operations                       |
+| Analytics      | `/api/analytics`     | Platform analytics                      |
+| Reports        | `/api/reports`       | Report submission and export            |
+| Reviews        | `/api/reviews`       | Public reviews and feedback             |
 
 Backend health endpoint:
 
@@ -603,17 +606,20 @@ Backend/src/services/
 Road2Resolution is structured to support separate deployment of the frontend, backend, and AI inference service.
 
 ### Frontend
+
 - Deployment using Vercel.
 - Vite production build.
 - SPA routing rewrites configured through `Frontend/vercel.json`.
 
 ### Backend
+
 - Node.js and Express deployment.
 - MongoDB database connection through environment variables.
 - Cloudinary integration for image storage.
 - CORS configuration for trusted frontend origins.
 
 ### AI Model Service
+
 - Python FastAPI deployment.
 - PyTorch CPU-based inference.
 - Lazy model loading for memory optimization.
@@ -624,6 +630,7 @@ Road2Resolution is structured to support separate deployment of the frontend, ba
 Configure the following environment variables in the respective hosting platforms:
 
 **Backend:**
+
 - `PORT`
 - `NODE_ENV`
 - `MONGO_URI`
@@ -638,10 +645,12 @@ Configure the following environment variables in the respective hosting platform
 - `AI_MODEL_SERVICE_URL`
 
 **Frontend:**
+
 - `VITE_API_URL`
 - `VITE_APP_NAME`
 
 **AI Service:**
+
 - `PORT`
 - `MODEL_DIR` (only if using a custom model checkpoint directory)
 

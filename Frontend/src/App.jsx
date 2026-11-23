@@ -12,7 +12,7 @@ export function App() {
       <ThemeProvider>                 {/* ThemeProvider is a React Context that provides theme-related functionality like---->>light or dark mood*/}
         <AuthProvider>                {/* AuthProvider is a React Context that provides authentication-related functionality---->> like register, login, logout */}
           <IssueProvider>             {/* IssueProvider is a React Context that provides issue-related functionality */}
-            <NotificationProvider>    {/* NotificationProvider is a React Context that provides notification-related functionality */}
+            <NotificationProvider>    {/* Notification Provider is a React Context that provides notification-related functionality */}
               <AppRoutes />           {/* AppRoutes is a React Component that handles routing-->> It decides which page should open for a particular URL*/}
             </NotificationProvider>
           </IssueProvider>
